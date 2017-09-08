@@ -4,7 +4,7 @@ Hi Full-stacker!
 
 Great that you're interested in this exercise! Thanks a lot for making it. The exercise exists of a few assignments. They are related to the SkyGeo way of working. Good luck and we are looking forward to hearing from you soon!
 
-To complete these assignments you need to clone this repo. When you're done you can push your changes to this repository but a **new branch.**
+To complete these assignments you need to fork this repo. When you're done you can push your changes to your own repo.
 
 
 ## Assignment 1: Build a REST API with Django
