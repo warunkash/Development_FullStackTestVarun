@@ -62,4 +62,4 @@ Note the following things:
 
 ## Notes:
 
- commits often, push regularly
+Commit Often, Perfect Later, Publish Once
