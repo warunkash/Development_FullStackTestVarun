@@ -60,6 +60,6 @@ Note the following things:
   * Etc.
 
 
-Notes:
+## Notes:
 
-* commits often, push regularly
+ commits often, push regularly
