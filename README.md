@@ -32,7 +32,7 @@ Now you have written a simple API in Django you are going to add an index page t
 The application should be a simple interface to view the data provided by the API. It should have at least the following features:
 
 * Overview of bookings
-  * Paginated (using $count, $limit and $offset, see code for explination)
+  * Paginated
   * The bookings should be searchable. Make them searchable on at least the following data:
     * Booking ID
     * Space name
@@ -51,7 +51,7 @@ The application should be a simple interface to view the data provided by the AP
 For the search function to work you probably need to extend the API with the search functionality.
 
 Note the following things:
-* It's not allowed to use a CSS framework (we want to see how you write CSS)
+* It's allowed to use a CSS framework, however, you are encouraged to write your own (we want to see how you write CSS)
 * CSS pre-processors like SASS and LESS are recommended
 * Make sure your code is well structured and reusable
 * Bonus: making extra additions to the API
