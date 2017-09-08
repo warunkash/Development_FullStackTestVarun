@@ -2,21 +2,21 @@
 
 Hi Full-stacker!
 
-Great that you're interested in this exercise! Thanks a lot for making it. The exercise exists of a few assignments. They are related to the SkyGeo way of working. Good luck and we are looking forward to hearing from you soon!
+The exercise exists of a few assignments. They are related to the SkyGeo way of working.
 
-To complete these assignments you need to fork this repo. When you're done you can push your changes to your own repo.
+To complete these assignments you need to clone this repo. When you're done you can push your changes to your own repo (commit often!).
 
 
 ## Assignment 1: Build a REST API with Django
 
-In this exercise we have an example database structure and the dummy data to fill the database. You are free to choose any database you are most comfortable with.
+In this exercise we have an example database structure and the dummy data to fill the database. You are free to choose any database you are most comfortable working with.
 
-The PHP models and some extra PHP application code are for your reference.
+The PHP models and some extra PHP application code are just for your reference.
 
 The task is to setup a Django application with:
 
 * Model objects which represents the data structure in data/database.sql
-* Dump all the data in assignment/data.sql to the database django generates
+* Dump all the data of assignment/data.sql to the database your django generated
 * Authentication
 * A Django REST API so that it can serve assignment 2
 * Django admin site
@@ -25,7 +25,7 @@ The task is to setup a Django application with:
 Your resulting Django application should be placed in `assignment1/django/`. Make sure you pick a solution which is easily maintainable. If special software is needed to run the code make sure this is documented.
 
 
-## Assignment 2: Add a Front-End to your Node application
+## Assignment 2: Add a Front-End to your Django application
 
 Now you have written a simple API in Django you are going to add an index page to the it. The index page should be a SPA (Single Page Application). It's recommended to use frameworks like React or Angular for this purpose.
 
