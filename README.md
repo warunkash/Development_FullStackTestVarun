@@ -22,6 +22,7 @@ The task is to setup a Django application with:
 * Django admin site
 
 
+[New to django? No problem! Follow the tutorial to get started] (https://docs.djangoproject.com/en/1.11/intro/tutorial01/)
 Your resulting Django application should be placed in `assignment1/django/`. Make sure you pick a solution which is easily maintainable. If special software is needed to run the code make sure this is documented.
 
 
