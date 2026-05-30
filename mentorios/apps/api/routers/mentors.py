@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -10,7 +12,7 @@ router = APIRouter(prefix="/mentors", tags=["mentors"])
 
 
 class MentorResponse(BaseModel):
-    id: str
+    id: uuid.UUID
     slug: str
     name: str
     birth_year: int | None
