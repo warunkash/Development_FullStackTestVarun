@@ -9,7 +9,11 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import cv2
+try:
+    import cv2
+except ImportError:
+    cv2 = None  # type: ignore[assignment]
+
 import numpy as np
 
 log = logging.getLogger(__name__)
@@ -89,7 +93,7 @@ class PoseAnalyzer:
                 log.warning("YOLO not available: %s", e)
         return self._yolo_model
 
-    def analyze_frame(self, frame: np.ndarray, timestamp: float) -> list[PoseFrame]:
+    def analyze_frame(self, frame: "np.ndarray", timestamp: float) -> list[PoseFrame]:
         """Analyze a single video frame for pose keypoints."""
         results = []
 
@@ -106,7 +110,9 @@ class PoseAnalyzer:
 
         return results
 
-    def _analyze_mediapipe(self, frame: np.ndarray, timestamp: float, model) -> PoseFrame | None:
+    def _analyze_mediapipe(self, frame: "np.ndarray", timestamp: float, model) -> PoseFrame | None:
+        if cv2 is None:
+            return None
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         result = model.process(rgb_frame)
 
@@ -176,6 +182,8 @@ class PoseAnalyzer:
         sample_fps: float = 5.0,
     ) -> list[PoseFrame]:
         """Analyze pose across a video segment at sampled framerate."""
+        if cv2 is None:
+            return []
         cap = cv2.VideoCapture(str(video_path))
         video_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
 

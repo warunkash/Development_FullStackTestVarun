@@ -17,9 +17,7 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  experimental: {
-    optimizeCss: true,
-  },
+  experimental: {},
 }
 
 export default nextConfig
