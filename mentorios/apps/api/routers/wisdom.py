@@ -95,13 +95,13 @@ async def list_principles(
 async def get_video_timeline(
     video_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-) -> TimelineResponse:
+) -> dict:
     """Get annotated timeline for a video."""
     service = WisdomService(db)
     timeline = await service.build_timeline(video_id)
     if not timeline:
         raise HTTPException(status_code=404, detail="Video not found")
-    return timeline
+    return timeline  # type: ignore[return-value]
 
 
 @router.get("/graph/subgraph/{video_id}")

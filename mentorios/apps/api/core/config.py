@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import AnyHttpUrl, Field, PostgresDsn, RedisDsn, field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     environment: Literal["development", "staging", "production"] = "development"
     debug: bool = False
     api_prefix: str = "/api/v1"
-    allowed_origins: list[AnyHttpUrl] = Field(default=["http://localhost:3000"])
+    allowed_origins: list[str] = Field(default=["http://localhost:3000"])
 
     # Security
     secret_key: str = Field(..., min_length=32)
@@ -29,14 +29,14 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 30
 
     # PostgreSQL
-    database_url: PostgresDsn = Field(
+    database_url: str = Field(
         default="postgresql+asyncpg://mentorios:password@localhost:5432/mentorios"
     )
     database_pool_size: int = 20
     database_max_overflow: int = 40
 
     # Redis
-    redis_url: RedisDsn = Field(default="redis://localhost:6379/0")
+    redis_url: str = Field(default="redis://localhost:6379/0")
     redis_cache_ttl: int = 3600
 
     # Neo4j
@@ -93,4 +93,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    return Settings()  # type: ignore[call-arg]

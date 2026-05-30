@@ -36,8 +36,8 @@ class WisdomService:
 
         if principle_code:
             query = (
-                query.join("insight_principles")
-                .join("wisdom_principles")
+                query.join("insight_principles")  # type: ignore[arg-type]
+                .join("wisdom_principles")  # type: ignore[arg-type]
                 .where(text("wisdom_principles.code = :code"))
                 .params(code=principle_code)
             )

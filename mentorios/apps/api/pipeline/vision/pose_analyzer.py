@@ -307,7 +307,7 @@ def compute_movement_intensity(frames: list[PoseFrame]) -> float:
     if not frames:
         return 0.0
 
-    all_velocities = []
+    all_velocities: list[float] = []
     for frame in frames:
         if frame.velocity:
             all_velocities.extend(frame.velocity.values())

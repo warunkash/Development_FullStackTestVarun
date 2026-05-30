@@ -13,7 +13,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-import redis
+import redis  # type: ignore[import-untyped]
 from celery import Task
 
 from core.config import get_settings
@@ -82,7 +82,7 @@ def process_video_task(self: Task, video_id: str) -> dict[str, Any]:
         # ── Step 2: Extract audio and transcribe ──────────────────────────
         _update_progress(video_id, 0.15, "Extracting audio")
         audio_path = work_dir / "audio.wav"
-        _run_async(asyncio.coroutine(_extract_audio_sync)(video_path, audio_path))
+        _extract_audio_sync(video_path, audio_path)
 
         _update_progress(video_id, 0.20, "Transcribing speech")
         transcript = _transcribe(audio_path)

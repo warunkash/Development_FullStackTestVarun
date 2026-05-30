@@ -135,7 +135,7 @@ async def get_video_status(
     status_data = await service.get_processing_status(video_id)
     if not status_data:
         raise HTTPException(status_code=404, detail="Video not found")
-    return status_data
+    return status_data  # type: ignore[return-value]
 
 
 @router.delete("/{video_id}", status_code=status.HTTP_204_NO_CONTENT)

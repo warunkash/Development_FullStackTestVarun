@@ -143,7 +143,7 @@ class VideoService:
     async def _get_redis_progress(self, video_id: str) -> tuple[float, str | None]:
         """Get real-time processing progress from Redis."""
         try:
-            import redis.asyncio as aioredis
+            import redis.asyncio as aioredis  # type: ignore[import-untyped]
 
             r = aioredis.from_url(str(settings.redis_url))
             progress = await r.get(f"mentorios:job:{video_id}:progress")

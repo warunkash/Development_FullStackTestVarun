@@ -181,7 +181,7 @@ async def get_video_metadata(video_path: Path) -> dict:
 
     data = json.loads(stdout)
 
-    video_stream = next(
+    video_stream: dict = next(
         (s for s in data.get("streams", []) if s.get("codec_type") == "video"), {}
     )
     fmt = data.get("format", {})

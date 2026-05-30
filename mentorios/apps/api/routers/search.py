@@ -50,7 +50,7 @@ async def semantic_search(
         min_score=min_score,
         limit=limit,
     )
-    return SearchResponse(query=q, total=len(results), results=results)
+    return SearchResponse(query=q, total=len(results), results=results)  # type: ignore[arg-type]
 
 
 @router.get("/principles/{principle_code}/examples")
