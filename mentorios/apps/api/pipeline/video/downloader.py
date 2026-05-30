@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import re
-import tempfile
 from pathlib import Path
 
 import yt_dlp
@@ -65,7 +64,9 @@ async def download_video(url: str, output_dir: Path, max_duration: int = 14400) 
                 "width": info.get("width"),
                 "height": info.get("height"),
                 "fps": info.get("fps"),
-                "filepath": ydl.prepare_filename(info).replace(".webm", ".mp4").replace(".mkv", ".mp4"),
+                "filepath": ydl.prepare_filename(info)
+                .replace(".webm", ".mp4")
+                .replace(".mkv", ".mp4"),
             }
 
     try:
@@ -80,6 +81,7 @@ def _check_duration(max_seconds: int):
         if duration and duration > max_seconds:
             return f"Video too long: {duration}s > {max_seconds}s limit"
         return None
+
     return check
 
 
@@ -88,12 +90,17 @@ async def extract_audio(video_path: Path, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     cmd = [
-        "ffmpeg", "-i", str(video_path),
-        "-vn",                          # No video
-        "-acodec", "pcm_s16le",         # WAV format for Whisper
-        "-ar", "16000",                 # 16kHz sample rate
-        "-ac", "1",                     # Mono
-        "-y",                           # Overwrite
+        "ffmpeg",
+        "-i",
+        str(video_path),
+        "-vn",  # No video
+        "-acodec",
+        "pcm_s16le",  # WAV format for Whisper
+        "-ar",
+        "16000",  # 16kHz sample rate
+        "-ac",
+        "1",  # Mono
+        "-y",  # Overwrite
         str(output_path),
     ]
 
@@ -121,9 +128,13 @@ async def extract_frames(
     output_pattern = str(output_dir / "frame_%06d.jpg")
 
     cmd = [
-        "ffmpeg", "-i", str(video_path),
-        "-vf", f"fps={fps}",
-        "-q:v", str(quality),           # Quality 1-31, lower = better
+        "ffmpeg",
+        "-i",
+        str(video_path),
+        "-vf",
+        f"fps={fps}",
+        "-q:v",
+        str(quality),  # Quality 1-31, lower = better
         "-y",
         output_pattern,
     ]
@@ -146,9 +157,13 @@ async def extract_frames(
 async def get_video_metadata(video_path: Path) -> dict:
     """Get video metadata using ffprobe."""
     cmd = [
-        "ffprobe", "-v", "quiet",
-        "-print_format", "json",
-        "-show_streams", "-show_format",
+        "ffprobe",
+        "-v",
+        "quiet",
+        "-print_format",
+        "json",
+        "-show_streams",
+        "-show_format",
         str(video_path),
     ]
 
@@ -163,11 +178,11 @@ async def get_video_metadata(video_path: Path) -> dict:
         raise RuntimeError("ffprobe failed")
 
     import json
+
     data = json.loads(stdout)
 
     video_stream = next(
-        (s for s in data.get("streams", []) if s.get("codec_type") == "video"),
-        {}
+        (s for s in data.get("streams", []) if s.get("codec_type") == "video"), {}
     )
     fmt = data.get("format", {})
 

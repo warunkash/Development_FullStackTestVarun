@@ -43,6 +43,7 @@ def load_whisper_model(model_name: str = "large-v3-turbo", device: str = "cuda")
         log.info("Loading Whisper model: %s on %s", model_name, device)
         try:
             from faster_whisper import WhisperModel
+
             compute_type = "float16" if device == "cuda" else "int8"
             _model_cache[cache_key] = WhisperModel(
                 model_name,
@@ -52,6 +53,7 @@ def load_whisper_model(model_name: str = "large-v3-turbo", device: str = "cuda")
             )
         except ImportError:
             import whisper
+
             _model_cache[cache_key] = whisper.load_model(model_name, device=device)
         log.info("Whisper model loaded")
     return _model_cache[cache_key]
@@ -136,10 +138,15 @@ def transcribe_audio(
 
     except AttributeError:
         # Fallback: OpenAI whisper interface
-        result = model.transcribe(str(audio_path), word_timestamps=True, **{
-            k: v for k, v in transcribe_kwargs.items()
-            if k not in ("vad_filter", "vad_parameters")
-        })
+        result = model.transcribe(
+            str(audio_path),
+            word_timestamps=True,
+            **{
+                k: v
+                for k, v in transcribe_kwargs.items()
+                if k not in ("vad_filter", "vad_parameters")
+            },
+        )
 
         segments = []
         for seg in result["segments"]:
@@ -175,7 +182,9 @@ def transcribe_audio(
         )
 
 
-def get_words_in_range(result: TranscriptionResult, start: float, end: float) -> list[WordTimestamp]:
+def get_words_in_range(
+    result: TranscriptionResult, start: float, end: float
+) -> list[WordTimestamp]:
     """Extract all words within a time range."""
     words = []
     for seg in result.segments:

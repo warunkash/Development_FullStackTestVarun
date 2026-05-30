@@ -26,7 +26,9 @@ class MentorResponse(BaseModel):
 @router.get("", response_model=list[MentorResponse])
 async def list_mentors(db: AsyncSession = Depends(get_db)) -> list[MentorResponse]:
     """List all available mentors."""
-    result = await db.execute(select(Mentor).where(Mentor.is_active == True).order_by(Mentor.name))
+    result = await db.execute(
+        select(Mentor).where(Mentor.is_active).order_by(Mentor.name)
+    )
     mentors = result.scalars().all()
     return [MentorResponse.model_validate(m) for m in mentors]
 

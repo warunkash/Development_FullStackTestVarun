@@ -103,7 +103,7 @@ export default function WisdomPage() {
         <div className="mx-auto max-w-6xl">
           <h1 className="text-3xl font-bold mb-2">Wisdom Explorer</h1>
           <p className="text-muted-foreground">
-            Browse {SAMPLE_INSIGHTS.length}+ insights extracted from Bruce Lee's videos
+            Browse {SAMPLE_INSIGHTS.length}+ insights extracted from Bruce Lee&apos;s videos
           </p>
 
           <div className="mt-6 flex gap-3 max-w-2xl">

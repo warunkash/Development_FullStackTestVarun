@@ -60,6 +60,7 @@ def process_video_task(self: Task, video_id: str) -> dict[str, Any]:
 
     try:
         from models.video import ProcessingStatus, Video
+
         video = db.get(Video, uuid.UUID(video_id))
 
         if not video:
@@ -133,6 +134,7 @@ def process_video_task(self: Task, video_id: str) -> dict[str, Any]:
         db.rollback()
 
         from models.video import ProcessingStatus, Video
+
         video = db.get(Video, uuid.UUID(video_id))
         if video:
             video.status = ProcessingStatus.FAILED
@@ -168,16 +170,22 @@ def generate_wisdom_task(
         insights = []
         for i, scene in enumerate(scene_data):
             progress = 0.75 + (i / max(len(scene_data), 1)) * 0.15
-            _update_progress(video_id, progress, f"Extracting wisdom from scene {i + 1}/{len(scene_data)}")
+            _update_progress(
+                video_id,
+                progress,
+                f"Extracting wisdom from scene {i + 1}/{len(scene_data)}",
+            )
 
             scene_actions = [
-                a for a in actions_data
+                a
+                for a in actions_data
                 if a.get("start_time", 0) >= scene.get("start_time", 0)
                 and a.get("end_time", 0) <= scene.get("end_time", 9999)
             ]
 
             scene_transcript = " ".join(
-                seg["text"] for seg in transcript_segments
+                seg["text"]
+                for seg in transcript_segments
                 if seg.get("start_time", 0) >= scene.get("start_time", 0)
                 and seg.get("end_time", 0) <= scene.get("end_time", 9999)
             )
@@ -198,7 +206,7 @@ def generate_wisdom_task(
 
         return {"video_id": video_id, "insights_count": len(insights)}
 
-    except Exception as e:
+    except Exception:
         log.exception("Wisdom generation failed for video %s", video_id)
         db.rollback()
         raise
@@ -221,17 +229,17 @@ def generate_embeddings_task(self: Task, video_id: str, insight_ids: list[str]) 
 
         from services.llm_service import EmbeddingService
         from models.video import WisdomInsight
-        import numpy as np
-        from pgvector.sqlalchemy import Vector
 
         embedder = EmbeddingService()
 
         batch_size = 10
         for batch_start in range(0, len(insight_ids), batch_size):
-            batch_ids = insight_ids[batch_start:batch_start + batch_size]
-            insights = db.query(WisdomInsight).filter(
-                WisdomInsight.id.in_([uuid.UUID(i) for i in batch_ids])
-            ).all()
+            batch_ids = insight_ids[batch_start : batch_start + batch_size]
+            insights = (
+                db.query(WisdomInsight)
+                .filter(WisdomInsight.id.in_([uuid.UUID(i) for i in batch_ids]))
+                .all()
+            )
 
             texts = [f"{i.title}. {i.insight_text}" for i in insights]
             embeddings = embedder.embed(texts)
@@ -254,9 +262,11 @@ def generate_embeddings_task(self: Task, video_id: str, insight_ids: list[str]) 
 
         # ── Complete ──────────────────────────────────────────────────────
         from models.video import ProcessingStatus, Video
+
         video = db.get(Video, uuid.UUID(video_id))
         if video:
             from datetime import datetime
+
             video.status = ProcessingStatus.COMPLETE
             video.processing_completed_at = datetime.utcnow()
             db.commit()
@@ -264,9 +274,13 @@ def generate_embeddings_task(self: Task, video_id: str, insight_ids: list[str]) 
         _update_progress(video_id, 1.0, "Processing complete")
         log.info("Video %s processing complete", video_id)
 
-        return {"video_id": video_id, "status": "complete", "embeddings_count": len(insight_ids)}
+        return {
+            "video_id": video_id,
+            "status": "complete",
+            "embeddings_count": len(insight_ids),
+        }
 
-    except Exception as e:
+    except Exception:
         log.exception("Embedding generation failed for video %s", video_id)
         db.rollback()
         raise
@@ -279,20 +293,26 @@ def generate_embeddings_task(self: Task, video_id: str, insight_ids: list[str]) 
 def cleanup_failed_jobs() -> dict:
     """Periodic cleanup of stuck processing jobs."""
     from datetime import datetime, timedelta
+
     db = _get_db_session()
     try:
         cutoff = datetime.utcnow() - timedelta(hours=6)
         from models.video import ProcessingStatus, Video
         from sqlalchemy import update
+
         db.execute(
             update(Video)
-            .where(Video.status.in_([
-                ProcessingStatus.DOWNLOADING,
-                ProcessingStatus.TRANSCRIBING,
-                ProcessingStatus.ANALYZING_VISION,
-                ProcessingStatus.DETECTING_ACTIONS,
-                ProcessingStatus.GENERATING_WISDOM,
-            ]))
+            .where(
+                Video.status.in_(
+                    [
+                        ProcessingStatus.DOWNLOADING,
+                        ProcessingStatus.TRANSCRIBING,
+                        ProcessingStatus.ANALYZING_VISION,
+                        ProcessingStatus.DETECTING_ACTIONS,
+                        ProcessingStatus.GENERATING_WISDOM,
+                    ]
+                )
+            )
             .where(Video.processing_started_at < cutoff)
             .values(
                 status=ProcessingStatus.FAILED,
@@ -306,6 +326,7 @@ def cleanup_failed_jobs() -> dict:
 
 
 # ── Private helpers ────────────────────────────────────────────────────────────
+
 
 def _run_async(coro):
     """Run a coroutine synchronously from Celery worker context."""
@@ -334,22 +355,27 @@ def _download_video(video, work_dir: Path) -> Path:
 def _extract_audio_sync(video_path: Path, audio_path: Path):
     async def _inner():
         from pipeline.video.downloader import extract_audio
+
         await extract_audio(video_path, audio_path)
+
     return _inner()
 
 
 def _transcribe(audio_path: Path):
     from pipeline.audio.transcriber import transcribe_audio
+
     return transcribe_audio(audio_path, device=settings.device)
 
 
 def _detect_scenes(video_path: Path, keyframes_dir: Path) -> list:
     from pipeline.vision.scene_detector import detect_scenes
+
     return detect_scenes(video_path, keyframes_dir=keyframes_dir)
 
 
 def _analyze_poses(video_path: Path, scene_records: list) -> list:
     from pipeline.vision.pose_analyzer import PoseAnalyzer
+
     analyzer = PoseAnalyzer(device=settings.device)
     all_poses = []
     for scene in scene_records:
@@ -364,7 +390,11 @@ def _analyze_poses(video_path: Path, scene_records: list) -> list:
 
 
 def _detect_actions(poses, transcript, scene_records) -> list[dict]:
-    from pipeline.action.action_detector import classify_actions_from_poses, enrich_actions_with_transcript
+    from pipeline.action.action_detector import (
+        classify_actions_from_poses,
+        enrich_actions_with_transcript,
+    )
+
     actions = classify_actions_from_poses(poses)
     transcript_list = _transcript_to_list(transcript)
     actions = enrich_actions_with_transcript(actions, transcript_list)
@@ -413,7 +443,10 @@ title, insight_text, evidence_quote (or null), principle_codes (list of BL-XX co
             json={
                 "model": settings.llm_model,
                 "messages": [
-                    {"role": "system", "content": "You are a Bruce Lee wisdom analyst. Respond only in valid JSON."},
+                    {
+                        "role": "system",
+                        "content": "You are a Bruce Lee wisdom analyst. Respond only in valid JSON.",
+                    },
                     {"role": "user", "content": prompt},
                 ],
                 "temperature": 0.3,
@@ -432,8 +465,6 @@ title, insight_text, evidence_quote (or null), principle_codes (list of BL-XX co
 
 
 def _save_transcript(db, video, transcript) -> None:
-    from models.video import Scene
-    from sqlalchemy import insert
     db.execute(
         """
         INSERT INTO transcripts (video_id, language, full_text, word_count, confidence)
@@ -470,12 +501,14 @@ def _save_scenes(db, video, scenes) -> list[dict]:
                 "keyframe_path": scene.keyframe_path,
             },
         )
-        records.append({
-            "id": scene_id,
-            "scene_index": scene.scene_index,
-            "start_time": scene.start_time,
-            "end_time": scene.end_time,
-        })
+        records.append(
+            {
+                "id": scene_id,
+                "scene_index": scene.scene_index,
+                "start_time": scene.start_time,
+                "end_time": scene.end_time,
+            }
+        )
     db.commit()
     return records
 
@@ -565,33 +598,42 @@ def _build_knowledge_graph(db, video_id: str, insight_ids: list[str]) -> None:
         loop = asyncio.new_event_loop()
 
         from models.video import Video, WisdomInsight
+
         video = db.get(Video, uuid.UUID(video_id))
         if video:
-            loop.run_until_complete(graph.create_video_node({
-                "id": str(video.id),
-                "title": video.title or "",
-                "source_url": video.source_url or "",
-                "duration": video.duration_seconds or 0,
-            }))
+            loop.run_until_complete(
+                graph.create_video_node(
+                    {
+                        "id": str(video.id),
+                        "title": video.title or "",
+                        "source_url": video.source_url or "",
+                        "duration": video.duration_seconds or 0,
+                    }
+                )
+            )
 
-        insights = db.query(WisdomInsight).filter(
-            WisdomInsight.id.in_([uuid.UUID(i) for i in insight_ids])
-        ).all()
+        insights = (
+            db.query(WisdomInsight)
+            .filter(WisdomInsight.id.in_([uuid.UUID(i) for i in insight_ids]))
+            .all()
+        )
 
         for insight in insights:
-            loop.run_until_complete(graph.create_insight_node(
-                insight_data={
-                    "id": str(insight.id),
-                    "title": insight.title,
-                    "text": insight.insight_text,
-                    "evidence_quote": insight.evidence_quote or "",
-                    "start_time": insight.start_time or 0,
-                    "confidence": insight.confidence_score,
-                    "model_version": insight.model_version or "qwen2.5",
-                },
-                principle_codes=[],
-                scene_id="",
-            ))
+            loop.run_until_complete(
+                graph.create_insight_node(
+                    insight_data={
+                        "id": str(insight.id),
+                        "title": insight.title,
+                        "text": insight.insight_text,
+                        "evidence_quote": insight.evidence_quote or "",
+                        "start_time": insight.start_time or 0,
+                        "confidence": insight.confidence_score,
+                        "model_version": insight.model_version or "qwen2.5",
+                    },
+                    principle_codes=[],
+                    scene_id="",
+                )
+            )
 
         loop.close()
     except Exception as e:

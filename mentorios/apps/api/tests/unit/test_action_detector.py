@@ -1,7 +1,5 @@
 """Unit tests for action detection pipeline."""
 
-import pytest
-
 from pipeline.action.action_detector import (
     _classify_segment,
     _segment_by_movement,
@@ -64,7 +62,9 @@ class TestSegmentByMovement:
 
 class TestClassifySegment:
     def test_high_wrist_speed_gives_strike(self):
-        frames = [make_pose_frame(0.0, velocity={"left_wrist": 0.5, "right_wrist": 0.4})]
+        frames = [
+            make_pose_frame(0.0, velocity={"left_wrist": 0.5, "right_wrist": 0.4})
+        ]
         action_type, subtype, confidence = _classify_segment(frames, intensity=0.4)
         assert action_type == "strike"
         assert confidence > 0.5
@@ -75,7 +75,12 @@ class TestClassifySegment:
         assert action_type == "stance"
 
     def test_ankle_movement_gives_footwork(self):
-        frames = [make_pose_frame(0.0, velocity={"left_ankle": 0.3, "right_ankle": 0.2, "left_wrist": 0.02})]
+        frames = [
+            make_pose_frame(
+                0.0,
+                velocity={"left_ankle": 0.3, "right_ankle": 0.2, "left_wrist": 0.02},
+            )
+        ]
         action_type, _, _ = _classify_segment(frames, intensity=0.2)
         assert action_type == "movement"
 
@@ -94,8 +99,10 @@ class TestClassifyActionsFromPoses:
         frames = []
         for i in range(20):
             is_active = 5 <= i <= 12
-            vel = {"left_wrist": 0.5 if is_active else 0.0,
-                   "right_wrist": 0.3 if is_active else 0.0}
+            vel = {
+                "left_wrist": 0.5 if is_active else 0.0,
+                "right_wrist": 0.3 if is_active else 0.0,
+            }
             frames.append(make_pose_frame(i * 0.2, velocity=vel))
 
         result = classify_actions_from_poses(frames, movement_threshold=0.05)
@@ -105,49 +112,53 @@ class TestClassifyActionsFromPoses:
 class TestEnrichActionsWithTranscript:
     def test_adds_transcript_context(self):
         actions = [
-            type('Action', (), {
-                'action_type': 'verbal',
-                'action_subtype': None,
-                'start_time': 0.0,
-                'end_time': 5.0,
-                'context_notes': '',
-                '__dict__': {},
-            })()
+            type(
+                "Action",
+                (),
+                {
+                    "action_type": "verbal",
+                    "action_subtype": None,
+                    "start_time": 0.0,
+                    "end_time": 5.0,
+                    "context_notes": "",
+                    "__dict__": {},
+                },
+            )()
         ]
 
-        actions[0].context_notes = ''
-        actions[0].action_type = 'verbal'
+        actions[0].context_notes = ""
+        actions[0].action_type = "verbal"
 
         from pipeline.action.action_detector import DetectedAction
+
         real_action = DetectedAction(
-            action_type='movement',
+            action_type="movement",
             action_subtype=None,
             start_time=1.0,
             end_time=4.0,
             confidence=0.7,
             intensity=0.3,
-            description='test',
+            description="test",
         )
 
-        segments = [
-            {"start_time": 0.0, "end_time": 5.0, "text": "Be like water"}
-        ]
+        segments = [{"start_time": 0.0, "end_time": 5.0, "text": "Be like water"}]
 
         result = enrich_actions_with_transcript([real_action], segments)
         assert result[0].context_notes == "Be like water"
 
     def test_no_overlap_no_enrichment(self):
         from pipeline.action.action_detector import DetectedAction
+
         action = DetectedAction(
-            action_type='strike',
-            action_subtype='jab',
+            action_type="strike",
+            action_subtype="jab",
             start_time=10.0,
             end_time=11.0,
             confidence=0.8,
             intensity=0.9,
-            description='jab',
+            description="jab",
         )
 
         segments = [{"start_time": 0.0, "end_time": 5.0, "text": "Some speech"}]
         result = enrich_actions_with_transcript([action], segments)
-        assert result[0].context_notes == ''
+        assert result[0].context_notes == ""

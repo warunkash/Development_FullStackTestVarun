@@ -1,5 +1,4 @@
 import uuid
-from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -125,9 +124,20 @@ async def get_domain_applications(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     """Get all wisdom applications for a specific domain."""
-    valid_domains = ["business", "investing", "leadership", "relationships", "personal_growth", "athletics"]
+    valid_domains = [
+        "business",
+        "investing",
+        "leadership",
+        "relationships",
+        "personal_growth",
+        "athletics",
+    ]
     if domain not in valid_domains:
-        raise HTTPException(status_code=400, detail=f"Invalid domain. Choose from: {valid_domains}")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid domain. Choose from: {valid_domains}"
+        )
 
     service = WisdomService(db)
-    return await service.get_domain_applications(domain=domain, mentor_slug=mentor_slug, limit=limit)
+    return await service.get_domain_applications(
+        domain=domain, mentor_slug=mentor_slug, limit=limit
+    )

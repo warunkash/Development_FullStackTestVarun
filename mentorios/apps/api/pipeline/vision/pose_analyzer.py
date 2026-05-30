@@ -22,9 +22,9 @@ log = logging.getLogger(__name__)
 @dataclass
 class Keypoint:
     name: str
-    x: float       # normalized 0-1
-    y: float       # normalized 0-1
-    z: float       # depth (when available)
+    x: float  # normalized 0-1
+    y: float  # normalized 0-1
+    z: float  # depth (when available)
     visibility: float
 
 
@@ -40,22 +40,59 @@ class PoseFrame:
 
 
 MEDIAPIPE_LANDMARK_NAMES = [
-    "nose", "left_eye_inner", "left_eye", "left_eye_outer",
-    "right_eye_inner", "right_eye", "right_eye_outer",
-    "left_ear", "right_ear", "mouth_left", "mouth_right",
-    "left_shoulder", "right_shoulder", "left_elbow", "right_elbow",
-    "left_wrist", "right_wrist", "left_pinky", "right_pinky",
-    "left_index", "right_index", "left_thumb", "right_thumb",
-    "left_hip", "right_hip", "left_knee", "right_knee",
-    "left_ankle", "right_ankle", "left_heel", "right_heel",
-    "left_foot_index", "right_foot_index",
+    "nose",
+    "left_eye_inner",
+    "left_eye",
+    "left_eye_outer",
+    "right_eye_inner",
+    "right_eye",
+    "right_eye_outer",
+    "left_ear",
+    "right_ear",
+    "mouth_left",
+    "mouth_right",
+    "left_shoulder",
+    "right_shoulder",
+    "left_elbow",
+    "right_elbow",
+    "left_wrist",
+    "right_wrist",
+    "left_pinky",
+    "right_pinky",
+    "left_index",
+    "right_index",
+    "left_thumb",
+    "right_thumb",
+    "left_hip",
+    "right_hip",
+    "left_knee",
+    "right_knee",
+    "left_ankle",
+    "right_ankle",
+    "left_heel",
+    "right_heel",
+    "left_foot_index",
+    "right_foot_index",
 ]
 
 YOLO_KEYPOINT_NAMES = [
-    "nose", "left_eye", "right_eye", "left_ear", "right_ear",
-    "left_shoulder", "right_shoulder", "left_elbow", "right_elbow",
-    "left_wrist", "right_wrist", "left_hip", "right_hip",
-    "left_knee", "right_knee", "left_ankle", "right_ankle",
+    "nose",
+    "left_eye",
+    "right_eye",
+    "left_ear",
+    "right_ear",
+    "left_shoulder",
+    "right_shoulder",
+    "left_elbow",
+    "right_elbow",
+    "left_wrist",
+    "right_wrist",
+    "left_hip",
+    "right_hip",
+    "left_knee",
+    "right_knee",
+    "left_ankle",
+    "right_ankle",
 ]
 
 
@@ -70,6 +107,7 @@ class PoseAnalyzer:
         if self._mp_model is None:
             try:
                 import mediapipe as mp
+
                 self._mp_model = mp.solutions.pose.Pose(
                     static_image_mode=False,
                     model_complexity=2,
@@ -87,6 +125,7 @@ class PoseAnalyzer:
         if self._yolo_model is None and self.use_yolo:
             try:
                 from ultralytics import YOLO
+
                 self._yolo_model = YOLO("yolo11x-pose.pt")
                 log.info("YOLO11-pose loaded")
             except (ImportError, Exception) as e:
@@ -110,7 +149,9 @@ class PoseAnalyzer:
 
         return results
 
-    def _analyze_mediapipe(self, frame: "np.ndarray", timestamp: float, model) -> PoseFrame | None:
+    def _analyze_mediapipe(
+        self, frame: "np.ndarray", timestamp: float, model
+    ) -> PoseFrame | None:
         if cv2 is None:
             return None
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -121,13 +162,19 @@ class PoseAnalyzer:
 
         keypoints = []
         for i, landmark in enumerate(result.pose_landmarks.landmark):
-            keypoints.append(Keypoint(
-                name=MEDIAPIPE_LANDMARK_NAMES[i] if i < len(MEDIAPIPE_LANDMARK_NAMES) else f"landmark_{i}",
-                x=landmark.x,
-                y=landmark.y,
-                z=landmark.z,
-                visibility=landmark.visibility,
-            ))
+            keypoints.append(
+                Keypoint(
+                    name=(
+                        MEDIAPIPE_LANDMARK_NAMES[i]
+                        if i < len(MEDIAPIPE_LANDMARK_NAMES)
+                        else f"landmark_{i}"
+                    ),
+                    x=landmark.x,
+                    y=landmark.y,
+                    z=landmark.z,
+                    visibility=landmark.visibility,
+                )
+            )
 
         avg_visibility = sum(kp.visibility for kp in keypoints) / len(keypoints)
 
@@ -139,7 +186,9 @@ class PoseAnalyzer:
             bbox=None,
         )
 
-    def _analyze_yolo(self, frame: np.ndarray, timestamp: float, model) -> list[PoseFrame]:
+    def _analyze_yolo(
+        self, frame: np.ndarray, timestamp: float, model
+    ) -> list[PoseFrame]:
         results = model(frame, verbose=False, conf=0.3)
         frames = []
 
@@ -153,24 +202,34 @@ class PoseAnalyzer:
                 keypoints = []
                 for i, kp in enumerate(kps):
                     x, y, conf = kp[0].item(), kp[1].item(), kp[2].item()
-                    keypoints.append(Keypoint(
-                        name=YOLO_KEYPOINT_NAMES[i] if i < len(YOLO_KEYPOINT_NAMES) else f"kp_{i}",
-                        x=x,
-                        y=y,
-                        z=0.0,
-                        visibility=conf,
-                    ))
+                    keypoints.append(
+                        Keypoint(
+                            name=(
+                                YOLO_KEYPOINT_NAMES[i]
+                                if i < len(YOLO_KEYPOINT_NAMES)
+                                else f"kp_{i}"
+                            ),
+                            x=x,
+                            y=y,
+                            z=0.0,
+                            visibility=conf,
+                        )
+                    )
 
-                avg_conf = sum(kp.visibility for kp in keypoints) / max(len(keypoints), 1)
+                avg_conf = sum(kp.visibility for kp in keypoints) / max(
+                    len(keypoints), 1
+                )
                 bbox = tuple(box.cpu().numpy().tolist())
 
-                frames.append(PoseFrame(
-                    timestamp=timestamp,
-                    person_index=person_idx,
-                    keypoints=keypoints,
-                    confidence=avg_conf,
-                    bbox=bbox,
-                ))
+                frames.append(
+                    PoseFrame(
+                        timestamp=timestamp,
+                        person_index=person_idx,
+                        keypoints=keypoints,
+                        confidence=avg_conf,
+                        bbox=bbox,
+                    )
+                )
 
         return frames
 

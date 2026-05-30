@@ -1,14 +1,20 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, HttpUrl
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    UploadFile,
+    status,
+)
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import decode_token
-from models.video import ProcessingStatus, Video, VideoSource
+from models.video import ProcessingStatus, VideoSource
 from services.video_service import VideoService
 
 router = APIRouter(prefix="/videos", tags=["videos"])
@@ -42,7 +48,9 @@ class VideoStatusResponse(BaseModel):
     error_message: str | None
 
 
-@router.post("/ingest-url", response_model=VideoResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/ingest-url", response_model=VideoResponse, status_code=status.HTTP_202_ACCEPTED
+)
 async def ingest_youtube_url(
     payload: VideoIngestURL,
     background_tasks: BackgroundTasks,
@@ -59,14 +67,21 @@ async def ingest_youtube_url(
     return VideoResponse.model_validate(video)
 
 
-@router.post("/upload", response_model=VideoResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/upload", response_model=VideoResponse, status_code=status.HTTP_202_ACCEPTED
+)
 async def upload_video(
     file: Annotated[UploadFile, File(description="Video file (MP4, MOV, AVI, MKV)")],
     background_tasks: BackgroundTasks,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> VideoResponse:
     """Upload a video file for processing."""
-    if file.content_type not in ["video/mp4", "video/quicktime", "video/x-msvideo", "video/x-matroska"]:
+    if file.content_type not in [
+        "video/mp4",
+        "video/quicktime",
+        "video/x-msvideo",
+        "video/x-matroska",
+    ]:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail=f"Unsupported media type: {file.content_type}",
@@ -91,7 +106,9 @@ async def list_videos(
 ) -> list[VideoResponse]:
     """List all videos with optional filtering."""
     service = VideoService(db)
-    videos = await service.list_videos(status=status, mentor_id=mentor_id, limit=limit, offset=offset)
+    videos = await service.list_videos(
+        status=status, mentor_id=mentor_id, limit=limit, offset=offset
+    )
     return [VideoResponse.model_validate(v) for v in videos]
 
 

@@ -7,7 +7,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from models.video import InsightApplication, Video, WisdomInsight
+from models.video import Video, WisdomInsight
 
 
 class WisdomService:
@@ -35,13 +35,12 @@ class WisdomService:
             query = query.where(WisdomInsight.video_id == video_id)
 
         if principle_code:
-            query = query.join(
-                "insight_principles"
-            ).join(
-                "wisdom_principles"
-            ).where(
-                text("wisdom_principles.code = :code")
-            ).params(code=principle_code)
+            query = (
+                query.join("insight_principles")
+                .join("wisdom_principles")
+                .where(text("wisdom_principles.code = :code"))
+                .params(code=principle_code)
+            )
 
         result = await self.db.execute(query)
         return list(result.scalars().all())
@@ -70,9 +69,7 @@ class WisdomService:
             {tier_filter}
             GROUP BY wp.id
             ORDER BY wp.tier ASC, wp.name ASC
-        """.format(
-            tier_filter="AND wp.tier = :tier" if tier else ""
-        ))
+        """.format(tier_filter="AND wp.tier = :tier" if tier else ""))
 
         params: dict[str, Any] = {"mentor_slug": mentor_slug}
         if tier:
@@ -115,6 +112,7 @@ class WisdomService:
 
     async def get_video_subgraph(self, video_id: uuid.UUID, depth: int = 2) -> dict:
         from services.graph_service import GraphService
+
         graph = GraphService()
         return await graph.get_video_subgraph(str(video_id), depth)
 
@@ -146,7 +144,6 @@ class WisdomService:
         """)
 
         result = await self.db.execute(
-            query,
-            {"domain": domain, "mentor_slug": mentor_slug, "limit": limit}
+            query, {"domain": domain, "mentor_slug": mentor_slug, "limit": limit}
         )
         return [dict(row._mapping) for row in result.fetchall()]

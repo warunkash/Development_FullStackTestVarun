@@ -8,11 +8,13 @@ Two-stage approach:
 
 import logging
 from dataclasses import dataclass, field
-from pathlib import Path
 
-import numpy as np
 
-from pipeline.vision.pose_analyzer import PoseFrame, compute_movement_intensity, extract_body_posture_features
+from pipeline.vision.pose_analyzer import (
+    PoseFrame,
+    compute_movement_intensity,
+    extract_body_posture_features,
+)
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +35,16 @@ class DetectedAction:
 # Martial arts action taxonomy
 MARTIAL_ARTS_ACTIONS = {
     "strike": {
-        "subtypes": ["jab", "cross", "hook", "uppercut", "kick", "side_kick", "back_kick", "elbow"],
+        "subtypes": [
+            "jab",
+            "cross",
+            "hook",
+            "uppercut",
+            "kick",
+            "side_kick",
+            "back_kick",
+            "elbow",
+        ],
         "pose_signals": ["rapid_wrist_extension", "hip_rotation", "weight_transfer"],
     },
     "block": {
@@ -81,7 +92,7 @@ def classify_actions_from_poses(
 
     actions = []
     for seg_start_idx, seg_end_idx in segments:
-        seg_frames = pose_frames[seg_start_idx:seg_end_idx + 1]
+        seg_frames = pose_frames[seg_start_idx : seg_end_idx + 1]
 
         if not seg_frames:
             continue
@@ -95,22 +106,27 @@ def classify_actions_from_poses(
         posture_features = {}
 
         if seg_frames:
-            posture_features = extract_body_posture_features(seg_frames[len(seg_frames) // 2])
+            posture_features = extract_body_posture_features(
+                seg_frames[len(seg_frames) // 2]
+            )
 
-        actions.append(DetectedAction(
-            action_type=action_type,
-            action_subtype=subtype,
-            start_time=seg_frames[0].timestamp,
-            end_time=seg_frames[-1].timestamp,
-            confidence=confidence,
-            intensity=min(intensity * 10, 1.0),
-            description=f"{action_type.replace('_', ' ').title()}" + (f" - {subtype}" if subtype else ""),
-            pose_analysis={
-                "movement_intensity": intensity,
-                "posture_features": posture_features,
-                "frame_count": len(seg_frames),
-            },
-        ))
+        actions.append(
+            DetectedAction(
+                action_type=action_type,
+                action_subtype=subtype,
+                start_time=seg_frames[0].timestamp,
+                end_time=seg_frames[-1].timestamp,
+                confidence=confidence,
+                intensity=min(intensity * 10, 1.0),
+                description=f"{action_type.replace('_', ' ').title()}"
+                + (f" - {subtype}" if subtype else ""),
+                pose_analysis={
+                    "movement_intensity": intensity,
+                    "posture_features": posture_features,
+                    "frame_count": len(seg_frames),
+                },
+            )
+        )
 
     return actions
 
@@ -125,7 +141,11 @@ def _segment_by_movement(
     seg_start = 0
 
     for i, frame in enumerate(frames):
-        intensity = sum(frame.velocity.values()) / max(len(frame.velocity), 1) if frame.velocity else 0.0
+        intensity = (
+            sum(frame.velocity.values()) / max(len(frame.velocity), 1)
+            if frame.velocity
+            else 0.0
+        )
 
         if intensity > threshold and not in_movement:
             in_movement = True
@@ -149,7 +169,6 @@ def _classify_segment(
         return "stance", "fighting_stance", 0.7
 
     mid_frame = frames[len(frames) // 2]
-    kp_map = {kp.name: kp for kp in mid_frame.keypoints}
 
     # Check wrist velocities (high = strike/block)
     wrist_velocity = 0.0
@@ -202,7 +221,9 @@ def enrich_actions_with_transcript(
 
         if relevant_text:
             action.context_notes = " ".join(relevant_text)
-            if not any(term in action.action_type for term in ["strike", "block", "movement"]):
+            if not any(
+                term in action.action_type for term in ["strike", "block", "movement"]
+            ):
                 action.action_type = "verbal"
                 action.action_subtype = "teaching"
 

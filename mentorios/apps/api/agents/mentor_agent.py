@@ -5,7 +5,6 @@ Uses RAG (Retrieval-Augmented Generation) to ensure all responses
 are traceable to actual video evidence. Never fabricates.
 """
 
-import json
 import logging
 from dataclasses import dataclass
 from typing import Any, AsyncIterator
@@ -169,12 +168,16 @@ class MentorAgent:
                 principle_codes.extend(item.get("principle_codes", []))
 
             if principle_codes:
-                related = await self._get_related_principles(list(set(principle_codes[:3])))
+                related = await self._get_related_principles(
+                    list(set(principle_codes[:3]))
+                )
                 context_items.extend(related)
 
         return context_items[:10]  # Cap at 10 context items
 
-    async def _get_timestamp_context(self, video_id: str, timestamp: float) -> list[dict]:
+    async def _get_timestamp_context(
+        self, video_id: str, timestamp: float
+    ) -> list[dict]:
         """Get wisdom context for a specific video timestamp."""
         insights = await self.search.get_insights_by_timestamp(
             video_id=video_id,
@@ -224,7 +227,9 @@ class MentorAgent:
         lines = ["EVIDENCE CONTEXT (from analyzed Bruce Lee videos):"]
         for i, item in enumerate(context, 1):
             item_type = item.get("entity_type", "insight")
-            lines.append(f"\n[{i}] {item_type.upper()}: {item.get('title', 'Untitled')}")
+            lines.append(
+                f"\n[{i}] {item_type.upper()}: {item.get('title', 'Untitled')}"
+            )
 
             if item.get("start_time") is not None:
                 lines.append(f"    Timestamp: {item['start_time']:.1f}s")
@@ -266,14 +271,16 @@ BL-DT: Detachment — Non-attachment to outcomes
         citations = []
         for item in context:
             if item.get("video_id") and item.get("start_time") is not None:
-                citations.append(Citation(
-                    video_id=item["video_id"],
-                    video_title=item.get("video_title", ""),
-                    timestamp_start=item.get("start_time", 0),
-                    timestamp_end=item.get("end_time", 0),
-                    quote=item.get("evidence_quote"),
-                    confidence=item.get("score", 0.8),
-                ))
+                citations.append(
+                    Citation(
+                        video_id=item["video_id"],
+                        video_title=item.get("video_title", ""),
+                        timestamp_start=item.get("start_time", 0),
+                        timestamp_end=item.get("end_time", 0),
+                        quote=item.get("evidence_quote"),
+                        confidence=item.get("score", 0.8),
+                    )
+                )
         return citations
 
     def _estimate_confidence(self, context: list[dict], response: str) -> float:
@@ -281,11 +288,17 @@ BL-DT: Detachment — Non-attachment to outcomes
         if not context:
             return 0.3
 
-        avg_context_score = sum(
-            item.get("score", 0.5) for item in context
-        ) / len(context)
+        avg_context_score = sum(item.get("score", 0.5) for item in context) / len(
+            context
+        )
 
-        uncertainty_markers = ["might", "possibly", "unclear", "uncertain", "don't have evidence"]
+        uncertainty_markers = [
+            "might",
+            "possibly",
+            "unclear",
+            "uncertain",
+            "don't have evidence",
+        ]
         has_uncertainty = any(m in response.lower() for m in uncertainty_markers)
 
         base_confidence = avg_context_score
@@ -296,7 +309,21 @@ BL-DT: Detachment — Non-attachment to outcomes
 
     def _extract_mentioned_principles(self, text: str) -> list[str]:
         """Extract principle codes mentioned in response."""
-        codes = ["BL-AD", "BL-FL", "BL-TM", "BL-IN", "BL-EF", "BL-DR",
-                 "BL-AW", "BL-PO", "BL-SI", "BL-NR", "BL-PR",
-                 "BL-SE", "BL-EC", "BL-CG", "BL-DT"]
+        codes = [
+            "BL-AD",
+            "BL-FL",
+            "BL-TM",
+            "BL-IN",
+            "BL-EF",
+            "BL-DR",
+            "BL-AW",
+            "BL-PO",
+            "BL-SI",
+            "BL-NR",
+            "BL-PR",
+            "BL-SE",
+            "BL-EC",
+            "BL-CG",
+            "BL-DT",
+        ]
         return [code for code in codes if code in text]

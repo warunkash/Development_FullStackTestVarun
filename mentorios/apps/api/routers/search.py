@@ -61,4 +61,6 @@ async def search_principle_examples(
 ) -> dict:
     """Find all video examples demonstrating a specific principle."""
     service = SearchService(db)
-    return await service.find_principle_examples(principle_code=principle_code, limit=limit)
+    return await service.find_principle_examples(
+        principle_code=principle_code, limit=limit
+    )

@@ -66,7 +66,7 @@ export default function HomePage() {
           </h1>
 
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            MentorOS converts video of the world's greatest masters into structured,
+            MentorOS converts video of the world&apos;s greatest masters into structured,
             searchable wisdom — grounded in evidence, applicable across every domain.
           </p>
 
@@ -117,7 +117,7 @@ export default function HomePage() {
       <section className="py-24 px-6 bg-card/30">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Bruce Lee's Wisdom Taxonomy</h2>
+            <h2 className="text-3xl font-bold mb-4">Bruce Lee&apos;s Wisdom Taxonomy</h2>
             <p className="text-muted-foreground">
               15 core principles extracted from a lifetime of mastery
             </p>
@@ -140,7 +140,7 @@ export default function HomePage() {
                   {p.name}
                 </h3>
                 <blockquote className="text-sm text-muted-foreground italic border-l border-primary/30 pl-3">
-                  "{p.quote}"
+                  &ldquo;{p.quote}&rdquo;
                 </blockquote>
               </div>
             ))}

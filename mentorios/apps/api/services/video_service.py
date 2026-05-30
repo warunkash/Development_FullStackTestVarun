@@ -1,7 +1,6 @@
 """Video management service — CRUD and processing dispatch."""
 
 import uuid
-from pathlib import Path
 
 from fastapi import UploadFile
 from sqlalchemy import select
@@ -70,6 +69,7 @@ class VideoService:
     async def dispatch_processing(self, video_id: uuid.UUID) -> None:
         """Dispatch video to Celery processing pipeline."""
         from workers.tasks import process_video_task
+
         process_video_task.delay(str(video_id))
 
     async def get_video(self, video_id: uuid.UUID) -> Video | None:
@@ -82,7 +82,9 @@ class VideoService:
         limit: int = 20,
         offset: int = 0,
     ) -> list[Video]:
-        query = select(Video).order_by(Video.created_at.desc()).limit(limit).offset(offset)
+        query = (
+            select(Video).order_by(Video.created_at.desc()).limit(limit).offset(offset)
+        )
 
         if status:
             query = query.where(Video.status == status)
@@ -142,6 +144,7 @@ class VideoService:
         """Get real-time processing progress from Redis."""
         try:
             import redis.asyncio as aioredis
+
             r = aioredis.from_url(str(settings.redis_url))
             progress = await r.get(f"mentorios:job:{video_id}:progress")
             step = await r.get(f"mentorios:job:{video_id}:step")

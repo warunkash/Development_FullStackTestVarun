@@ -37,8 +37,13 @@ class TestVideoIngestURL:
         mock_video.thumbnail_url = None
         mock_video.created_at.isoformat.return_value = "2026-01-01T00:00:00Z"
 
-        with patch("services.video_service.VideoService.create_from_url", return_value=mock_video), \
-             patch("services.video_service.VideoService.dispatch_processing", new_callable=AsyncMock):
+        with patch(
+            "services.video_service.VideoService.create_from_url",
+            return_value=mock_video,
+        ), patch(
+            "services.video_service.VideoService.dispatch_processing",
+            new_callable=AsyncMock,
+        ):
 
             response = await client.post(
                 "/api/v1/videos/ingest-url",
@@ -62,7 +67,10 @@ class TestVideoIngestURL:
 class TestVideoStatus:
     async def test_get_status_not_found(self, client, mock_db):
         video_id = uuid.uuid4()
-        with patch("services.video_service.VideoService.get_processing_status", return_value=None):
+        with patch(
+            "services.video_service.VideoService.get_processing_status",
+            return_value=None,
+        ):
             response = await client.get(f"/api/v1/videos/{video_id}/status")
         assert response.status_code == 404
 
@@ -75,7 +83,10 @@ class TestVideoStatus:
             "current_step": "Detecting scenes",
             "error_message": None,
         }
-        with patch("services.video_service.VideoService.get_processing_status", return_value=status_data):
+        with patch(
+            "services.video_service.VideoService.get_processing_status",
+            return_value=status_data,
+        ):
             response = await client.get(f"/api/v1/videos/{video_id}/status")
         assert response.status_code == 200
         data = response.json()

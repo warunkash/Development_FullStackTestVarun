@@ -7,7 +7,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import create_access_token, create_refresh_token, hash_password, verify_password
+from core.security import (
+    create_access_token,
+    create_refresh_token,
+    hash_password,
+    verify_password,
+)
 from models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -37,8 +42,12 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)) -> UserResponse:
+@router.post(
+    "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+)
+async def register(
+    payload: RegisterRequest, db: AsyncSession = Depends(get_db)
+) -> UserResponse:
     """Register a new user account."""
     existing = await db.scalar(select(User).where(User.email == payload.email))
     if existing:
@@ -75,7 +84,9 @@ async def login(
     user.last_login_at = datetime.utcnow()
 
     return TokenResponse(
-        access_token=create_access_token(str(user.id), {"role": user.role, "email": user.email}),
+        access_token=create_access_token(
+            str(user.id), {"role": user.role, "email": user.email}
+        ),
         refresh_token=create_refresh_token(str(user.id)),
     )
 
@@ -87,6 +98,7 @@ async def get_current_user(
 ) -> UserResponse:
     """Get current authenticated user."""
     from core.security import decode_token
+
     try:
         payload = decode_token(token)
     except ValueError as e:

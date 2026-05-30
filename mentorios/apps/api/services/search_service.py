@@ -1,7 +1,6 @@
 """Search service — hybrid vector + full-text + graph search."""
 
 import uuid
-from typing import Any
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -90,7 +89,11 @@ class SearchService:
                 "video_id": str(row.video_id),
                 "video_title": row.video_title,
                 "score": float(row.score),
-                "excerpt": row.insight_text[:200] + "..." if len(row.insight_text) > 200 else row.insight_text,
+                "excerpt": (
+                    row.insight_text[:200] + "..."
+                    if len(row.insight_text) > 200
+                    else row.insight_text
+                ),
             }
             for row in rows
         ]
@@ -124,8 +127,7 @@ class SearchService:
         """)
 
         result = await self.db.execute(
-            query,
-            {"principle_code": principle_code, "limit": limit}
+            query, {"principle_code": principle_code, "limit": limit}
         )
         rows = result.fetchall()
 

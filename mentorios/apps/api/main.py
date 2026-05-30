@@ -17,7 +17,9 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    log.info("mentorios.startup", version=settings.app_version, env=settings.environment)
+    log.info(
+        "mentorios.startup", version=settings.app_version, env=settings.environment
+    )
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

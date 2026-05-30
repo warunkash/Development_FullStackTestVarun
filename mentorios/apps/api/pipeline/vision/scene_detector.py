@@ -31,8 +31,8 @@ def detect_scenes(
     Threshold: 30.0 is good for most content; lower = more sensitive.
     """
     try:
-        from scenedetect import SceneManager, VideoManager, open_video
-        from scenedetect.detectors import AdaptiveDetector, ContentDetector
+        from scenedetect import SceneManager, open_video
+        from scenedetect.detectors import AdaptiveDetector
 
         log.info("Detecting scenes in: %s (threshold=%.1f)", video_path.name, threshold)
 
@@ -86,12 +86,18 @@ def _detect_scenes_ffmpeg(
     normalized_threshold = threshold / 100.0
 
     cmd = [
-        "ffprobe", "-v", "quiet",
+        "ffprobe",
+        "-v",
+        "quiet",
         "-show_frames",
-        "-select_streams", "v",
-        "-of", "csv=p=0",
-        "-show_entries", "frame=pkt_pts_time,key_frame",
-        "-vf", f"select=gt(scene\\,{normalized_threshold}),showinfo",
+        "-select_streams",
+        "v",
+        "-of",
+        "csv=p=0",
+        "-show_entries",
+        "frame=pkt_pts_time,key_frame",
+        "-vf",
+        f"select=gt(scene\\,{normalized_threshold}),showinfo",
         str(video_path),
     ]
 
@@ -106,23 +112,35 @@ def _detect_scenes_ffmpeg(
                 scene_times.append(t)
 
     import subprocess as sp
+
     dur_result = sp.run(
-        ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
-         "-of", "default=noprint_wrappers=1:nokey=1", str(video_path)],
-        capture_output=True, text=True
+        [
+            "ffprobe",
+            "-v",
+            "quiet",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            str(video_path),
+        ],
+        capture_output=True,
+        text=True,
     )
     total_duration = float(dur_result.stdout.strip() or "0")
     scene_times.append(total_duration)
 
     scenes = []
     for i in range(len(scene_times) - 1):
-        scenes.append(SceneDetectionResult(
-            scene_index=i,
-            start_time=scene_times[i],
-            end_time=scene_times[i + 1],
-            start_frame=0,
-            end_frame=0,
-        ))
+        scenes.append(
+            SceneDetectionResult(
+                scene_index=i,
+                start_time=scene_times[i],
+                end_time=scene_times[i + 1],
+                start_frame=0,
+                end_frame=0,
+            )
+        )
 
     return scenes
 
@@ -142,10 +160,15 @@ def _extract_keyframes(
         output_path = output_dir / f"scene_{scene.scene_index:04d}_keyframe.jpg"
 
         cmd = [
-            "ffmpeg", "-ss", str(midpoint),
-            "-i", str(video_path),
-            "-vframes", "1",
-            "-q:v", "2",
+            "ffmpeg",
+            "-ss",
+            str(midpoint),
+            "-i",
+            str(video_path),
+            "-vframes",
+            "1",
+            "-q:v",
+            "2",
             "-y",
             str(output_path),
         ]

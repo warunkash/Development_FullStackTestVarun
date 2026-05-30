@@ -6,7 +6,6 @@ from typing import AsyncIterator
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from models.user import ChatMessage, ChatSession
 
@@ -122,7 +121,9 @@ class ChatService:
         complete_response = "".join(full_response)
         await self.add_message(session_id, "assistant", complete_response)
 
-        yield json.dumps({"chunk": "", "done": True, "full_response": complete_response})
+        yield json.dumps(
+            {"chunk": "", "done": True, "full_response": complete_response}
+        )
 
     async def _get_conversation_history(self, session_id: uuid.UUID) -> list[dict]:
         messages = await self.get_messages(session_id)

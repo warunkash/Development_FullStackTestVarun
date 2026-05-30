@@ -136,12 +136,14 @@ class EmbeddingService:
             log.info("Loading BGE-M3 embedding model")
             try:
                 from FlagEmbedding import BGEM3FlagModel
+
                 cls._model = BGEM3FlagModel(
                     settings.embedding_model,
                     use_fp16=settings.device == "cuda",
                 )
             except ImportError:
                 from sentence_transformers import SentenceTransformer
+
                 cls._model = SentenceTransformer(settings.embedding_model)
             log.info("Embedding model loaded")
         return cls._model

@@ -6,7 +6,7 @@ Converts: Action + Context + Transcript → Intent → Principle → Wisdom → 
 
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 log = logging.getLogger(__name__)
@@ -132,7 +132,13 @@ async def extract_wisdom_from_scene(
         data = json.loads(response)
 
         # Validate required fields
-        required = ["title", "insight_text", "principle_codes", "confidence", "applications"]
+        required = [
+            "title",
+            "insight_text",
+            "principle_codes",
+            "confidence",
+            "applications",
+        ]
         for field_name in required:
             if field_name not in data:
                 log.warning("LLM response missing field: %s", field_name)
@@ -143,11 +149,25 @@ async def extract_wisdom_from_scene(
 
         # Filter invalid principle codes
         valid_codes = {
-            "BL-AD", "BL-FL", "BL-TM", "BL-IN", "BL-EF", "BL-DR",
-            "BL-AW", "BL-PO", "BL-SI", "BL-NR", "BL-PR",
-            "BL-SE", "BL-EC", "BL-CG", "BL-DT",
+            "BL-AD",
+            "BL-FL",
+            "BL-TM",
+            "BL-IN",
+            "BL-EF",
+            "BL-DR",
+            "BL-AW",
+            "BL-PO",
+            "BL-SI",
+            "BL-NR",
+            "BL-PR",
+            "BL-SE",
+            "BL-EC",
+            "BL-CG",
+            "BL-DT",
         }
-        data["principle_codes"] = [c for c in data.get("principle_codes", []) if c in valid_codes]
+        data["principle_codes"] = [
+            c for c in data.get("principle_codes", []) if c in valid_codes
+        ]
 
         if not data["principle_codes"]:
             log.warning("No valid principle codes extracted")
@@ -221,7 +241,7 @@ async def generate_cross_domain_applications(
 
     primary_principle = next(
         (p for p in principles if p["code"] == insight.principle_codes[0]),
-        {"name": "Wisdom", "definition": "Universal principle"}
+        {"name": "Wisdom", "definition": "Universal principle"},
     )
 
     prompt = CROSS_DOMAIN_TEMPLATE.format(
@@ -268,7 +288,9 @@ def _summarize_movement(actions: list[dict]) -> dict:
     avg_intensity = sum(intensities) / max(len(intensities), 1)
 
     action_types = [a.get("action_type", "unknown") for a in actions]
-    dominant = max(set(action_types), key=action_types.count) if action_types else "unknown"
+    dominant = (
+        max(set(action_types), key=action_types.count) if action_types else "unknown"
+    )
 
     all_posture = {}
     for a in actions:

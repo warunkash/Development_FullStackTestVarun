@@ -1,7 +1,6 @@
 """Neo4j graph service — wisdom graph operations."""
 
 import logging
-from typing import Any
 
 from core.database import get_neo4j_driver
 
@@ -147,7 +146,17 @@ class GraphService:
                     MERGE (m)-[:TEACHES]->(pr)
                     """,
                     mentor_id=mentor_id,
-                    **{k: p[k] for k in ["id", "code", "name", "tier", "description", "definition"]},
+                    **{
+                        k: p[k]
+                        for k in [
+                            "id",
+                            "code",
+                            "name",
+                            "tier",
+                            "description",
+                            "definition",
+                        ]
+                    },
                 )
 
     async def get_principle_context(self, principle_codes: list[str]) -> list[dict]:
@@ -169,19 +178,24 @@ class GraphService:
             context = []
             for record in records:
                 p = record["p"]
-                context.append({
-                    "entity_type": "principle",
-                    "id": p.get("id", ""),
-                    "code": p.get("code", ""),
-                    "title": p.get("name", ""),
-                    "insight_text": p.get("definition", ""),
-                    "score": 0.7,
-                    "related_principles": [r.get("name") for r in record["related_principles"] if r],
-                    "sample_lessons": [
-                        {"title": l.get("title"), "text": l.get("text")}
-                        for l in record["sample_lessons"] if l
-                    ],
-                })
+                context.append(
+                    {
+                        "entity_type": "principle",
+                        "id": p.get("id", ""),
+                        "code": p.get("code", ""),
+                        "title": p.get("name", ""),
+                        "insight_text": p.get("definition", ""),
+                        "score": 0.7,
+                        "related_principles": [
+                            r.get("name") for r in record["related_principles"] if r
+                        ],
+                        "sample_lessons": [
+                            {"title": lesson.get("title"), "text": lesson.get("text")}
+                            for lesson in record["sample_lessons"]
+                            if lesson
+                        ],
+                    }
+                )
             return context
 
     async def get_video_subgraph(self, video_id: str, depth: int = 2) -> dict:
@@ -208,8 +222,13 @@ class GraphService:
                 return {"nodes": [], "edges": []}
 
             nodes = []
-            for node_list in [record["videos"], record["scenes"], record["lessons"],
-                              record["principles"], record["applications"]]:
+            for node_list in [
+                record["videos"],
+                record["scenes"],
+                record["lessons"],
+                record["principles"],
+                record["applications"],
+            ]:
                 nodes.extend([n for n in node_list if n and n.get("id")])
 
             return {"nodes": nodes, "edges": []}
