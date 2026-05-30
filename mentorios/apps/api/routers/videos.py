@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import (
@@ -34,7 +35,7 @@ class VideoResponse(BaseModel):
     status: ProcessingStatus
     duration_seconds: int | None
     thumbnail_url: str | None
-    created_at: str
+    created_at: datetime
 
     class Config:
         from_attributes = True

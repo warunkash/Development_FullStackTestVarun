@@ -47,7 +47,8 @@ class SearchService:
         min_score: float,
     ) -> list[dict]:
         """pgvector cosine similarity search on insight embeddings."""
-        query = text("""
+        query = text(
+            """
             SELECT
                 wi.id,
                 wi.title,
@@ -65,7 +66,8 @@ class SearchService:
             WHERE 1 - (e.embedding <=> :query_vec::vector) > :min_score
             ORDER BY e.embedding <=> :query_vec::vector
             LIMIT :limit
-        """)
+        """
+        )
 
         result = await self.db.execute(
             query,
@@ -104,7 +106,8 @@ class SearchService:
         limit: int = 10,
     ) -> dict:
         """Find all video examples demonstrating a specific principle."""
-        query = text("""
+        query = text(
+            """
             SELECT
                 wi.id,
                 wi.title,
@@ -124,7 +127,8 @@ class SearchService:
             WHERE wp.code = :principle_code
             ORDER BY ip.relevance_score DESC, wi.confidence_score DESC
             LIMIT :limit
-        """)
+        """
+        )
 
         result = await self.db.execute(
             query, {"principle_code": principle_code, "limit": limit}
@@ -158,7 +162,8 @@ class SearchService:
         window_seconds: float = 30,
     ) -> list[dict]:
         """Get wisdom insights within a time window of a given timestamp."""
-        query = text("""
+        query = text(
+            """
             SELECT wi.*, v.title as video_title
             FROM wisdom_insights wi
             JOIN videos v ON v.id = wi.video_id
@@ -166,7 +171,8 @@ class SearchService:
               AND wi.start_time >= :ts_start
               AND wi.end_time <= :ts_end
             ORDER BY wi.confidence_score DESC
-        """)
+        """
+        )
 
         result = await self.db.execute(
             query,

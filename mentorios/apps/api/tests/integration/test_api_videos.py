@@ -1,6 +1,7 @@
 """Integration tests for the video ingestion API."""
 
 import uuid
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -37,7 +38,7 @@ class TestVideoIngestURL:
         mock_video.status = "QUEUED"
         mock_video.duration_seconds = None
         mock_video.thumbnail_url = None
-        mock_video.created_at.isoformat.return_value = "2026-01-01T00:00:00Z"
+        mock_video.created_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
         with patch(
             "services.video_service.VideoService.create_from_url",

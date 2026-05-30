@@ -58,7 +58,8 @@ class WisdomService:
         mentor_slug: str = "bruce-lee",
         tier: int | None = None,
     ) -> list[dict]:
-        query = text("""
+        query = text(
+            """
             SELECT
                 wp.id, wp.code, wp.name, wp.tier, wp.description, wp.definition,
                 COUNT(ip.insight_id) as example_count
@@ -69,7 +70,10 @@ class WisdomService:
             {tier_filter}
             GROUP BY wp.id
             ORDER BY wp.tier ASC, wp.name ASC
-        """.format(tier_filter="AND wp.tier = :tier" if tier else ""))
+        """.format(
+                tier_filter="AND wp.tier = :tier" if tier else ""
+            )
+        )
 
         params: dict[str, Any] = {"mentor_slug": mentor_slug}
         if tier:
@@ -122,7 +126,8 @@ class WisdomService:
         mentor_slug: str = "bruce-lee",
         limit: int = 20,
     ) -> list[dict]:
-        query = text("""
+        query = text(
+            """
             SELECT
                 ia.id,
                 ia.application_text,
@@ -141,7 +146,8 @@ class WisdomService:
               AND m.slug = :mentor_slug
             ORDER BY wi.confidence_score DESC
             LIMIT :limit
-        """)
+        """
+        )
 
         result = await self.db.execute(
             query, {"domain": domain, "mentor_slug": mentor_slug, "limit": limit}
