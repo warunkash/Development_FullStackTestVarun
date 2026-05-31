@@ -1,0 +1,187 @@
+version: '3.9'
+
+# Development overrides - extends docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  postgres:
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_PASSWORD: ecnt_dev_password
+
+  redis:
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes
+
+  api-gateway:
+    build:
+      context: ./apps/api-gateway
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+    volumes:
+      - ./apps/api-gateway/src:/app/src
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:dev
+
+  auth-service:
+    build:
+      context: ./apps/auth-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      DATABASE_PASSWORD: ecnt_dev_password
+      JWT_SECRET: dev-jwt-secret-change-in-production
+      JWT_REFRESH_SECRET: dev-refresh-secret-change-in-production
+      ENCRYPTION_KEY: dev-encryption-key-32-chars-long
+      OTP_EXPIRY_MINUTES: 10
+    volumes:
+      - ./apps/auth-service/src:/app/src
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:dev
+
+  user-service:
+    build:
+      context: ./apps/user-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      DATABASE_PASSWORD: ecnt_dev_password
+      JWT_SECRET: dev-jwt-secret-change-in-production
+    volumes:
+      - ./apps/user-service/src:/app/src
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:dev
+
+  charging-service:
+    build:
+      context: ./apps/charging-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      DATABASE_PASSWORD: ecnt_dev_password
+    volumes:
+      - ./apps/charging-service/src:/app/src
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:dev
+
+  ocpp-service:
+    build:
+      context: ./apps/ocpp-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      DATABASE_PASSWORD: ecnt_dev_password
+    volumes:
+      - ./apps/ocpp-service/src:/app/src
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:dev
+
+  payment-service:
+    build:
+      context: ./apps/payment-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      DATABASE_PASSWORD: ecnt_dev_password
+      RAZORPAY_KEY_ID: rzp_test_placeholder
+      RAZORPAY_KEY_SECRET: placeholder
+    volumes:
+      - ./apps/payment-service/src:/app/src
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:dev
+
+  analytics-service:
+    build:
+      context: ./apps/analytics-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      DATABASE_PASSWORD: ecnt_dev_password
+    volumes:
+      - ./apps/analytics-service/src:/app/src
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:dev
+
+  billing-service:
+    build:
+      context: ./apps/billing-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      DATABASE_PASSWORD: ecnt_dev_password
+    volumes:
+      - ./apps/billing-service/src:/app/src
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:dev
+
+  fleet-service:
+    build:
+      context: ./apps/fleet-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      DATABASE_PASSWORD: ecnt_dev_password
+    volumes:
+      - ./apps/fleet-service/src:/app/src
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:dev
+
+  franchise-service:
+    build:
+      context: ./apps/franchise-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      DATABASE_PASSWORD: ecnt_dev_password
+    volumes:
+      - ./apps/franchise-service/src:/app/src
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:dev
+
+  notification-service:
+    build:
+      context: ./apps/notification-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+    volumes:
+      - ./apps/notification-service/src:/app/src
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:dev
+
+  admin-portal:
+    build:
+      context: ./apps/admin-portal
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      REACT_APP_API_URL: http://localhost:3000
+    volumes:
+      - ./apps/admin-portal/src:/app/src
+      - /app/node_modules
+    command: npm run start

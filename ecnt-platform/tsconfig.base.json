@@ -1,0 +1,43 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2021",
+    "module": "commonjs",
+    "lib": ["ES2021", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@ecnt/common": ["libs/common/src/index.ts"],
+      "@ecnt/common/*": ["libs/common/src/*"],
+      "@ecnt/database": ["libs/database/src/index.ts"],
+      "@ecnt/database/*": ["libs/database/src/*"],
+      "@ecnt/ocpp": ["libs/ocpp/src/index.ts"],
+      "@ecnt/ocpp/*": ["libs/ocpp/src/*"],
+      "@ecnt/shared-types": ["libs/shared-types/src/index.ts"],
+      "@ecnt/shared-types/*": ["libs/shared-types/src/*"],
+      "@ecnt/config": ["libs/config/src/index.ts"],
+      "@ecnt/config/*": ["libs/config/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}
