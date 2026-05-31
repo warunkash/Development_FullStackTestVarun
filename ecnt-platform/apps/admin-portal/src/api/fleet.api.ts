@@ -1,14 +1,7 @@
 import apiClient from './client';
 
-export interface FleetFilters {
-  search?: string;
-  status?: string;
-  page?: number;
-  limit?: number;
-}
-
 export const fleetApi = {
-  getAll: (params?: FleetFilters) => apiClient.get('/fleet', { params }),
+  getAll: (params?: Record<string, unknown>) => apiClient.get('/fleet', { params }),
   getById: (id: string) => apiClient.get(`/fleet/${id}`),
   create: (data: Record<string, unknown>) => apiClient.post('/fleet', data),
   update: (id: string, data: Record<string, unknown>) => apiClient.put(`/fleet/${id}`, data),
