@@ -1,0 +1,22 @@
+{
+  "name": "@ecnt/common",
+  "version": "1.0.0",
+  "description": "ECNT shared common library - decorators, guards, filters, interceptors, DTOs, and utilities",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "private": true,
+  "peerDependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/passport": "^10.0.0",
+    "@nestjs/swagger": "^7.0.0",
+    "class-validator": "^0.14.0",
+    "class-transformer": "^0.5.0",
+    "reflect-metadata": "^0.1.0",
+    "rxjs": "^7.0.0",
+    "typeorm": "^0.3.0",
+    "bcrypt": "^5.0.0",
+    "crypto-js": "^4.0.0",
+    "winston": "^3.0.0"
+  }
+}
