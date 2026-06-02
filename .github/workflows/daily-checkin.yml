@@ -1,0 +1,33 @@
+name: Daily Activity Check-in
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  check-in:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post check-in comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const now = new Date();
+            const timeStr = now.toLocaleString('en-US', {
+              timeZone: 'UTC',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+              month: 'short',
+              day: 'numeric'
+            });
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 3,
+              body: `## Hey! What are you working on? ⏰\n**Time:** ${timeStr} UTC\n\nGive a quick update on your current activity — reply to this comment!`
+            });
