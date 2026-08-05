@@ -30,7 +30,36 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Usage
+## Dashboard app
+
+A [Streamlit](https://streamlit.io) app (`app.py`) wraps the screener in an
+interactive UI:
+
+```bash
+streamlit run app.py
+```
+
+Then open the printed local URL (default `http://localhost:8501`). It gives
+you:
+
+- A mode toggle (**Intraday** vs **End of Day**) and a slider for the % move
+  band (default 15-20%).
+- A market-open/closed banner (Mon-Fri 09:15-15:30 IST) so it's clear when
+  Intraday numbers are live vs. stale.
+- A results table (Symbol, Company, Direction, % Change, Prev Close,
+  Current, timestamp), color-coded green for Surge / red for Plunge, plus a
+  bar chart of the moves.
+- A **Download CSV** button for the current scan.
+- Optional **auto-refresh** (Intraday mode) that re-scans on a configurable
+  interval while you keep the tab open.
+- A **Force refresh Nifty 500 list** button if NSE has published an index
+  rebalance since the cached list was last pulled.
+
+This is a single-user dashboard (the auto-refresh loop blocks that session
+while waiting), which is the right shape for one person watching the market
+during the day — it isn't meant to be deployed for many concurrent viewers.
+
+## CLI usage
 
 Intraday scan (only runs during NSE hours, Mon-Fri 09:15-15:30 IST, unless `--force`):
 
@@ -94,6 +123,7 @@ scan on a holiday just won't find any fresh price movement.
 ## Project layout
 
 ```
+app.py                 # Streamlit dashboard
 nifty500_screener/
   constituents.py   # Nifty 500 list fetch + on-disk cache
   yahoo_client.py    # HTTP client for live quotes and daily closes
