@@ -1,0 +1,17 @@
+{
+  "name": "gst-itc",
+  "version": "1.0.0",
+  "description": "GST and Input Tax Credit (ITC) calculation utilities for a multi-stage supply chain",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}
