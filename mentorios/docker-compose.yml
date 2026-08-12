@@ -1,0 +1,237 @@
+version: "3.9"
+
+# ============================================================
+# MentorOS — Development Docker Compose
+# ============================================================
+# Start: docker compose up --build
+# GPU workers: docker compose --profile gpu up
+
+services:
+
+  # ── Databases ─────────────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: mentorios-postgres
+    environment:
+      POSTGRES_DB: mentorios
+      POSTGRES_USER: mentorios
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mentorios_dev_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mentorios -d mentorios"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mentorios-redis
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  neo4j:
+    image: neo4j:5.26-community
+    container_name: mentorios-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-mentorios_dev_pass}
+      NEO4J_PLUGINS: '["apoc", "graph-data-science"]'
+      NEO4J_dbms_memory_heap_initial__size: 512m
+      NEO4J_dbms_memory_heap_max__size: 1G
+      NEO4J_dbms_memory_pagecache_size: 512m
+    ports:
+      - "7474:7474"   # Browser
+      - "7687:7687"   # Bolt
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "neo4j status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: mentorios-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── API Services ───────────────────────────────────────────
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: ../../infrastructure/docker/api/Dockerfile
+    container_name: mentorios-api
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://mentorios:${POSTGRES_PASSWORD:-mentorios_dev_pass}@postgres:5432/mentorios
+      REDIS_URL: redis://redis:6379/0
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-mentorios_dev_pass}
+      STORAGE_ENDPOINT: http://minio:9000
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/api:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level info
+    restart: unless-stopped
+
+  # ── Celery Workers ─────────────────────────────────────────
+  worker-video:
+    build:
+      context: ./apps/api
+      dockerfile: ../../infrastructure/docker/worker/Dockerfile
+    container_name: mentorios-worker-video
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://mentorios:${POSTGRES_PASSWORD:-mentorios_dev_pass}@postgres:5432/mentorios
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      STORAGE_ENDPOINT: http://minio:9000
+      DEVICE: cpu  # Change to "cuda" for GPU
+    volumes:
+      - ./apps/api:/app
+      - /tmp/mentorios:/tmp/mentorios
+    depends_on:
+      - postgres
+      - redis
+    command: celery -A workers.celery_app worker -Q video -c 2 --loglevel=info
+    profiles: ["workers"]
+    restart: unless-stopped
+
+  worker-wisdom:
+    build:
+      context: ./apps/api
+      dockerfile: ../../infrastructure/docker/worker/Dockerfile
+    container_name: mentorios-worker-wisdom
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://mentorios:${POSTGRES_PASSWORD:-mentorios_dev_pass}@postgres:5432/mentorios
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      VLLM_BASE_URL: ${VLLM_BASE_URL:-http://vllm:8100}
+      DEVICE: cpu
+    volumes:
+      - ./apps/api:/app
+    depends_on:
+      - postgres
+      - redis
+    command: celery -A workers.celery_app worker -Q wisdom,embed -c 1 --loglevel=info
+    profiles: ["workers"]
+    restart: unless-stopped
+
+  # ── Frontend ───────────────────────────────────────────────
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: ../../infrastructure/docker/web/Dockerfile
+    container_name: mentorios-web
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_WS_URL: ws://localhost:8001
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - api
+    command: npm run dev
+    restart: unless-stopped
+
+  # ── Monitoring ─────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mentorios-prometheus
+    volumes:
+      - ./infrastructure/docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    profiles: ["monitoring"]
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mentorios-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    profiles: ["monitoring"]
+
+  # ── vLLM (GPU) ─────────────────────────────────────────────
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: mentorios-vllm
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN}
+    command: >
+      --model Qwen/Qwen2.5-72B-Instruct
+      --tensor-parallel-size 4
+      --max-model-len 32768
+      --port 8100
+    ports:
+      - "8100:8100"
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 4
+              capabilities: [gpu]
+    profiles: ["gpu"]
+
+volumes:
+  postgres_data:
+  redis_data:
+  neo4j_data:
+  neo4j_logs:
+  minio_data:
+  grafana_data:
+  hf_cache:
+
+networks:
+  default:
+    name: mentorios-network
