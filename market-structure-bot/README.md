@@ -76,12 +76,20 @@ Time (IST)    Swing  Label  Price
 14 Aug 13:50  HIGH   LH     384.95
 
 Structure breaks:
-Time (IST)    Type   Dir      Broke  Level   Close   Stop    Target  Risk
---------------------------------------------------------------------------
-14 Aug 11:40  BOS    bullish  HH     389.95  390.00  385.05  399.90  1.27%
-14 Aug 12:55  CHoCH  bearish  HL     388.60  386.55  390.40  378.85  1.00%
-14 Aug 14:20  BOS    bearish  LL     384.00  383.80  384.95  381.50  0.30%
+Time (IST)    Type   Dir      Broke  Level   Close   Slip   Stop    Target  Risk
+---------------------------------------------------------------------------------
+14 Aug 11:40  BOS    bullish  HH     389.95  390.00  0.01%  385.05  399.90  1.27%
+14 Aug 12:55  CHoCH  bearish  HL     388.60  386.55  0.53%  390.40  378.85  1.00%
+14 Aug 14:20  BOS    bearish  LL     384.00  383.80  0.05%  384.95  381.50  0.30%
 ```
+
+**Slip** is how far the entry (the bar's close) sits from the level it broke.
+Usually a rounding error, as in the first and third rows. It matters on gap
+bars: the 12:55 CHoCH above entered 2.05 below its level, so the real fill was
+meaningfully worse than the level suggests. Measured across a month of 5m data
+on four NSE symbols, the median slip is 0.05% on intraday bars but 0.27% on
+09:15 session-open bars, with a worst case of 2.65% — so treat a signal on the
+opening bar with more caution than its risk column implies.
 
 Sweep a watchlist for symbols that broke structure in the last 3 bars:
 
@@ -151,16 +159,27 @@ A dark candlestick chart with the zig-zag between confirmed swings, HH/HL/LH/LL
 labels, dotted lines at broken levels and BOS/CHoCH markers — plus the same
 structure-tuning knobs as the CLI, a watchlist-scan tab, and a CSV download.
 
+The time axis collapses weekends and the overnight 15:30-09:15 window, so
+sessions run continuously instead of clumping between stretches of dead space.
+Only the six most recent breaks carry a BOS/CHoCH badge; older ones keep their
+level line but drop the label, which stops a month of history burying the
+chart.
+
 ## Tuning `--depth`
 
 `--depth` is the difference between "every wiggle" and "the turns that
 matter". On the 5m chart:
 
-| depth | Effect |
-|---|---|
-| 1-2 | Very noisy. Dozens of swings a day, most of them meaningless. |
-| **3** | Default. Roughly what a chart indicator draws on 5m. |
-| 5-8 | Only the session's real turning points. Slower to confirm. |
+Measured on TATAPOWER, 5m, one month of history (~1650 bars):
+
+| depth | Swings | Signals | Effect |
+|---|---|---|---|
+| 1 | 517 | 230 | Very noisy — most of it is not structure. |
+| 2 | 318 | 166 | Still busy. |
+| **3** | 231 | 120 | Default. Roughly what a chart indicator draws on 5m. |
+| 5 | 145 | 82 | Session-level turns only. |
+| 8 | 105 | 54 | Major turns, confirmed 40 minutes late. |
+| 12 | 65 | 34 | Swing-trading altitude on an intraday chart. |
 
 Pair a low depth with `--min-swing-pct` if you want fast confirmation without
 labeling every 0.1% wiggle as structure.
@@ -183,7 +202,7 @@ market_structure_bot/
   watchlist.py                # concurrent multi-symbol scan + freshness filter
   market_hours.py             # NSE trading-hours check (IST)
   cli.py                      # argparse entrypoint, tables, --watch loop
-tests/                        # 65 unit tests, fully mocked — no network
+tests/                        # 68 unit tests, fully mocked — no network
 output/                       # generated CSV/JSON (gitignored)
 ```
 
@@ -208,6 +227,9 @@ python -m unittest discover -s tests -t tests -v
 - A bar that takes out both the swing high and the swing low produces no
   signal. OHLC does not say which side was hit first, and guessing would be
   worse than staying quiet.
+- Entry is the breaking bar's close, so a gap that opens well beyond a level
+  produces a real signal with a poor fill. The `Slip` column exists to make
+  that visible rather than leaving it buried in the risk number.
 - Structure is read on one timeframe at a time. A 5m CHoCH against a clear
   daily downtrend is still a 5m CHoCH; the bot does not know about the daily.
 

@@ -55,6 +55,23 @@ def load_scan(symbols: tuple[str, ...], interval: str, lookback: str, depth: int
     )
 
 
+#: Signals older than this many are drawn as a plain level line with no label,
+#: so a month of history does not bury the chart under overlapping badges.
+LABELLED_SIGNALS = 6
+
+
+def _range_breaks(interval: str) -> list[dict]:
+    """Collapse the time axis over periods where NSE does not trade.
+
+    Without this the overnight gap (15:30-09:15) eats most of the horizontal
+    space and each session shrinks to a narrow clump of candles.
+    """
+    breaks = [dict(bounds=["sat", "mon"])]
+    if interval.endswith(("m", "h")):
+        breaks.append(dict(bounds=[15.5, 9.25], pattern="hour"))
+    return breaks
+
+
 def structure_figure(analysis, bars: int) -> go.Figure:
     candles = analysis.candles[-bars:]
     first_index = len(analysis.candles) - len(candles)
@@ -93,28 +110,32 @@ def structure_figure(analysis, bars: int) -> go.Figure:
                 font=dict(size=11, color=BULL_LABEL if p.label in ("HH", "HL") else BEAR_LABEL),
             )
 
-    for s in analysis.signals:
-        if s.index < first_index:
-            continue
+    visible = [s for s in analysis.signals if s.index >= first_index]
+    for position, s in enumerate(reversed(visible)):
         bullish = s.direction == BULLISH
+        colour = BULL_LABEL if bullish else BEAR_LABEL
+        broken_at = analysis.candles[s.index].time_ist
+
+        # The level line runs from the swing that made it to the bar that broke
+        # it, rather than spanning the whole chart, so overlapping levels stay
+        # readable.
         fig.add_shape(
-            type="line", x0=times[0], x1=times[-1], y0=s.level, y1=s.level,
-            line=dict(color=BULL_LABEL if bullish else BEAR_LABEL, width=1, dash="dot"),
+            type="line", x0=s.level_time_ist, x1=broken_at, y0=s.level, y1=s.level,
+            line=dict(color=colour, width=1, dash="dot"),
         )
-        fig.add_annotation(
-            x=analysis.candles[s.index].time_ist, y=s.price,
-            text=f"<b>{s.kind}</b>", showarrow=True, arrowhead=2, arrowsize=1,
-            arrowcolor=BULL_LABEL if bullish else BEAR_LABEL,
-            ay=40 if bullish else -40,
-            font=dict(size=11, color="#ffffff"),
-            bgcolor=BULL_LABEL if bullish else BEAR_LABEL,
-        )
+        if position < LABELLED_SIGNALS:
+            fig.add_annotation(
+                x=broken_at, y=s.price,
+                text=f"<b>{s.kind}</b>", showarrow=True, arrowhead=2, arrowsize=1,
+                arrowcolor=colour, ay=40 if bullish else -40,
+                font=dict(size=11, color="#ffffff"), bgcolor=colour,
+            )
 
     fig.update_layout(
         height=620, margin=dict(l=8, r=8, t=8, b=8),
         paper_bgcolor=PAPER, plot_bgcolor=PAPER, font=dict(color="#d1d4dc"),
         xaxis_rangeslider_visible=False, showlegend=False,
-        xaxis=dict(gridcolor=GRID, rangebreaks=[dict(bounds=["sat", "mon"])]),
+        xaxis=dict(gridcolor=GRID, rangebreaks=_range_breaks(analysis.interval)),
         yaxis=dict(gridcolor=GRID, side="right"),
     )
     return fig
@@ -129,6 +150,7 @@ def signal_frame(analysis) -> pd.DataFrame:
                 "Direction": s.direction,
                 "Broke": f"{s.level_label} @ {s.level:.2f}",
                 "Close": round(s.price, 2),
+                "Slip %": round(s.slip_pct, 3),
                 "Stop": round(s.stop, 2) if s.stop is not None else None,
                 "Target": round(s.target, 2) if s.target is not None else None,
                 "Risk %": round(s.risk_pct, 2) if s.risk_pct is not None else None,

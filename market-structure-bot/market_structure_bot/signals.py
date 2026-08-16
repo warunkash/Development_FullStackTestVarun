@@ -54,6 +54,7 @@ class Signal:
     price: float            #: close of the breaking bar
     level: float            #: the swing price that was broken
     level_label: str        #: label of the broken swing (HH, LH, ...)
+    level_epoch: int        #: open time of the bar that made that swing
     trend_before: str
     trend_after: str
     stop: float | None      #: opposing swing -- where the idea is wrong
@@ -62,6 +63,22 @@ class Signal:
     @property
     def time_ist(self) -> datetime:
         return datetime.fromtimestamp(self.epoch, tz=IST)
+
+    @property
+    def level_time_ist(self) -> datetime:
+        """When the broken swing printed — the left end of the level."""
+        return datetime.fromtimestamp(self.level_epoch, tz=IST)
+
+    @property
+    def slip_pct(self) -> float:
+        """How far the entry (bar close) sits from the level it broke.
+
+        Usually a rounding error, but a gap open can close far beyond the
+        level, so the fill is materially worse than the level suggests.
+        """
+        if not self.level:
+            return 0.0
+        return abs(self.price - self.level) / self.level * 100.0
 
     @property
     def risk_pct(self) -> float | None:
@@ -185,7 +202,8 @@ def replay(
                 Signal(
                     kind=kind, direction=BULLISH, index=i, epoch=candle.epoch,
                     price=candle.close, level=last_high.price,
-                    level_label=last_high.label, trend_before=effective,
+                    level_label=last_high.label, level_epoch=last_high.epoch,
+                    trend_before=effective,
                     trend_after=UPTREND, stop=stop,
                     target=_projected_target(candle.close, stop, BULLISH, reward_multiple),
                 )
@@ -201,7 +219,8 @@ def replay(
                 Signal(
                     kind=kind, direction=BEARISH, index=i, epoch=candle.epoch,
                     price=candle.close, level=last_low.price,
-                    level_label=last_low.label, trend_before=effective,
+                    level_label=last_low.label, level_epoch=last_low.epoch,
+                    trend_before=effective,
                     trend_after=DOWNTREND, stop=stop,
                     target=_projected_target(candle.close, stop, BEARISH, reward_multiple),
                 )

@@ -103,6 +103,30 @@ class RiskTests(unittest.TestCase):
 
         self.assertAlmostEqual(last.risk_pct, expected)
 
+    def test_slip_measures_the_gap_between_entry_and_level(self):
+        last = replay(series(BOS_PATH), depth=1).last_signal
+        expected = abs(last.price - last.level) / last.level * 100.0
+
+        self.assertAlmostEqual(last.slip_pct, expected)
+
+    def test_a_gap_through_the_level_shows_up_as_large_slip(self):
+        # Normal break: the close sits just past the level.
+        tight = replay(series([100, 110, 100, 90, 100, 111]), depth=1).last_signal
+        # Gap break: the bar opens far above the level and closes there.
+        gapped = replay(series([100, 110, 100, 90, 100, 130]), depth=1).last_signal
+
+        self.assertLess(tight.slip_pct, 1.0)
+        self.assertGreater(gapped.slip_pct, 10.0)
+
+    def test_signal_points_back_at_the_swing_it_broke(self):
+        analysis = replay(series(BOS_PATH), depth=1)
+        last = analysis.last_signal
+        source = [p for p in analysis.structure.pivots if p.epoch == last.level_epoch]
+
+        self.assertEqual(len(source), 1)
+        self.assertEqual(source[0].price, last.level)
+        self.assertLess(last.level_time_ist, last.time_ist)
+
     def test_bearish_target_sits_below_entry(self):
         analysis = replay(series(CHOCH_PATH[:8]), depth=1)
         bearish = [s for s in analysis.signals if s.direction == BEARISH]

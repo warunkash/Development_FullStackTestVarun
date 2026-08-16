@@ -74,7 +74,8 @@ def _print_structure(analysis: Analysis, pivot_limit: int) -> None:
         print("\nStructure breaks:")
         print(
             _table(
-                ["Time (IST)", "Type", "Dir", "Broke", "Level", "Close", "Stop", "Target", "Risk"],
+                ["Time (IST)", "Type", "Dir", "Broke", "Level", "Close", "Slip",
+                 "Stop", "Target", "Risk"],
                 [
                     [
                         s.time_ist.strftime("%d %b %H:%M"),
@@ -83,6 +84,7 @@ def _print_structure(analysis: Analysis, pivot_limit: int) -> None:
                         s.level_label,
                         f"{s.level:.2f}",
                         f"{s.price:.2f}",
+                        f"{s.slip_pct:.2f}%",
                         f"{s.stop:.2f}" if s.stop is not None else "-",
                         f"{s.target:.2f}" if s.target is not None else "-",
                         f"{s.risk_pct:.2f}%" if s.risk_pct is not None else "-",
@@ -150,6 +152,7 @@ def _signal_rows(results: list[ScanResult]) -> list[dict]:
                 "level_broken": round(s.level, 2),
                 "level_label": s.level_label,
                 "close": round(s.price, 2),
+                "slip_pct": round(s.slip_pct, 3),
                 "last_price": round(r.analysis.last_price, 2),
                 "stop": round(s.stop, 2) if s.stop is not None else None,
                 "target": round(s.target, 2) if s.target is not None else None,
@@ -238,7 +241,7 @@ def _analysis_json(analysis: Analysis) -> dict:
         "signals": [
             {"time_ist": s.time_ist.isoformat(), "kind": s.kind, "direction": s.direction,
              "level": round(s.level, 2), "level_label": s.level_label,
-             "close": round(s.price, 2),
+             "close": round(s.price, 2), "slip_pct": round(s.slip_pct, 3),
              "stop": round(s.stop, 2) if s.stop is not None else None,
              "target": round(s.target, 2) if s.target is not None else None}
             for s in analysis.signals
@@ -318,6 +321,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if not args.watch:
         return _run_once(args, set())
+
+    # Piping a long-running loop to a log file otherwise block-buffers its
+    # output, so a cron'd --watch looks dead for hours at a time.
+    sys.stdout.reconfigure(line_buffering=True)
 
     seen: set[tuple[str, int]] = set()
     print(
