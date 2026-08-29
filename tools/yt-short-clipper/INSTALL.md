@@ -64,7 +64,25 @@ Runtime dependencies to install yourself (the PowerShell fetcher won't run):
 
 - **ffmpeg** — required. `apt install ffmpeg` / `brew install ffmpeg`. The core
   resolves the bundled binary first, then falls back to `PATH`.
-- **deno** — optional. Only used to let yt-dlp solve YouTube JS challenges.
+- **deno** — recommended, not strictly required. yt-dlp uses it as its
+  JavaScript runtime for YouTube; without one on `PATH` it warns that
+  "YouTube extraction without a JS runtime has been deprecated" and some
+  formats may be missing. Install the release binary:
+
+  ```bash
+  curl -fsSL -o deno.zip \
+    https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip
+  unzip -o deno.zip -d /usr/local/bin && chmod a+rx /usr/local/bin/deno
+  ```
+
+- **yt-dlp** — the venv installs it as a library, which is all the core needs.
+  For the standalone CLI on `PATH` (upstream's recommended Linux install):
+
+  ```bash
+  curl -fsSL -o /usr/local/bin/yt-dlp \
+    https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
+  chmod a+rx /usr/local/bin/yt-dlp
+  ```
 - **face_landmarker.task** — nothing to do. If it isn't bundled,
   `get_face_landmarker_model_path()` downloads it from Google's MediaPipe
   storage and caches it in the app data dir on first use.
@@ -99,6 +117,11 @@ Everything below was actually run, not just transcribed from the README:
   numpy 2.4.6, pyinstaller 6.22.2.
 - `import yt_short_clipper_core.sidecar, yt_short_clipper_core.cli` — OK, and
   the CLI returns its usage JSON when invoked with no arguments.
+- Standalone yt-dlp 2026.08.19 and deno 2.9.6 installed to `/usr/local/bin`;
+  `yt-dlp --simulate` on a YouTube URL resolved formats cleanly, and the
+  missing-JS-runtime warning disappears once deno is on `PATH`. Fetching the
+  media itself returned `HTTP Error 403: Forbidden` — YouTube refuses this
+  datacenter IP, which is exactly why the app requires `cookies.txt`.
 
 Not exercised here: `npm run tauri build/dev` (needs Windows for the bundled
 `.exe` resources, and there's no display in a container), and any real clipping
