@@ -111,7 +111,8 @@ and never exposed to the model. Register it with
 
 Built-ins: `finish`, `current_time`, `read_file`, `write_file`, `list_dir`,
 `http_get`, `remember`, `recall`, `append_json_line`, and `run_command`
-(dangerous, off by default).
+(dangerous, off by default). The Pinterest integration adds
+`pinterest_list_boards` and `pinterest_create_pin` (also dangerous) — see below.
 
 ## Writing a policy
 
@@ -189,9 +190,76 @@ Nothing here is reviewed by a human before it runs, so the defaults are closed:
 - **Every run is auditable** — steps are flushed to the journal as they happen,
   so a run killed mid-flight still leaves a readable trail.
 
+## Pinterest
+
+The bot can publish image pins through the [Pinterest API v5](https://developers.pinterest.com/docs/api/v5/)
+(`POST /pins`, `GET /boards`). It calls the REST API directly, so it works the
+same as a daemon or in a GitHub Actions job.
+
+### Setup
+
+1. Create an app at [developers.pinterest.com](https://developers.pinterest.com/),
+   and get an OAuth access token with the **`pins:write`** and **`boards:read`**
+   scopes.
+2. Export it — it is never read from the config file:
+
+   ```bash
+   export PINTEREST_ACCESS_TOKEN='...'
+   ```
+3. Check what the bot sees:
+
+   ```bash
+   python -m autobot.cli doctor
+   ```
+4. Verify the credentials without publishing anything, by enabling the
+   read-only `pinterest-boards` task and running it:
+
+   ```bash
+   python -m autobot.cli run pinterest-boards
+   ```
+
+### Publishing is off by default, three times over
+
+Posting is public and the bot cannot take a pin back, so reaching Pinterest for
+real needs three separate, deliberate switches:
+
+| Gate | Default | To publish |
+|---|---|---|
+| `pinterest.dry_run` | `true` | set to `false` |
+| `allow_dangerous_tools` | `false` | set to `true` (`pinterest_create_pin` is a dangerous tool) |
+| the `pinterest-post` task | `enabled: false` | set to `true` |
+
+In dry-run the full request is built, validated and logged — you can read
+exactly what *would* have been posted — but nothing is sent. Watch a few dry
+runs and agree with them before flipping anything.
+
+`AUTOBOT_PINTEREST_DRY_RUN=true` forces dry-run on regardless of the config
+file. It can only turn the safety **on**, never off, so a scheduled job can be
+made incapable of publishing.
+
+`pinterest.max_pins_per_run` (default 5) caps how many pins a single run can
+create, whatever the policy decides to do. Dry-run pins count against it, so the
+cap behaves identically in both modes.
+
+### Supplying images
+
+`create_pin` takes an `image_url`: Pinterest fetches the image itself, so it must
+be a **public https URL**. Local paths and `http://` are rejected up front.
+Generating or hosting those images is not part of this framework — the
+`pinterest-post` task reads them from a `pins/queue.jsonl` queue that something
+upstream fills.
+
+### Rate limits and platform rules
+
+Pinterest rate-limits the API (HTTP 429, which the client reports as a retryable
+error) and its spam policy restricts bulk automated posting, particularly of
+generated content. Keep the cadence conservative and make sure what you post
+complies — the per-run cap and the daily task interval are set low deliberately.
+
 ## Credentials
 
-Only the `claude` policy needs any. The SDK resolves `ANTHROPIC_API_KEY`, then
+The `claude` policy and the Pinterest integration each need their own. For
+Pinterest see above. For Claude, the SDK resolves `ANTHROPIC_API_KEY`, then
 `ANTHROPIC_AUTH_TOKEN`, then an `ant auth login` profile — so an unset API key
 doesn't mean no credentials. `autobot doctor` reports what it found.
 
@@ -202,7 +270,7 @@ pip install -r requirements-dev.txt
 python -m pytest tests/ -q
 ```
 
-120 tests, no network and no credentials required — the Claude policy is tested
+156 tests, no network and no credentials required — the Claude policy is tested
 against a fake client that asserts the request shape (model, tool schemas,
 adaptive thinking, refusal fallbacks) and the handling of tool calls, refusals,
 parallel calls and API errors.

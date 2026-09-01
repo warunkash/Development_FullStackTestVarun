@@ -14,6 +14,7 @@ from typing import Any, Callable
 from .builtins import FINISH_TOOL
 from .memory import Journal
 from .models import Action, Budget, Goal, Observation, RunResult, RunStatus, Step, utcnow
+from .policy import PlaybookAborted
 from .tools import ToolContext, ToolError, ToolRegistry
 
 logger = logging.getLogger("autobot.agent")
@@ -72,6 +73,12 @@ class Agent:
             # --- plan ---
             try:
                 action = self.policy.propose(goal, steps, self.registry)
+            except PlaybookAborted as exc:
+                # A deliberate stop, not a crash - no traceback wanted.
+                logger.warning("%s", exc)
+                status = "failed"
+                summary = str(exc)
+                break
             except Exception as exc:
                 logger.exception("policy failed to propose an action")
                 status = "failed"

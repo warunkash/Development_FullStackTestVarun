@@ -20,10 +20,11 @@ from datetime import datetime, timezone
 from typing import Any, Callable
 
 from .agent import Agent
-from .builtins import default_registry
+from .builtins import BUILTIN_TOOLS
 from .config import BotConfig, TaskSpec
 from .memory import Journal
 from .models import RunResult
+from .pinterest import PINTEREST_TOOLS
 from .policy import build_policy
 from .tools import ToolRegistry
 
@@ -34,11 +35,18 @@ MAX_BACKOFF_S = 3600.0
 
 
 def build_registry(config: BotConfig, extra_tools: list[Any] | None = None) -> ToolRegistry:
-    """Assemble the tool registry for a run, honouring the dangerous-tool gate."""
-    registry = default_registry(include_dangerous=config.allow_dangerous_tools)
+    """Assemble the tool registry for a run, honouring the dangerous-tool gate.
+
+    Every tool - built-in, integration and caller-supplied - is collected first
+    and the gate applied once at the end, so a dangerous tool passed in through
+    ``extra_tools`` cannot slip past it.
+    """
+    registry = ToolRegistry([f.tool for f in BUILTIN_TOOLS])
+    for entry in PINTEREST_TOOLS:
+        registry.add(entry)
     for entry in extra_tools or []:
         registry.add(entry)
-    return registry
+    return registry if config.allow_dangerous_tools else registry.without_dangerous()
 
 
 def run_id_for(task_name: str) -> str:

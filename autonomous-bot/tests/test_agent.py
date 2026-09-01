@@ -221,6 +221,8 @@ class TestPlaybookFailure:
         # Only the failing step ran; the dependent steps were not attempted.
         assert len(result.steps) == 1
         assert "playbook aborted at step 0" in result.summary
+        # A deliberate abort reads as itself, not as an internal policy crash.
+        assert not result.summary.startswith("Policy error:")
 
     def test_stop_on_failure_can_be_disabled(self, tmp_path):
         goal = Goal(

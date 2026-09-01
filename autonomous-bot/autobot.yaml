@@ -33,6 +33,19 @@ allow_dangerous_tools: false
 # Abandon a run after this many consecutive failed steps.
 failure_limit: 3
 
+# Pinterest integration. The access token is NOT stored here - it is read from
+# the PINTEREST_ACCESS_TOKEN environment variable (scopes: pins:write,
+# boards:read).
+pinterest:
+  # Build and log every request but publish nothing. Leave this on until you
+  # have watched a few dry runs and agree with what they would have posted.
+  # Publishing is public and the bot cannot undo it.
+  dry_run: true
+  # Hard ceiling per run, independent of what the policy decides to do.
+  max_pins_per_run: 5
+  # Point at Pinterest's sandbox instead of the live API while developing.
+  sandbox: false
+
 tasks:
   # A deterministic task: no model, no network, safe to run anywhere.
   # This is the one CI runs on every push.
@@ -59,6 +72,41 @@ tasks:
       - tool: finish
         args:
           summary: Heartbeat recorded; status file and history updated.
+
+  # Verifies the Pinterest connection without publishing anything: it only
+  # reads boards. Run this first after setting PINTEREST_ACCESS_TOKEN.
+  - name: pinterest-boards
+    objective: Confirm the Pinterest credentials work and record the boards.
+    interval_s: 86400
+    max_steps: 6
+    deadline_s: 120
+    enabled: false
+    playbook:
+      - tool: pinterest_list_boards
+        rationale: proves the token and the boards:read scope work
+      - tool: write_file
+        rationale: keep the board ids where the posting task can find them
+        args:
+          path: runs/pinterest_boards.txt
+          content: "{{last_output}}"
+      - tool: finish
+        args:
+          summary: Pinterest credentials verified and boards recorded.
+
+  # Publishes pins. Needs the claude policy (it has to read a queue and decide
+  # what to post), allow_dangerous_tools: true, and pinterest.dry_run: false
+  # before anything actually reaches Pinterest. Disabled deliberately.
+  - name: pinterest-post
+    objective: >-
+      Read the queued pins from pins/queue.jsonl. For each entry that has not
+      already been posted, create the pin on the board named in the entry, then
+      append its id to runs/posted.jsonl so it is not posted twice. Stop when
+      the queue is exhausted or the per-run cap is reached, and finish with a
+      count of what was posted.
+    interval_s: 86400
+    max_steps: 20
+    deadline_s: 900
+    enabled: false
 
   # An open-ended task: the claude policy decides which tools to call.
   # Under the rule policy it has no playbook, so `autobot doctor` flags it.

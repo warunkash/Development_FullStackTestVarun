@@ -93,6 +93,10 @@ class BotConfig:
     #: Tools marked ``dangerous`` (e.g. run_command) are unavailable unless this is on.
     allow_dangerous_tools: bool = False
     failure_limit: int = 3
+    #: Optional integration settings, e.g. {"dry_run": true, "max_pins_per_run": 5}.
+    #: The access token itself is never stored here - it comes from the
+    #: PINTEREST_ACCESS_TOKEN environment variable.
+    pinterest: dict[str, Any] = field(default_factory=dict)
     tasks: list[TaskSpec] = field(default_factory=list)
 
     def task(self, name: str) -> TaskSpec:
@@ -130,6 +134,7 @@ class BotConfig:
             allowed_domains=[str(d).lower() for d in (raw.get("allowed_domains") or [])],
             allow_dangerous_tools=bool(raw.get("allow_dangerous_tools", False)),
             failure_limit=int(raw.get("failure_limit", 3)),
+            pinterest=_validated_pinterest(raw.get("pinterest") or {}),
             tasks=tasks,
         )
         return config.with_env_overrides()
@@ -152,6 +157,29 @@ class BotConfig:
         if value := env.get("AUTOBOT_ALLOW_DANGEROUS_TOOLS"):
             self.allow_dangerous_tools = value.strip().lower() in {"1", "true", "yes"}
         return self
+
+
+_PINTEREST_KEYS = {"dry_run", "sandbox", "base_url", "max_pins_per_run", "timeout_s"}
+
+
+def _validated_pinterest(section: Any) -> dict[str, Any]:
+    """Check the pinterest block, so a typo fails loudly instead of silently.
+
+    A misspelled ``dry_run`` would otherwise fall back to the safe default and
+    look like it worked - but the reverse mistake, a typo that leaves dry-run on
+    when the user meant it off, is just as confusing. Reject both.
+    """
+    if not isinstance(section, dict):
+        raise ConfigError("the 'pinterest' config section must be a mapping")
+    unknown = set(section) - _PINTEREST_KEYS
+    if unknown:
+        raise ConfigError(
+            f"unknown key(s) in the 'pinterest' section: {', '.join(sorted(unknown))}; "
+            f"expected any of {', '.join(sorted(_PINTEREST_KEYS))}"
+        )
+    if "dry_run" in section and not isinstance(section["dry_run"], bool):
+        raise ConfigError("pinterest.dry_run must be true or false")
+    return dict(section)
 
 
 def load_raw(path: str | Path) -> dict[str, Any]:

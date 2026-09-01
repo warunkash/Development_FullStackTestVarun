@@ -18,6 +18,8 @@ from typing import Sequence
 
 from .config import BotConfig, ConfigError, load_config
 from .models import RunResult
+from .pinterest import TOKEN_ENV as PINTEREST_TOKEN_ENV
+from .pinterest import PinterestConfig
 from .runner import Runner, build_registry, run_once
 
 EXIT_OK = 0
@@ -153,6 +155,24 @@ def cmd_doctor(config: BotConfig, _args: argparse.Namespace) -> int:
                     "\nnote: no ANTHROPIC_API_KEY/ANTHROPIC_AUTH_TOKEN set; the SDK will "
                     "fall back to an `ant auth login` profile if one exists."
                 )
+
+    if config.pinterest or os.environ.get(PINTEREST_TOKEN_ENV):
+        settings = PinterestConfig.from_bot_config(config)
+        token = "set" if settings.access_token else f"MISSING ({PINTEREST_TOKEN_ENV} is unset)"
+        print(f"\npinterest token:   {token}")
+        print(f"pinterest mode:    {'DRY RUN - nothing is published' if settings.dry_run else 'LIVE - pins will be published publicly'}")
+        print(f"pinterest api:     {settings.base_url}")
+        print(f"pinterest cap:     {settings.max_pins_per_run} pin(s) per run")
+        if not settings.access_token:
+            problems.append(
+                f"pinterest is configured but {PINTEREST_TOKEN_ENV} is unset; "
+                "no Pinterest call can succeed"
+            )
+        if not settings.dry_run and not config.allow_dangerous_tools:
+            problems.append(
+                "pinterest.dry_run is false but allow_dangerous_tools is false, so "
+                "pinterest_create_pin is not available - the bot cannot post either way"
+            )
 
     rule_policy = config.policy.strip().lower() not in {"claude", "llm", "anthropic"}
     for spec in config.enabled_tasks:

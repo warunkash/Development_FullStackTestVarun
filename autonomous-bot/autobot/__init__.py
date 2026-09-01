@@ -16,6 +16,7 @@ from .builtins import BUILTIN_TOOLS, default_registry
 from .config import BotConfig, ConfigError, TaskSpec, load_config
 from .memory import Journal
 from .models import Action, Budget, Goal, Observation, RunResult, Step
+from .pinterest import PINTEREST_TOOLS, PinterestClient, PinterestConfig, PinterestError
 from .policy import (
     BasePolicy,
     ClaudePolicy,
@@ -40,8 +41,12 @@ __all__ = [
     "ConfigError",
     "Goal",
     "Journal",
+    "PINTEREST_TOOLS",
     "Observation",
     "PlaybookAborted",
+    "PinterestClient",
+    "PinterestConfig",
+    "PinterestError",
     "Policy",
     "RulePolicy",
     "RunResult",
