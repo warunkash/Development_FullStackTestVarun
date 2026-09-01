@@ -1,0 +1,6 @@
+# Core runtime. The agent loop, tools and the rule policy need only PyYAML.
+PyYAML>=6.0
+
+# Required only for the "claude" policy; the import is lazy, so the bot runs
+# without it as long as policy stays "rule".
+anthropic>=0.70.0
