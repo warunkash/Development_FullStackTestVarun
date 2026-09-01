@@ -229,6 +229,8 @@ real needs three separate, deliberate switches:
 | `allow_dangerous_tools` | `false` | set to `true` (`pinterest_create_pin` is a dangerous tool) |
 | the `pinterest-post` task | `enabled: false` | set to `true` |
 
+All three live in `autobot.yaml`. The committed defaults keep publishing off, because that file also drives the scheduled GitHub Actions job — committing it live would point a cron at a public account.
+
 In dry-run the full request is built, validated and logged — you can read
 exactly what *would* have been posted — but nothing is sent. Watch a few dry
 runs and agree with them before flipping anything.
@@ -241,13 +243,35 @@ made incapable of publishing.
 create, whatever the policy decides to do. Dry-run pins count against it, so the
 cap behaves identically in both modes.
 
+### Posting automatically
+
+`pinterest_post_queue` drains a JSONL queue and is what the `pinterest-post`
+task runs. It is deterministic — no model is involved, so scheduled posting
+needs no Claude credentials and does exactly the same thing every time.
+
+`pins/queue.jsonl`, one object per line (see `pins/queue.example.jsonl`):
+
+```json
+{"id": "launch-01", "board_id": "...", "image_url": "https://...png", "title": "...", "description": "...", "link": "https://...", "alt_text": "..."}
+```
+
+Only `board_id` and `image_url` are required. Unknown fields and malformed lines
+are rejected with the offending line number rather than silently skipped.
+
+**Re-running never double-posts.** Every published pin is appended to
+`runs/posted.jsonl` keyed by `id` (or `image_url` if you omit `id`), and
+anything already in that ledger is skipped. The ledger is written immediately
+after each pin, so a crash mid-run cannot cause a re-post; a corrupt ledger
+makes the tool refuse to run rather than risk one. On an API error it stops at
+the first failure instead of hammering the API, keeping what succeeded, so a
+retry resumes cleanly.
+
 ### Supplying images
 
 `create_pin` takes an `image_url`: Pinterest fetches the image itself, so it must
 be a **public https URL**. Local paths and `http://` are rejected up front.
-Generating or hosting those images is not part of this framework — the
-`pinterest-post` task reads them from a `pins/queue.jsonl` queue that something
-upstream fills.
+Generating and hosting those images is **not** part of this framework — you fill
+the queue from wherever your images live.
 
 ### Rate limits and platform rules
 
@@ -270,7 +294,7 @@ pip install -r requirements-dev.txt
 python -m pytest tests/ -q
 ```
 
-164 tests, no network and no credentials required — the Claude policy is tested
+179 tests, no network and no credentials required — the Claude policy is tested
 against a fake client that asserts the request shape (model, tool schemas,
 adaptive thinking, refusal fallbacks) and the handling of tool calls, refusals,
 parallel calls and API errors.

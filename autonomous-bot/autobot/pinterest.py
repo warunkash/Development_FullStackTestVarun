@@ -261,4 +261,150 @@ def pinterest_create_pin(
     return f"Created pin {result.get('id', '(no id returned)')} on board {board_id}."
 
 
-PINTEREST_TOOLS = [pinterest_list_boards, pinterest_create_pin]
+@dataclass
+class QueueEntry:
+    """One pin waiting to be published."""
+
+    board_id: str
+    image_url: str
+    title: str = ""
+    description: str = ""
+    link: str = ""
+    alt_text: str = ""
+    #: Stable de-duplication key. Falls back to the image URL.
+    id: str = ""
+
+    @property
+    def key(self) -> str:
+        return self.id or self.image_url
+
+    @classmethod
+    def from_dict(cls, raw: dict, line_no: int) -> "QueueEntry":
+        if not isinstance(raw, dict):
+            raise PinterestError(f"queue line {line_no}: expected an object, got {type(raw).__name__}")
+        unknown = set(raw) - {f.name for f in cls.__dataclass_fields__.values()}
+        if unknown:
+            raise PinterestError(
+                f"queue line {line_no}: unknown field(s) {', '.join(sorted(unknown))}"
+            )
+        for required in ("board_id", "image_url"):
+            if not str(raw.get(required, "")).strip():
+                raise PinterestError(f"queue line {line_no}: '{required}' is required")
+        return cls(**{k: str(v) for k, v in raw.items()})
+
+
+def _read_queue(path) -> list[QueueEntry]:
+    """Parse a JSONL queue file, reporting the offending line on bad input."""
+    if not path.is_file():
+        return []
+    entries: list[QueueEntry] = []
+    for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        try:
+            raw = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise PinterestError(f"queue line {line_no}: invalid JSON: {exc}") from exc
+        entries.append(QueueEntry.from_dict(raw, line_no))
+    return entries
+
+
+def _read_posted(path) -> set[str]:
+    """The de-duplication keys of everything already published."""
+    if not path.is_file():
+        return set()
+    done: set[str] = set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            done.add(str(json.loads(line).get("key", "")))
+        except (json.JSONDecodeError, AttributeError):
+            # A corrupt ledger line must not cause a re-post, so fail loudly.
+            raise PinterestError(
+                f"{path} contains a malformed line; refusing to run in case it "
+                "hides an already-published pin"
+            ) from None
+    return done - {""}
+
+
+@tool(dangerous=True)
+def pinterest_post_queue(
+    ctx: ToolContext,
+    queue_path: str = "pins/queue.jsonl",
+    posted_path: str = "runs/posted.jsonl",
+    limit: int = 0,
+) -> str:
+    """Publish every not-yet-posted pin from a JSONL queue.
+
+    Each queue line is an object with board_id and image_url, plus optional
+    title, description, link, alt_text and id. Published pins are recorded in a
+    ledger so re-running never posts the same entry twice - which is what makes
+    this safe to put on a schedule.
+
+    Args:
+        queue_path: JSONL file of pins to publish, relative to the workspace.
+        posted_path: Ledger of already-published pins, relative to the workspace.
+        limit: Stop after this many pins (0 means use the configured per-run cap).
+    """
+    from .builtins import _resolve
+
+    queue_file = _resolve(ctx, queue_path)
+    ledger_file = _resolve(ctx, posted_path)
+
+    entries = _read_queue(queue_file)
+    if not entries:
+        return f"Queue {queue_path} is empty or missing; nothing to post."
+
+    already = _read_posted(ledger_file)
+    pending = [e for e in entries if e.key not in already]
+    if not pending:
+        return f"All {len(entries)} queued pin(s) have already been posted; nothing to do."
+
+    client = _client(ctx)
+    budget = limit if limit > 0 else client.config.max_pins_per_run
+    ledger_file.parent.mkdir(parents=True, exist_ok=True)
+
+    posted, failures = 0, []
+    for entry in pending:
+        if posted >= budget:
+            break
+        try:
+            result = client.create_pin(
+                board_id=entry.board_id,
+                image_url=entry.image_url,
+                title=entry.title,
+                description=entry.description,
+                link=entry.link,
+                alt_text=entry.alt_text,
+            )
+        except PinterestError as exc:
+            failures.append(f"{entry.key}: {exc}")
+            break  # stop on the first failure rather than hammering the API
+        posted += 1
+        # Record immediately: a crash after this point must not re-post.
+        with ledger_file.open("a", encoding="utf-8") as handle:
+            handle.write(
+                json.dumps(
+                    {
+                        "key": entry.key,
+                        "pin_id": result.get("id", ""),
+                        "board_id": entry.board_id,
+                        "dry_run": bool(result.get("dry_run")),
+                    },
+                    sort_keys=True,
+                )
+                + "\n"
+            )
+
+    mode = "DRY RUN - nothing published" if client.config.dry_run else "published"
+    remaining = len(pending) - posted
+    report = f"{mode}: {posted} pin(s), {remaining} still queued, {len(already)} previously done."
+    if failures:
+        report += " Stopped early: " + "; ".join(failures)
+    return report
+
+
+PINTEREST_TOOLS = [pinterest_list_boards, pinterest_create_pin, pinterest_post_queue]

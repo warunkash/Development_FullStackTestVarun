@@ -447,3 +447,174 @@ class TestTools:
         monkeypatch.setenv(TOKEN_ENV, "tok")
         capture.script.append({"items": []})
         assert "No boards found" in pinterest_list_boards.tool.call({}, self._ctx())
+
+
+class TestQueueDraining:
+    """The queue drainer is what makes scheduled posting safe.
+
+    The property that matters most is idempotence: a scheduled job re-runs, and
+    re-running must never publish the same pin twice.
+    """
+
+    def _ctx(self, tmp_path, **pinterest) -> ToolContext:
+        return ToolContext(workspace=str(tmp_path), config=BotConfig(pinterest=pinterest))
+
+    def _queue(self, tmp_path, *entries: dict) -> None:
+        path = tmp_path / "pins"
+        path.mkdir(parents=True, exist_ok=True)
+        (path / "queue.jsonl").write_text("\n".join(json.dumps(e) for e in entries) + "\n")
+
+    def _ledger(self, tmp_path) -> list[dict]:
+        path = tmp_path / "runs" / "posted.jsonl"
+        if not path.is_file():
+            return []
+        return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+    def _drain(self, ctx, **kwargs) -> str:
+        from autobot.pinterest import pinterest_post_queue
+
+        return pinterest_post_queue.tool.call(kwargs, ctx)
+
+    ENTRY_A = {"id": "a", "board_id": "b1", "image_url": "https://x.test/a.png", "title": "A"}
+    ENTRY_B = {"id": "b", "board_id": "b1", "image_url": "https://x.test/b.png", "title": "B"}
+
+    def test_missing_queue_is_not_an_error(self, tmp_path, monkeypatch):
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        assert "empty or missing" in self._drain(self._ctx(tmp_path))
+
+    def test_posts_pending_entries_and_records_them(self, capture, tmp_path, monkeypatch):
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        monkeypatch.delenv("AUTOBOT_PINTEREST_DRY_RUN", raising=False)
+        self._queue(tmp_path, self.ENTRY_A, self.ENTRY_B)
+        capture.script.extend([{"id": "pin-a"}, {"id": "pin-b"}])
+
+        out = self._drain(self._ctx(tmp_path, dry_run=False))
+
+        assert "published: 2 pin(s)" in out
+        assert len(capture.sent) == 2
+        assert [r["key"] for r in self._ledger(tmp_path)] == ["a", "b"]
+        assert [r["pin_id"] for r in self._ledger(tmp_path)] == ["pin-a", "pin-b"]
+
+    def test_rerunning_does_not_repost(self, capture, tmp_path, monkeypatch):
+        # The whole point of the ledger.
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        monkeypatch.delenv("AUTOBOT_PINTEREST_DRY_RUN", raising=False)
+        self._queue(tmp_path, self.ENTRY_A, self.ENTRY_B)
+        capture.script.extend([{"id": "pin-a"}, {"id": "pin-b"}])
+        self._drain(self._ctx(tmp_path, dry_run=False))
+        assert len(capture.sent) == 2
+
+        second = self._drain(self._ctx(tmp_path, dry_run=False))
+        assert "already been posted" in second
+        assert len(capture.sent) == 2  # unchanged - nothing re-sent
+
+    def test_only_new_entries_are_posted_on_a_later_run(self, capture, tmp_path, monkeypatch):
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        monkeypatch.delenv("AUTOBOT_PINTEREST_DRY_RUN", raising=False)
+        self._queue(tmp_path, self.ENTRY_A)
+        capture.script.append({"id": "pin-a"})
+        self._drain(self._ctx(tmp_path, dry_run=False))
+
+        self._queue(tmp_path, self.ENTRY_A, self.ENTRY_B)
+        capture.script.append({"id": "pin-b"})
+        out = self._drain(self._ctx(tmp_path, dry_run=False))
+
+        assert "1 pin(s)" in out
+        assert capture.sent[-1]["body"]["media_source"]["url"] == "https://x.test/b.png"
+
+    def test_image_url_is_the_default_dedup_key(self, capture, tmp_path, monkeypatch):
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        monkeypatch.delenv("AUTOBOT_PINTEREST_DRY_RUN", raising=False)
+        entry = {"board_id": "b1", "image_url": "https://x.test/only.png"}
+        self._queue(tmp_path, entry)
+        capture.script.append({"id": "p"})
+        self._drain(self._ctx(tmp_path, dry_run=False))
+        assert self._ledger(tmp_path)[0]["key"] == "https://x.test/only.png"
+
+    def test_respects_the_per_run_cap(self, capture, tmp_path, monkeypatch):
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        monkeypatch.delenv("AUTOBOT_PINTEREST_DRY_RUN", raising=False)
+        self._queue(tmp_path, self.ENTRY_A, self.ENTRY_B)
+        capture.script.append({"id": "pin-a"})
+
+        out = self._drain(self._ctx(tmp_path, dry_run=False, max_pins_per_run=1))
+
+        assert "1 pin(s), 1 still queued" in out
+        assert len(capture.sent) == 1
+
+    def test_explicit_limit_overrides_the_cap(self, capture, tmp_path, monkeypatch):
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        monkeypatch.delenv("AUTOBOT_PINTEREST_DRY_RUN", raising=False)
+        self._queue(tmp_path, self.ENTRY_A, self.ENTRY_B)
+        capture.script.append({"id": "pin-a"})
+        out = self._drain(self._ctx(tmp_path, dry_run=False), limit=1)
+        assert "1 pin(s), 1 still queued" in out
+
+    def test_dry_run_records_the_ledger_without_sending(self, capture, tmp_path, monkeypatch):
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        self._queue(tmp_path, self.ENTRY_A)
+        out = self._drain(self._ctx(tmp_path, dry_run=True))
+
+        assert "DRY RUN" in out
+        assert capture.sent == []
+        # The ledger marks it as a dry run, so a later live run is not fooled
+        # into thinking it was really published.
+        assert self._ledger(tmp_path)[0]["dry_run"] is True
+
+    def test_stops_on_the_first_api_failure(self, capture, tmp_path, monkeypatch):
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        monkeypatch.delenv("AUTOBOT_PINTEREST_DRY_RUN", raising=False)
+        self._queue(tmp_path, self.ENTRY_A, self.ENTRY_B)
+        capture.script.extend([{"id": "pin-a"}, http_error(429)])
+
+        out = self._drain(self._ctx(tmp_path, dry_run=False))
+
+        assert "Stopped early" in out and "rate limited" in out
+        # The successful pin is still recorded, so a retry resumes cleanly.
+        assert [r["key"] for r in self._ledger(tmp_path)] == ["a"]
+
+    def test_malformed_queue_line_names_the_line(self, tmp_path, monkeypatch):
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        (tmp_path / "pins").mkdir()
+        (tmp_path / "pins" / "queue.jsonl").write_text('{"board_id": "b"}\nnot json\n')
+        with pytest.raises(PinterestError, match="queue line 1: 'image_url' is required"):
+            self._drain(self._ctx(tmp_path))
+
+    def test_rejects_unknown_queue_field(self, tmp_path, monkeypatch):
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        self._queue(tmp_path, {"board_id": "b", "image_url": "https://x.test/a.png", "boad": "typo"})
+        with pytest.raises(PinterestError, match="unknown field"):
+            self._drain(self._ctx(tmp_path))
+
+    def test_comments_and_blank_lines_are_skipped(self, capture, tmp_path, monkeypatch):
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        (tmp_path / "pins").mkdir()
+        (tmp_path / "pins" / "queue.jsonl").write_text(
+            "# a comment\n\n" + json.dumps(self.ENTRY_A) + "\n"
+        )
+        assert "1 pin(s)" in self._drain(self._ctx(tmp_path, dry_run=True))
+
+    def test_corrupt_ledger_refuses_rather_than_reposting(self, tmp_path, monkeypatch):
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        self._queue(tmp_path, self.ENTRY_A)
+        (tmp_path / "runs").mkdir(parents=True, exist_ok=True)
+        (tmp_path / "runs" / "posted.jsonl").write_text("{broken\n")
+        with pytest.raises(PinterestError, match="malformed line"):
+            self._drain(self._ctx(tmp_path))
+
+    def test_queue_tool_is_dangerous(self):
+        from autobot.pinterest import pinterest_post_queue
+
+        assert pinterest_post_queue.tool.dangerous is True
+        assert "pinterest_post_queue" not in build_registry(BotConfig())
+
+    def test_shipped_example_queue_parses(self):
+        """The committed example must be valid, or it teaches the wrong shape."""
+        from pathlib import Path
+
+        from autobot.pinterest import _read_queue
+
+        example = Path(__file__).resolve().parent.parent / "pins" / "queue.example.jsonl"
+        entries = _read_queue(example)
+        assert len(entries) == 2
+        assert entries[0].key == "launch-01"

@@ -93,20 +93,32 @@ tasks:
         args:
           summary: Pinterest credentials verified and boards recorded.
 
-  # Publishes pins. Needs the claude policy (it has to read a queue and decide
-  # what to post), allow_dangerous_tools: true, and pinterest.dry_run: false
-  # before anything actually reaches Pinterest. Disabled deliberately.
+  # Publishes pins from pins/queue.jsonl. Deterministic - no model involved, so
+  # it needs no Claude credentials and always does exactly the same thing.
+  # Re-running never double-posts: published pins are recorded in
+  # runs/posted.jsonl and skipped thereafter.
+  #
+  # To actually publish you must change three things, deliberately:
+  #   1. this task's `enabled: false` -> true
+  #   2. `allow_dangerous_tools: false` -> true (above)
+  #   3. `pinterest.dry_run: true` -> false (above)
+  # Leave dry_run on until you have read a run's log and agree with every pin
+  # it would have sent. Pins are public and the bot cannot take them back.
   - name: pinterest-post
-    objective: >-
-      Read the queued pins from pins/queue.jsonl. For each entry that has not
-      already been posted, create the pin on the board named in the entry, then
-      append its id to runs/posted.jsonl so it is not posted twice. Stop when
-      the queue is exhausted or the per-run cap is reached, and finish with a
-      count of what was posted.
+    objective: Publish any queued pins that have not been posted yet.
     interval_s: 86400
-    max_steps: 20
+    max_steps: 6
     deadline_s: 900
     enabled: false
+    playbook:
+      - tool: pinterest_post_queue
+        rationale: drain the queue, skipping anything already published
+        args:
+          queue_path: pins/queue.jsonl
+          posted_path: runs/posted.jsonl
+      - tool: finish
+        args:
+          summary: "Queue drained: {{last_output}}"
 
   # An open-ended task: the claude policy decides which tools to call.
   # Under the rule policy it has no playbook, so `autobot doctor` flags it.

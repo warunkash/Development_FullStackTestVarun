@@ -1,0 +1,7 @@
+# One JSON object per line. Lines starting with # and blank lines are ignored.
+# Required: board_id, image_url (a PUBLIC https URL - Pinterest fetches it itself).
+# Optional: title, description, link, alt_text, id.
+# `id` is the de-duplication key; without it the image_url is used. Pins already
+# recorded in runs/posted.jsonl are never posted again, so re-running is safe.
+{"id": "launch-01", "board_id": "REPLACE_WITH_BOARD_ID", "image_url": "https://example.com/pin-one.png", "title": "First pin", "description": "What this pin is about", "link": "https://example.com/article", "alt_text": "Describe the image for screen readers"}
+{"id": "launch-02", "board_id": "REPLACE_WITH_BOARD_ID", "image_url": "https://example.com/pin-two.png", "title": "Second pin"}
