@@ -1,0 +1,73 @@
+# autobot configuration.
+#
+# Every setting here can be overridden from the environment with AUTOBOT_*
+# (AUTOBOT_POLICY, AUTOBOT_WORKSPACE, AUTOBOT_MODEL, AUTOBOT_ALLOWED_DOMAINS,
+# AUTOBOT_ALLOW_DANGEROUS_TOOLS, ...), which is how the GitHub Actions job
+# switches policies without editing this file.
+
+# Which brain picks the actions: "rule" replays a task's playbook (no
+# credentials, fully deterministic); "claude" lets the model decide.
+policy: rule
+
+# Filesystem tools are confined to this directory.
+workspace: .
+
+# Per-run JSONL transcripts land here.
+journal_dir: runs
+
+# Used only by the claude policy.
+model: claude-opus-5
+effort: high
+max_tokens: 16000
+
+# Hosts http_get is allowed to reach. An empty list means unrestricted -
+# set it to something real before pointing this at the open internet.
+allowed_domains:
+  - api.github.com
+  - raw.githubusercontent.com
+
+# run_command and anything else marked dangerous stays unavailable until this
+# is switched on.
+allow_dangerous_tools: false
+
+# Abandon a run after this many consecutive failed steps.
+failure_limit: 3
+
+tasks:
+  # A deterministic task: no model, no network, safe to run anywhere.
+  # This is the one CI runs on every push.
+  - name: heartbeat
+    objective: Record that the bot is alive and write a status file.
+    interval_s: 900
+    max_steps: 6
+    deadline_s: 120
+    playbook:
+      - tool: current_time
+        rationale: establish when this run happened
+      - tool: write_file
+        rationale: leave a status file the next run (and a human) can read
+        args:
+          path: runs/status.txt
+          content: "autobot heartbeat ok at {{last_output}}"
+      - tool: append_json_line
+        rationale: keep an append-only history of heartbeats
+        args:
+          path: runs/heartbeats.jsonl
+          record:
+            event: heartbeat
+            source: autobot
+      - tool: finish
+        args:
+          summary: Heartbeat recorded; status file and history updated.
+
+  # An open-ended task: the claude policy decides which tools to call.
+  # Under the rule policy it has no playbook, so `autobot doctor` flags it.
+  - name: repo-digest
+    objective: >-
+      Summarise what changed in this repository recently. Read README.md and
+      list the top-level directories, then write a short digest to
+      runs/digest.md and finish with a one-line summary.
+    interval_s: 86400
+    max_steps: 12
+    deadline_s: 600
+    enabled: false
