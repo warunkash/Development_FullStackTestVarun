@@ -225,6 +225,129 @@ class TestSafetyGates:
         assert "pinterest_create_pin" in build_registry(BotConfig(allow_dangerous_tools=True))
 
 
+class TestTokenRequirementDetection:
+    """Which enabled tasks can actually reach Pinterest.
+
+    Regression cover: a `pinterest:` block with every pinterest task disabled
+    used to be reported as a missing-token problem, which failed CI on a config
+    that was in fact perfectly valid.
+    """
+
+    def _config(self, **raw):
+        return BotConfig.from_dict({"pinterest": {"dry_run": True}, **raw})
+
+    def test_disabled_pinterest_task_does_not_require_a_token(self):
+        config = self._config(
+            tasks=[
+                {
+                    "name": "pins",
+                    "objective": "post",
+                    "enabled": False,
+                    "playbook": [{"tool": "pinterest_create_pin"}],
+                },
+                {
+                    "name": "heartbeat",
+                    "objective": "ping",
+                    "playbook": [{"tool": "current_time"}],
+                },
+            ]
+        )
+        assert config.tasks_reaching("pinterest_") == []
+
+    def test_enabled_playbook_using_pinterest_requires_a_token(self):
+        config = self._config(
+            tasks=[
+                {
+                    "name": "pins",
+                    "objective": "post",
+                    "playbook": [{"tool": "pinterest_list_boards"}],
+                }
+            ]
+        )
+        assert [t.name for t in config.tasks_reaching("pinterest_")] == ["pins"]
+
+    def test_open_ended_task_counts_under_the_claude_policy(self):
+        # No playbook means the model chooses; assume it can reach anything.
+        config = self._config(
+            policy="claude", tasks=[{"name": "free", "objective": "do things"}]
+        )
+        assert [t.name for t in config.tasks_reaching("pinterest_")] == ["free"]
+
+    def test_open_ended_task_does_not_count_under_the_rule_policy(self):
+        # The rule policy can only run a playbook, so with none it calls nothing.
+        config = self._config(
+            policy="rule", tasks=[{"name": "free", "objective": "do things"}]
+        )
+        assert config.tasks_reaching("pinterest_") == []
+
+
+class TestDoctorExitCodes:
+    """The doctor exit code is what CI keys off, so pin it down."""
+
+    def _write(self, tmp_path, body: str) -> str:
+        path = tmp_path / "autobot.yaml"
+        path.write_text(body)
+        return str(path)
+
+    def test_passes_when_no_enabled_task_uses_pinterest(self, tmp_path, monkeypatch, capsys):
+        from autobot.cli import EXIT_OK, main
+
+        monkeypatch.delenv(TOKEN_ENV, raising=False)
+        config = self._write(
+            tmp_path,
+            f"policy: rule\nworkspace: {tmp_path}\npinterest:\n  dry_run: true\n"
+            "tasks:\n  - name: heartbeat\n    objective: ping\n"
+            "    playbook:\n      - tool: current_time\n",
+        )
+        assert main(["-c", config, "-q", "doctor"]) == EXIT_OK
+        assert "no enabled task uses Pinterest" in capsys.readouterr().out
+
+    def test_fails_when_an_enabled_task_needs_the_missing_token(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        from autobot.cli import EXIT_CONFIG_ERROR, main
+
+        monkeypatch.delenv(TOKEN_ENV, raising=False)
+        config = self._write(
+            tmp_path,
+            f"policy: rule\nworkspace: {tmp_path}\npinterest:\n  dry_run: true\n"
+            "tasks:\n  - name: boards\n    objective: read\n"
+            "    playbook:\n      - tool: pinterest_list_boards\n",
+        )
+        assert main(["-c", config, "-q", "doctor"]) == EXIT_CONFIG_ERROR
+        assert "can call Pinterest" in capsys.readouterr().out
+
+    def test_flags_live_mode_without_the_dangerous_gate(self, tmp_path, monkeypatch, capsys):
+        from autobot.cli import EXIT_CONFIG_ERROR, main
+
+        monkeypatch.setenv(TOKEN_ENV, "tok")
+        monkeypatch.delenv("AUTOBOT_PINTEREST_DRY_RUN", raising=False)
+        config = self._write(
+            tmp_path,
+            f"policy: rule\nworkspace: {tmp_path}\npinterest:\n  dry_run: false\n"
+            "tasks:\n  - name: heartbeat\n    objective: ping\n"
+            "    playbook:\n      - tool: current_time\n",
+        )
+        assert main(["-c", config, "-q", "doctor"]) == EXIT_CONFIG_ERROR
+        assert "cannot post either way" in capsys.readouterr().out
+
+
+class TestShippedConfigPassesDoctor:
+    def test_repo_config_is_clean_without_any_credentials(self, monkeypatch, capsys):
+        """The committed autobot.yaml must pass doctor in a bare CI checkout.
+
+        This is the exact check the workflow runs; it failed once already.
+        """
+        from pathlib import Path
+
+        from autobot.cli import EXIT_OK, main
+
+        monkeypatch.delenv(TOKEN_ENV, raising=False)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        shipped = Path(__file__).resolve().parent.parent / "autobot.yaml"
+        assert main(["-c", str(shipped), "-q", "doctor"]) == EXIT_OK
+
+
 class TestErrorHandling:
     def test_missing_token_names_the_variable_and_scopes(self, capture):
         client = PinterestClient(PinterestConfig(access_token="", dry_run=False))

@@ -163,11 +163,21 @@ def cmd_doctor(config: BotConfig, _args: argparse.Namespace) -> int:
         print(f"pinterest mode:    {'DRY RUN - nothing is published' if settings.dry_run else 'LIVE - pins will be published publicly'}")
         print(f"pinterest api:     {settings.base_url}")
         print(f"pinterest cap:     {settings.max_pins_per_run} pin(s) per run")
+        # A pinterest block with every pinterest task disabled is a perfectly
+        # valid resting state - it does not mean a token is required.
+        needs_token = config.tasks_reaching("pinterest_")
         if not settings.access_token:
-            problems.append(
-                f"pinterest is configured but {PINTEREST_TOKEN_ENV} is unset; "
-                "no Pinterest call can succeed"
-            )
+            if needs_token:
+                problems.append(
+                    f"{PINTEREST_TOKEN_ENV} is unset, but "
+                    f"{', '.join(repr(s.name) for s in needs_token)} can call Pinterest; "
+                    "no Pinterest call can succeed"
+                )
+            else:
+                print(
+                    "\nnote: no Pinterest token set, and no enabled task uses Pinterest. "
+                    "Set PINTEREST_ACCESS_TOKEN and enable a pinterest task to post."
+                )
         if not settings.dry_run and not config.allow_dangerous_tools:
             problems.append(
                 "pinterest.dry_run is false but allow_dangerous_tools is false, so "

@@ -110,6 +110,26 @@ class BotConfig:
     def enabled_tasks(self) -> list[TaskSpec]:
         return [t for t in self.tasks if t.enabled]
 
+    @property
+    def uses_claude_policy(self) -> bool:
+        return self.policy.strip().lower() in {"claude", "llm", "anthropic"}
+
+    def tasks_reaching(self, tool_prefix: str) -> list[TaskSpec]:
+        """Enabled tasks that could call a tool whose name starts with ``tool_prefix``.
+
+        A playbook names its tools up front, so it can be checked exactly. An
+        open-ended task has no playbook and the model picks the tools, so under
+        the claude policy it must be assumed to reach anything available.
+        """
+        reaching = []
+        for spec in self.enabled_tasks:
+            if spec.playbook:
+                if any(str(e.get("tool", "")).startswith(tool_prefix) for e in spec.playbook):
+                    reaching.append(spec)
+            elif self.uses_claude_policy:
+                reaching.append(spec)
+        return reaching
+
     @classmethod
     def from_dict(cls, raw: dict[str, Any]) -> "BotConfig":
         if not isinstance(raw, dict):
