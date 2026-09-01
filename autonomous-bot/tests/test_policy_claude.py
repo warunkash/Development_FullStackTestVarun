@@ -7,6 +7,7 @@ each kind of response - the parts that are easy to get subtly wrong.
 
 from __future__ import annotations
 
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -27,6 +28,15 @@ def tool_use_block(tool_id: str, name: str, payload: dict) -> SimpleNamespace:
 
 def response(content: list, stop_reason: str = "tool_use", **extra) -> SimpleNamespace:
     return SimpleNamespace(content=content, stop_reason=stop_reason, **extra)
+
+
+def _fake_response(status_code: int):
+    """A minimal stand-in for the httpx response the SDK errors carry."""
+    return SimpleNamespace(
+        status_code=status_code,
+        headers={},
+        request=SimpleNamespace(method="POST", url="https://api.anthropic.com/v1/messages"),
+    )
 
 
 class FakeMessages:
@@ -54,6 +64,17 @@ class FakeClient:
 
 def make_policy(script: list) -> ClaudePolicy:
     return ClaudePolicy(client=FakeClient(script))
+
+
+@pytest.fixture()
+def no_anthropic_sdk(monkeypatch):
+    """Make ``import anthropic`` fail, whether or not the SDK is installed.
+
+    Without this the SDK-absent behaviour is only exercised when the SDK
+    happens to be missing, so the same test passes locally and fails in CI.
+    A ``None`` entry in sys.modules makes the import raise ImportError.
+    """
+    monkeypatch.setitem(sys.modules, "anthropic", None)
 
 
 GOAL = Goal(name="t", objective="do the thing", max_steps=5, deadline_s=60)
@@ -293,10 +314,31 @@ class TestEndToEnd:
 
 
 class TestErrorTranslation:
-    def test_passes_through_when_sdk_is_absent(self):
-        # Without the SDK installed there are no typed errors to match on.
+    def test_passes_through_when_sdk_is_absent(self, no_anthropic_sdk):
+        # With no SDK importable there are no typed errors to match on.
         original = ValueError("boom")
         assert translate_api_error(original, "claude-opus-5") is original
+
+    def test_passes_through_an_unrecognised_error(self):
+        # Not an Anthropic error type, so it is returned untouched.
+        original = ValueError("boom")
+        assert translate_api_error(original, "claude-opus-5") is original
+
+    def test_maps_typed_sdk_errors_most_specific_first(self):
+        anthropic = pytest.importorskip("anthropic")
+        not_found = anthropic.NotFoundError(
+            "missing", response=_fake_response(404), body=None
+        )
+        rate_limited = anthropic.RateLimitError(
+            "slow down", response=_fake_response(429), body=None
+        )
+
+        # NotFoundError and RateLimitError both subclass APIStatusError, so the
+        # order of the isinstance chain is what is actually under test here.
+        assert "not available to this account" in str(
+            translate_api_error(not_found, "claude-opus-5")
+        )
+        assert "rate limited" in str(translate_api_error(rate_limited, "claude-opus-5"))
 
     def test_request_failure_surfaces_to_the_agent_as_a_failed_run(self, tmp_path):
         policy = make_policy([RuntimeError("connection reset")])
@@ -318,6 +360,6 @@ class TestFactory:
         with pytest.raises(ValueError, match="unknown policy"):
             build_policy("magic")
 
-    def test_claude_policy_without_sdk_explains_itself(self):
+    def test_claude_policy_without_sdk_explains_itself(self, no_anthropic_sdk):
         with pytest.raises(RuntimeError, match="pip install anthropic"):
             _ = ClaudePolicy().client

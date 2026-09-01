@@ -202,7 +202,7 @@ pip install -r requirements-dev.txt
 python -m pytest tests/ -q
 ```
 
-118 tests, no network and no credentials required — the Claude policy is tested
+120 tests, no network and no credentials required — the Claude policy is tested
 against a fake client that asserts the request shape (model, tool schemas,
 adaptive thinking, refusal fallbacks) and the handling of tool calls, refusals,
 parallel calls and API errors.

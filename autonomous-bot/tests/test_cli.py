@@ -106,12 +106,16 @@ class TestServe:
     def test_serve_honours_max_cycles(self, config_path, capsys):
         assert run_cli(config_path, "serve", "--max-cycles", "2") == EXIT_OK
 
-    def test_policy_override_applies(self, config_path, capsys):
-        # --policy claude with no SDK installed should fail cleanly, not traceback.
+    def test_policy_override_applies(self, config_path, capsys, monkeypatch):
+        # Selecting the claude policy with no usable credentials must fail
+        # cleanly rather than tracebacking. The exact message depends on
+        # whether the SDK is installed, so assert the behaviour, not the text.
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("ANTHROPIC_AUTH_TOKEN", raising=False)
         assert run_cli(config_path, "--policy", "claude", "run", "good") == EXIT_INCOMPLETE
         out = capsys.readouterr().out
         assert "status:  failed" in out
-        assert "pip install anthropic" in out
+        assert "Policy error:" in out
 
 
 class TestConfigErrors:
