@@ -113,8 +113,9 @@ jobs:
 
           python -m faceless_content.cli "${args[@]}"
 
+      # A render-only run never records a topic, so there may be no file to save.
       - name: Save topic history
-        if: always()
+        if: always() && hashFiles('faceless-content/output/state.json') != ''
         uses: actions/cache/save@v4
         with:
           path: faceless-content/output/state.json

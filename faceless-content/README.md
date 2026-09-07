@@ -185,11 +185,12 @@ the topic cooldown keeps working.
 
 ## Known limits
 
-- **Reddit and Wikipedia block datacenter IPs.** Reddit returns `403 Blocked`
-  and Wikimedia returns `429` for anonymous cloud traffic. Both are skipped
-  gracefully — this is exactly what the multi-source design absorbs — but on a
-  hosted runner expect Google Trends and Hacker News to carry the ranking. Set
-  `WIKIMEDIA_ACCESS_TOKEN` for the authenticated Wikipedia allowance.
+- **Reddit blocks datacenter IPs.** It returns `403 Blocked` for cloud traffic,
+  including GitHub-hosted runners, so in CI it contributes nothing. Wikimedia
+  rate-limits anonymous callers per IP and returns `429` on some shared hosts
+  (though not on GitHub runners, where it works unauthenticated); set
+  `WIKIMEDIA_ACCESS_TOKEN` for the authenticated allowance. Both are skipped
+  gracefully — absorbing this is the point of querying several sources.
 - **Captions are estimated, not force-aligned.** Timing is proportional to text
   weight, which tracks a 40-second read closely but will drift on much longer
   narration. A forced aligner (e.g. WhisperX) would be the fix.
