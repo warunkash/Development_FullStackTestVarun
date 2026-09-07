@@ -1,0 +1,133 @@
+name: Faceless content
+
+on:
+  schedule:
+    # 13:00 UTC daily. Cron on hosted runners can start late under load.
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Skip discovery and use this topic"
+        required: false
+        type: string
+      publish:
+        description: "Actually post to the configured targets"
+        required: false
+        default: false
+        type: boolean
+  pull_request:
+    paths:
+      - "faceless-content/**"
+      - ".github/workflows/faceless-content.yml"
+
+concurrency:
+  # Never let two runs publish at once, and never cancel one mid-upload.
+  group: faceless-content
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: faceless-content
+
+jobs:
+  produce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: faceless-content/requirements.txt
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg espeak-ng
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run tests
+        run: python -m pytest
+
+      # A hosted runner starts with an empty filesystem, so the topic cooldown
+      # only works if the state file is carried between runs.
+      - name: Restore topic history
+        uses: actions/cache/restore@v4
+        with:
+          path: faceless-content/output/state.json
+          key: faceless-state-${{ github.run_id }}
+          restore-keys: faceless-state-
+
+      - name: Check the setup
+        run: python -m faceless_content.cli doctor
+
+      - name: Produce a video
+        id: produce
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          WIKIMEDIA_ACCESS_TOKEN: ${{ secrets.WIKIMEDIA_ACCESS_TOKEN }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          # Repository variable, e.g. "youtube,tiktok". Empty means render only.
+          PUBLISH_TARGETS: ${{ vars.PUBLISH_TARGETS }}
+          TOPIC: ${{ inputs.topic }}
+          # Pull requests always rehearse and must never post. A manual run
+          # publishes only when explicitly asked; a scheduled run always does.
+          PUBLISH_REQUESTED: >-
+            ${{ github.event_name == 'schedule'
+                || (github.event_name == 'workflow_dispatch' && inputs.publish) }}
+        run: |
+          set -euo pipefail
+
+          # Turn the repository variable into config the CLI understands.
+          {
+            echo "publish:"
+            echo "  targets: [${PUBLISH_TARGETS:-}]"
+          } > ci-config.yaml
+
+          # Build the argument list as an array so a topic with spaces survives.
+          args=(-c ci-config.yaml run)
+          if [ -n "${TOPIC:-}" ]; then
+            args+=(--topic "${TOPIC}")
+          fi
+          if [ "${PUBLISH_REQUESTED}" = "true" ] && [ -n "${PUBLISH_TARGETS:-}" ]; then
+            args+=(--publish)
+            echo "publishing to: ${PUBLISH_TARGETS}"
+          else
+            echo "render only (PUBLISH_REQUESTED=${PUBLISH_REQUESTED}, targets='${PUBLISH_TARGETS:-}')"
+          fi
+
+          python -m faceless_content.cli "${args[@]}"
+
+      # A render-only run never records a topic, so there may be no file to save.
+      - name: Save topic history
+        if: always() && hashFiles('faceless-content/output/state.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: faceless-content/output/state.json
+          key: faceless-state-${{ github.run_id }}
+
+      - name: Upload the video
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: faceless-video-${{ github.run_id }}
+          path: |
+            faceless-content/output/**/*.mp4
+            faceless-content/output/**/metadata.json
+          if-no-files-found: warn
+          retention-days: 14

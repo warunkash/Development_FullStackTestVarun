@@ -1,0 +1,10 @@
+output/
+config.yaml
+*.mp4
+*.wav
+*.mp3
+*.ass
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
