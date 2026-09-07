@@ -165,7 +165,55 @@ so a typo fails immediately rather than being silently ignored.
 | `PEXELS_API_KEY` | gradient backgrounds instead of stock footage |
 | `YOUTUBE_API_KEY` | the YouTube chart source is skipped |
 | `WIKIMEDIA_ACCESS_TOKEN` | anonymous Wikipedia rate limit (see below) |
-| `YOUTUBE_*`, `TIKTOK_*`, `INSTAGRAM_*` | that platform is skipped with a reason |
+| `YOUTUBE_*`, `TIKTOK_*`, `INSTAGRAM_*` | that platform is skipped with a reason (see below for YouTube) |
+
+## Getting a YouTube refresh token
+
+Uploading needs three secrets: `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET` and
+`YOUTUBE_REFRESH_TOKEN`. The first two come from the Google Cloud console; the
+third comes from authorising your channel once.
+
+### In the Google Cloud console
+
+1. Create or select a project, then enable **YouTube Data API v3**.
+2. **OAuth consent screen** → User type **External**. Add the scope
+   `https://www.googleapis.com/auth/youtube.upload`.
+3. **Publishing status matters.** While the app sits in **Testing**, Google
+   expires refresh tokens after **seven days** — a daily cron will work for a
+   week and then start failing on token refresh. Move it to **In production**
+   so the token is long-lived. Publishing an unverified app that uses a
+   sensitive scope shows an "unverified app" interstitial you click through,
+   and is capped at 100 users; for your own channel that is fine. Verification
+   is only needed to distribute it to others.
+4. **Credentials** → Create credentials → OAuth client ID → application type
+   **Desktop app**. Copy the client ID and secret.
+
+### Then run the helper
+
+```bash
+python scripts/youtube_auth.py --client-id XXX --client-secret YYY
+```
+
+It opens the consent screen, catches the redirect on a loopback port, and
+prints the three values to set as repository secrets. Add `--no-browser` on a
+headless box to print the URL instead, and `--port` to pin the loopback port.
+
+Two failure modes it exists to avoid:
+
+- Google returns a refresh token only when the request carries **both**
+  `access_type=offline` and `prompt=consent`. Miss the second and you get a
+  refresh token on the first authorisation and silently only an access token
+  on every later one — so re-running to "fix" a problem hands you nothing
+  usable. If it reports no refresh token, revoke the app at
+  [myaccount.google.com/permissions](https://myaccount.google.com/permissions)
+  and run it again.
+- The copy-paste out-of-band flow (`urn:ietf:wg:oauth:2.0:oob`) was switched
+  off by Google in 2022. Guides that tell you to paste a code from the browser
+  no longer work; this uses the loopback redirect that replaced it.
+
+The refresh token is long-lived but not permanent — it is revoked if you change
+your Google password, revoke the app, or leave it unused for six months. When
+uploads start failing on token refresh, re-run the helper.
 
 ## Running it on a schedule
 
