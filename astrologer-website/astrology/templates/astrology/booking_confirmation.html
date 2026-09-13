@@ -1,0 +1,47 @@
+{% extends "base.html" %}{% load astro_extras %}
+{% block title %}Booking {{ booking.reference }} — {{ site.name }}{% endblock %}
+
+{% block content %}
+<section class="section wrap">
+  <div class="card form-card">
+    <p class="eyebrow">Request received</p>
+    <h1>Thank you, {{ booking.full_name|truncatewords:1 }}.</h1>
+    <p class="muted">
+      Your reference is <strong class="rating">{{ booking.reference }}</strong>.
+      Quote it if you write to the desk. We confirm slots by e-mail, usually within a few hours during working times.
+    </p>
+
+    <div class="meta-row" style="margin-top:1.5rem">
+      <div><span>Astrologer</span><strong style="font-size:1rem">{{ booking.astrologer.name }}</strong></div>
+      <div><span>Service</span><strong style="font-size:1rem">{{ booking.service.name }}</strong></div>
+    </div>
+    <div class="meta-row">
+      <div><span>Requested for</span><strong style="font-size:1rem">{{ booking.preferred_datetime|date:"l, j F Y · H:i" }}</strong></div>
+      <div><span>Mode</span><strong style="font-size:1rem">{{ booking.get_mode_display }}</strong></div>
+    </div>
+    <div class="meta-row">
+      <div><span>Status</span><strong><span class="status status-{{ booking.status }}">{{ booking.get_status_display }}</span></strong></div>
+      <div><span>Payable on confirmation</span><strong style="font-size:1rem">{{ booking.service.price|rupees }}</strong></div>
+      {% if booking.sun_sign %}
+        <div><span>Your sun sign</span><strong style="font-size:1rem">{{ booking.sun_sign.symbol }} {{ booking.sun_sign.name }}</strong></div>
+      {% endif %}
+    </div>
+
+    {% if booking.question %}
+      <div class="reading-block" style="margin-top:1.5rem">
+        <h4>What you asked about</h4>
+        <p>{{ booking.question }}</p>
+      </div>
+    {% endif %}
+
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:2rem">
+      <a class="btn btn-ghost btn-sm" href="{% url 'home' %}">Back to the site</a>
+      {% if user.is_authenticated %}
+        <a class="btn btn-primary btn-sm" href="{% url 'my_bookings' %}">My bookings</a>
+      {% else %}
+        <a class="btn btn-primary btn-sm" href="{% url 'signup' %}">Create an account to track this</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

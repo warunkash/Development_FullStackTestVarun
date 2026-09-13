@@ -1,0 +1,34 @@
+{% extends "base.html" %}{% load astro_extras %}
+{% block title %}Consultations — {{ site.name }}{% endblock %}
+{% block description %}Birth chart readings, kundli matching, career timing, tarot, Vastu and numerology consultations.{% endblock %}
+
+{% block content %}
+<section class="section wrap">
+  <div class="section-head">
+    <p class="eyebrow">Consultations</p>
+    <h1>What we offer</h1>
+    <p class="muted">Prices are per session and include a recording and a written summary. If you are not sure which to pick, book a birth chart reading — it covers the most ground.</p>
+  </div>
+
+  <div class="grid grid-3">
+    {% for service in services %}
+      <article class="card">
+        <p style="font-size:2.1rem;margin:0 0 .6rem">{{ service.icon }}</p>
+        <h3><a href="{{ service.get_absolute_url }}">{{ service.name }}</a></h3>
+        <p class="muted small">{{ service.tagline }}</p>
+        <div class="meta-row" style="margin-top:1rem;padding-top:1rem">
+          <div><span>Price</span><strong>{{ service.price|rupees }}</strong></div>
+          <div><span>Length</span><strong>{{ service.duration_minutes|duration }}</strong></div>
+        </div>
+        {% if service.requires_birth_details %}<p style="margin-top:1rem"><span class="tag tag-gold">Birth details needed</span></p>{% endif %}
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem">
+          <a class="btn btn-ghost btn-sm" href="{{ service.get_absolute_url }}">Details</a>
+          <a class="btn btn-primary btn-sm" href="{% url 'book' %}?service={{ service.slug }}">Book</a>
+        </div>
+      </article>
+    {% empty %}
+      <p class="muted">No consultations are published yet.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

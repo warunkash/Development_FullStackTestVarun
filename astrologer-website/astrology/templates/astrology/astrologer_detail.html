@@ -1,0 +1,74 @@
+{% extends "base.html" %}{% load astro_extras %}
+{% block title %}{{ astrologer.name }} — {{ site.name }}{% endblock %}
+{% block description %}{{ astrologer.headline }} Book a consultation with {{ astrologer.name }}.{% endblock %}
+
+{% block content %}
+<section class="section wrap">
+  <p class="small"><a href="{% url 'astrologer_list' %}">← All astrologers</a></p>
+
+  <div class="hero-grid" style="align-items:start;margin-top:1.5rem">
+    <div>
+      <div class="astro-head">
+        {% if astrologer.photo_url %}
+          <img class="avatar" style="width:88px;height:88px" src="{{ astrologer.photo_url }}" alt="">
+        {% else %}
+          <div class="avatar" style="width:88px;height:88px;font-size:1.7rem" aria-hidden="true">{{ astrologer.initials }}</div>
+        {% endif %}
+        <div>
+          <h1 style="font-size:2.2rem;margin-bottom:.2rem">{{ astrologer.name }}</h1>
+          <p class="muted" style="margin:0">{{ astrologer.headline }}</p>
+        </div>
+      </div>
+
+      <p>{% for spec in astrologer.specialisations.all %}<span class="tag">{{ spec.name }}</span>{% endfor %}</p>
+
+      <div class="prose" style="margin-top:1.5rem">
+        {{ astrologer.bio|linebreaks }}
+      </div>
+
+      {% if testimonials %}
+        <h2 style="margin-top:2.5rem">Recent feedback</h2>
+        <div class="grid grid-2">
+          {% for testimonial in testimonials %}
+            <blockquote class="card" style="margin:0">
+              <p class="rating">{{ testimonial.stars }}</p>
+              <p>“{{ testimonial.quote }}”</p>
+              <footer class="small muted">— {{ testimonial.client_name }}{% if testimonial.location %}, {{ testimonial.location }}{% endif %}</footer>
+            </blockquote>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <aside class="card">
+      <div class="meta-row" style="margin:0;padding:0;border:0">
+        <div><span>Rating</span><strong>{{ astrologer.rating|stars }}</strong></div>
+        <div><span>Experience</span><strong>{{ astrologer.years_experience }} yrs</strong></div>
+      </div>
+      <div class="meta-row">
+        <div><span>Sessions</span><strong>{{ astrologer.consultations_done }}</strong></div>
+        <div><span>From</span><strong>{{ astrologer.rate_per_minute|rupees }}/min</strong></div>
+      </div>
+      <div class="meta-row">
+        <div><span>Languages</span><strong style="font-size:.95rem">{{ astrologer.languages }}</strong></div>
+      </div>
+
+      {% if astrologer.is_accepting_bookings %}
+        <a class="btn btn-primary" style="margin-top:1.5rem;width:100%;text-align:center"
+           href="{% url 'book' %}?astrologer={{ astrologer.slug }}">Book with {{ astrologer.name|cut:" "|truncatechars:14 }}</a>
+      {% else %}
+        <p class="muted small" style="margin-top:1.5rem">{{ astrologer.name }} is not accepting new bookings right now.
+           <a href="{% url 'astrologer_list' %}">See who is available</a>.</p>
+      {% endif %}
+
+      <h3 style="margin-top:2rem;font-size:.8rem;text-transform:uppercase;letter-spacing:.14em;color:var(--text-muted)">Available for</h3>
+      <ul class="plain small">
+        {% for service in services %}<li style="margin-bottom:.4rem">
+          <a href="{{ service.get_absolute_url }}">{{ service.name }}</a>
+          <span class="muted">· {{ service.duration_minutes|duration }}</span>
+        </li>{% endfor %}
+      </ul>
+    </aside>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}{% load astro_extras %}
+{% block title %}{{ service.name }} — {{ site.name }}{% endblock %}
+{% block description %}{{ service.tagline }}{% endblock %}
+
+{% block content %}
+<section class="section wrap">
+  <p class="small"><a href="{% url 'service_list' %}">← All consultations</a></p>
+
+  <div class="hero-grid" style="align-items:start;margin-top:1.5rem">
+    <div>
+      <p style="font-size:2.6rem;margin:0 0 .5rem">{{ service.icon }}</p>
+      <h1>{{ service.name }}</h1>
+      <p class="lede muted">{{ service.tagline }}</p>
+      <div class="prose" style="margin-top:1.75rem">{{ service.description|linebreaks }}</div>
+
+      {% if service.requires_birth_details %}
+        <div class="card" style="margin-top:2rem">
+          <h3>What to have ready</h3>
+          <ul class="muted">
+            <li>Your date of birth</li>
+            <li>Your time of birth, as precisely as you can find it — a birth certificate or hospital record is ideal</li>
+            <li>Your place of birth (city and country)</li>
+          </ul>
+          <p class="small muted" style="margin:0">If your birth time is unknown, say so when booking. The reading is still possible, but the ascendant and house placements become approximate.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <aside class="card">
+      <div class="meta-row" style="margin:0;padding:0;border:0">
+        <div><span>Price</span><strong style="font-size:1.5rem">{{ service.price|rupees }}</strong></div>
+      </div>
+      <div class="meta-row">
+        <div><span>Duration</span><strong>{{ service.duration_minutes|duration }}</strong></div>
+        <div><span>Format</span><strong style="font-size:.95rem">Call, video or chat</strong></div>
+      </div>
+      <a class="btn btn-primary" style="margin-top:1.5rem;width:100%;text-align:center"
+         href="{% url 'book' %}?service={{ service.slug }}">Book this session</a>
+      <p class="small muted" style="margin-top:1rem">You will not be charged now — the desk confirms a slot with you first.</p>
+
+      {% if astrologers %}
+        <h3 style="margin-top:2rem;font-size:.8rem;text-transform:uppercase;letter-spacing:.14em;color:var(--text-muted)">Available readers</h3>
+        <ul class="plain small">
+          {% for astrologer in astrologers %}
+            <li style="margin-bottom:.5rem">
+              <a href="{{ astrologer.get_absolute_url }}">{{ astrologer.name }}</a>
+              <span class="muted">· {{ astrologer.years_experience }} yrs</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </aside>
+  </div>
+</section>
+{% endblock %}

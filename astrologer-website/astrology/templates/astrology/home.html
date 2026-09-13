@@ -1,0 +1,137 @@
+{% extends "base.html" %}{% load astro_extras humanize %}
+
+{% block content %}
+<section class="hero wrap">
+  <div class="hero-grid">
+    <div>
+      <p class="eyebrow">Vedic astrology · since 2009</p>
+      <h1>Guidance that respects<br>your judgement.</h1>
+      <p class="lede">
+        We read charts carefully and explain them plainly. No fear-selling, no
+        endless remedies — just an experienced practitioner, your chart, and an
+        honest conversation about what it does and does not say.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="{% url 'book' %}">Book a consultation</a>
+        <a class="btn btn-ghost" href="{% url 'horoscope_index' %}">Read today's horoscope</a>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><strong>18,000+</strong><span>Consultations completed</span></div>
+        <div class="stat"><strong>4.8 / 5</strong><span>Average client rating</span></div>
+        <div class="stat"><strong>8</strong><span>Languages spoken</span></div>
+      </div>
+    </div>
+
+    <aside class="hero-card">
+      <p class="eyebrow">The sun is currently in</p>
+      <p class="sign-symbol">{{ sign_of_today.symbol }}</p>
+      <h2>{{ sign_of_today.name }} <span class="muted small">· {{ sign_of_today.vedic_name }}</span></h2>
+      <p class="muted small">{{ sign_of_today.date_range }} · {{ sign_of_today.element }} · ruled by {{ sign_of_today.ruling_planet }}</p>
+      <p>{{ featured_reading.general }}</p>
+      <a class="btn btn-ghost btn-sm" href="{% url 'horoscope_detail' sign_of_today.slug %}">Full {{ sign_of_today.name }} reading</a>
+    </aside>
+  </div>
+</section>
+
+<section class="section wrap">
+  <div class="section-head">
+    <p class="eyebrow">Consultations</p>
+    <h2>Pick the session that fits your question</h2>
+    <p class="muted">Every session ends with a recording and a written summary, so you are not relying on memory afterwards.</p>
+  </div>
+  <div class="grid grid-4">
+    {% for service in services %}
+      <a class="card card-link" href="{{ service.get_absolute_url }}">
+        <p style="font-size:1.9rem;margin:0 0 .5rem">{{ service.icon }}</p>
+        <h3>{{ service.name }}</h3>
+        <p class="muted small">{{ service.tagline }}</p>
+        <p class="small"><strong class="rating">{{ service.price|rupees }}</strong>
+           <span class="muted">· {{ service.duration_minutes|duration }}</span></p>
+      </a>
+    {% empty %}
+      <p class="muted">Services will appear here once the desk publishes them.</p>
+    {% endfor %}
+  </div>
+  <p style="margin-top:1.75rem"><a href="{% url 'service_list' %}">See all consultations →</a></p>
+</section>
+
+<section class="section-tight wrap">
+  <div class="section-head">
+    <p class="eyebrow">Practitioners</p>
+    <h2>Who you will actually be speaking to</h2>
+  </div>
+  <div class="grid grid-3">
+    {% for astrologer in astrologers %}
+      <a class="card card-link" href="{{ astrologer.get_absolute_url }}">
+        <div class="astro-head">
+          {% if astrologer.photo_url %}
+            <img class="avatar" src="{{ astrologer.photo_url }}" alt="">
+          {% else %}
+            <div class="avatar" aria-hidden="true">{{ astrologer.initials }}</div>
+          {% endif %}
+          <div>
+            <h3>{{ astrologer.name }}</h3>
+            <p class="small muted" style="margin:0">
+              <span class="rating">{{ astrologer.rating|stars }}</span>
+              {{ astrologer.years_experience }} yrs
+            </p>
+          </div>
+        </div>
+        <p class="muted small">{{ astrologer.headline }}</p>
+        <p>{% for spec in astrologer.specialisations.all %}<span class="tag">{{ spec.name }}</span>{% endfor %}</p>
+      </a>
+    {% endfor %}
+  </div>
+  <p style="margin-top:1.75rem"><a href="{% url 'astrologer_list' %}">Browse all astrologers →</a></p>
+</section>
+
+<section class="section wrap">
+  <div class="section-head">
+    <p class="eyebrow">Daily readings</p>
+    <h2>Today's horoscope, all twelve signs</h2>
+  </div>
+  <div class="sign-grid">
+    {% for sign in signs %}
+      <a class="sign-chip" href="{% url 'horoscope_detail' sign.slug %}">
+        <span class="glyph" aria-hidden="true">{{ sign.symbol }}</span>
+        <span><strong>{{ sign.name }}</strong><small>{{ sign.date_range }}</small></span>
+      </a>
+    {% endfor %}
+  </div>
+  <p style="margin-top:1.5rem" class="muted small">
+    Not sure of your sign? <a href="{% url 'find_my_sign' %}">Look it up from your date of birth</a>.
+  </p>
+</section>
+
+{% if testimonials %}
+<section class="section-tight wrap">
+  <div class="section-head">
+    <p class="eyebrow">In their words</p>
+    <h2>What clients say afterwards</h2>
+  </div>
+  <div class="grid grid-3">
+    {% for testimonial in testimonials %}
+      <blockquote class="card" style="margin:0">
+        <p class="rating">{{ testimonial.stars }}</p>
+        <p>“{{ testimonial.quote }}”</p>
+        <footer class="small muted">
+          — {{ testimonial.client_name }}{% if testimonial.location %}, {{ testimonial.location }}{% endif %}
+          {% if testimonial.astrologer %}<br>read by {{ testimonial.astrologer.name }}{% endif %}
+        </footer>
+      </blockquote>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="section wrap">
+  <div class="card center" style="padding:3rem 2rem">
+    <h2>Ready when you are</h2>
+    <p class="muted" style="max-width:52ch;margin-inline:auto">
+      Sessions run daily between 8:00 and 21:00 IST, by phone, video or chat.
+      Tell us what you would like to look at and we will match you with the right reader.
+    </p>
+    <a class="btn btn-primary" href="{% url 'book' %}">Request a consultation</a>
+  </div>
+</section>
+{% endblock %}

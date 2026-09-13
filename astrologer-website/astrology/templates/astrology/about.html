@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}About — {{ site.name }}{% endblock %}
+{% block description %}How we work, what we promise, and what astrology can and cannot tell you.{% endblock %}
+
+{% block content %}
+<section class="section wrap">
+  <div class="section-head">
+    <p class="eyebrow">About us</p>
+    <h1>How we work</h1>
+  </div>
+
+  <div class="hero-grid" style="align-items:start">
+    <div class="prose">
+      <p>
+        {{ site.name }} is a small practice. Four readers, one desk, and a preference
+        for saying less rather than more. Most of our clients come to us at a
+        decision point — a job, a match, a move — and what they usually need is a
+        careful second perspective rather than a prediction.
+      </p>
+
+      <h2>What a session is like</h2>
+      <p>
+        You send your birth details and your question ahead of time, so the reader
+        has already cast and studied your chart before you speak. The session
+        itself is a conversation. You will be asked questions as often as you ask
+        them. Afterwards you get a recording and a written summary, because almost
+        nobody remembers the second half of a reading.
+      </p>
+
+      <h2>What we will not do</h2>
+      <ul class="muted">
+        <li>Predict a death, a diagnosis or a legal outcome.</li>
+        <li>Sell you a gemstone, a yantra or a puja as a condition of the reading.</li>
+        <li>Tell you a chart is cursed, or that a problem needs repeat sessions to clear.</li>
+        <li>Give advice that belongs to a doctor, a lawyer, a therapist or an accountant.</li>
+      </ul>
+      <p>
+        If a reader suggests a remedy, it will be something simple, optional and
+        free or near-free. That is a house rule, not a preference.
+      </p>
+
+      <h2>Being straight about what this is</h2>
+      <p>
+        Astrology is a symbolic tradition with a long history and no established
+        physical mechanism. We take it seriously as a framework for reflection and
+        we are careful with it, but we are not going to tell you it is a science.
+        Clients who get the most out of a reading treat it as a structured way of
+        thinking about their own situation — which is, in our experience, where its
+        real value sits.
+      </p>
+    </div>
+
+    <aside>
+      <div class="card">
+        <h3>The practice</h3>
+        <ul class="plain small">
+          {% for astrologer in astrologers %}
+            <li style="margin-bottom:.7rem">
+              <a href="{{ astrologer.get_absolute_url }}">{{ astrologer.name }}</a>
+              <br><span class="muted">{{ astrologer.headline }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="card" style="margin-top:1.5rem">
+        <h3>Reach the desk</h3>
+        <p class="small"><a href="mailto:{{ site.email }}">{{ site.email }}</a><br>{{ site.phone }}</p>
+        <p class="small muted">{{ site.hours }}</p>
+        <a class="btn btn-primary btn-sm" href="{% url 'book' %}">Book a consultation</a>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}

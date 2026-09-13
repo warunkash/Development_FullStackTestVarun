@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ sign.name }} horoscope for {{ day|date:"j F Y" }} — {{ site.name }}{% endblock %}
+{% block description %}{{ sign.name }} ({{ sign.date_range }}): today's reading for love, career and health, plus compatibility.{% endblock %}
+
+{% block content %}
+<section class="section wrap">
+  <p class="small"><a href="{% url 'horoscope_index' %}">← All signs</a></p>
+
+  <div class="hero-grid" style="align-items:start;margin-top:1.5rem">
+    <div>
+      <div style="display:flex;align-items:center;gap:1.1rem;margin-bottom:1rem">
+        <span style="font-size:3.4rem;color:var(--gold);line-height:1" aria-hidden="true">{{ sign.symbol }}</span>
+        <div>
+          <h1 style="margin-bottom:.15rem">{{ sign.name }}</h1>
+          <p class="muted" style="margin:0">{{ sign.date_range }} · {{ sign.vedic_name }}</p>
+        </div>
+      </div>
+
+      <p>{% for trait in sign.traits %}<span class="tag">{{ trait }}</span>{% endfor %}</p>
+      <p class="muted">{{ sign.summary }}</p>
+
+      <div class="card" style="margin-top:2rem">
+        <p class="eyebrow">{{ day|date:"l, j F Y" }}{% if reading.is_editorial %} · written by our desk{% endif %}</p>
+        <p style="font-size:1.05rem">{{ reading.general }}</p>
+
+        <div class="reading-grid" style="margin-top:1.5rem">
+          <div class="reading-block"><h4>Love</h4><p>{{ reading.love }}</p></div>
+          <div class="reading-block"><h4>Career</h4><p>{{ reading.career }}</p></div>
+          <div class="reading-block"><h4>Health</h4><p>{{ reading.health }}</p></div>
+        </div>
+
+        <div class="meta-row">
+          <div><span>Mood</span><strong>{{ reading.mood }}</strong></div>
+          <div><span>Lucky number</span><strong>{{ reading.lucky_number }}</strong></div>
+          <div><span>Lucky colour</span><strong>{{ reading.lucky_colour }}</strong></div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:2.5rem">The next few days</h2>
+      <div class="grid grid-3">
+        {% for ahead in upcoming %}
+          <article class="card">
+            <p class="eyebrow">{{ ahead.day|date:"D, j M" }}</p>
+            <p class="small">{{ ahead.general }}</p>
+            <p class="small muted" style="margin:0">Mood: {{ ahead.mood }} · Number: {{ ahead.lucky_number }}</p>
+          </article>
+        {% endfor %}
+      </div>
+    </div>
+
+    <aside>
+      <div class="card">
+        <h3>{{ sign.name }} at a glance</h3>
+        <div class="meta-row" style="margin:0;padding:0;border:0">
+          <div><span>Element</span><strong>{{ sign.element }}</strong></div>
+          <div><span>Modality</span><strong>{{ sign.modality }}</strong></div>
+        </div>
+        <div class="meta-row">
+          <div><span>Ruling planet</span><strong>{{ sign.ruling_planet }}</strong></div>
+        </div>
+        <div class="meta-row">
+          <div><span>Vedic name</span><strong>{{ sign.vedic_name }}</strong></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1.5rem">
+        <h3>Most compatible with</h3>
+        <ul class="plain small">
+          {% for other, score in compatible %}
+            <li style="display:flex;justify-content:space-between;gap:1rem;margin-bottom:.55rem">
+              <a href="{% url 'horoscope_detail' other.slug %}">{{ other.symbol }} {{ other.name }}</a>
+              <strong class="rating">{{ score }}%</strong>
+            </li>
+          {% endfor %}
+        </ul>
+        <p class="small muted" style="margin:0">Element and modality compatibility only — a full synastry read needs both charts.</p>
+      </div>
+
+      <div class="card" style="margin-top:1.5rem">
+        <h3>Want the real thing?</h3>
+        <p class="small muted">A sun-sign column is a broad brush. Your own chart is far more specific.</p>
+        <a class="btn btn-primary btn-sm" href="{% url 'book' %}?service=birth-chart-reading">Book a chart reading</a>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}

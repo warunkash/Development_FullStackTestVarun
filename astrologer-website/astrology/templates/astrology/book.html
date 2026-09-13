@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Book a consultation — {{ site.name }}{% endblock %}
+{% block description %}Request a consultation: choose your astrologer, service and a time that suits you.{% endblock %}
+
+{% block content %}
+<section class="section wrap">
+  <div class="section-head">
+    <p class="eyebrow">Booking request</p>
+    <h1>Book a consultation</h1>
+    <p class="muted">
+      Nothing is charged at this step. The desk reviews your request, confirms the
+      slot by e-mail and sends payment details then.
+      {% if not user.is_authenticated %}
+        <br><a href="{% url 'login' %}">Sign in</a> or <a href="{% url 'signup' %}">create an account</a> to track your bookings — or continue as a guest.
+      {% endif %}
+    </p>
+  </div>
+
+  <form method="post" class="card form-card" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="message message-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <fieldset>
+      <legend>The session</legend>
+      <div class="form-row">
+        {% for field in form %}{% if field.name in "astrologer,service" %}
+          <div class="field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<small class="helptext">{{ field.help_text }}</small>{% endif %}
+            {{ field.errors }}
+          </div>
+        {% endif %}{% endfor %}
+      </div>
+      <div class="form-row">
+        {% for field in form %}{% if field.name in "preferred_datetime,mode" %}
+          <div class="field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<small class="helptext">{{ field.help_text }}</small>{% endif %}
+            {{ field.errors }}
+          </div>
+        {% endif %}{% endfor %}
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>About you</legend>
+      <div class="form-row">
+        {% for field in form %}{% if field.name in "full_name,email" %}
+          <div class="field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}{{ field.errors }}
+          </div>
+        {% endif %}{% endfor %}
+      </div>
+      {% for field in form %}{% if field.name == "phone" %}
+        <div class="field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}{{ field.errors }}
+        </div>
+      {% endif %}{% endfor %}
+    </fieldset>
+
+    <fieldset>
+      <legend>Birth details</legend>
+      <p class="small muted">Required for chart-based readings. Leave blank for tarot and Vastu sessions.</p>
+      <div class="form-row">
+        {% for field in form %}{% if field.name in "birth_date,birth_time" %}
+          <div class="field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<small class="helptext">{{ field.help_text }}</small>{% endif %}
+            {{ field.errors }}
+          </div>
+        {% endif %}{% endfor %}
+      </div>
+      {% for field in form %}{% if field.name == "birth_place" %}
+        <div class="field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}{{ field.errors }}
+        </div>
+      {% endif %}{% endfor %}
+    </fieldset>
+
+    <fieldset>
+      <legend>Your question</legend>
+      {% for field in form %}{% if field.name == "question" %}
+        <div class="field" style="margin:0">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<small class="helptext">{{ field.help_text }}</small>{% endif %}
+          {{ field.errors }}
+        </div>
+      {% endif %}{% endfor %}
+    </fieldset>
+
+    <button type="submit" class="btn btn-primary">Send request</button>
+    <p class="small muted" style="margin-top:1rem">{{ disclaimer }}</p>
+  </form>
+</section>
+{% endblock %}
