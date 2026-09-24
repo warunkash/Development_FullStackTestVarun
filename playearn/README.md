@@ -29,7 +29,8 @@ python3 -m http.server 8080
 ```
 
 On the phone, open the browser menu → **Add to Home screen** to install it like an app.
-To use it anywhere, host the folder on any static host (GitHub Pages, Netlify, Vercel).
+**Live version:** https://warunkash.github.io/Development_FullStackTestVarun/. It is deployed by
+`.github/workflows/deploy-playearn.yml` on every push to `master` that touches `playearn/`.
 
 ## ⚠️ About the "paid" part
 
