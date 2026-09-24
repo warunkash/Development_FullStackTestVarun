@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1b1440" />
+  <meta name="description" content="Play quick brain games, earn coins, and skip the endless scroll." />
+  <title>PlayEarn</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">🎯 PlayEarn</div>
+    <button class="coin-pill" data-nav="wallet" aria-label="Open wallet">
+      🪙 <span id="coinCount">0</span>
+    </button>
+  </header>
+
+  <main id="app">
+    <!-- HOME -->
+    <section id="view-home" class="view active">
+      <div class="card wallet-card">
+        <div class="muted">Your balance</div>
+        <div class="big"><span id="homeCoins">0</span> coins</div>
+        <div class="muted">≈ <span id="homeValue">₹0.00</span> <small>(demo rate)</small></div>
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span>Today: <b id="todayEarned">0</b> / <span id="dailyCap">0</span></span>
+            <span>🔥 <b id="streak">0</b> day streak</span>
+          </div>
+          <div class="progress"><div id="todayBar"></div></div>
+        </div>
+      </div>
+
+      <div class="card bonus-card">
+        <div>
+          <div class="title">Daily bonus</div>
+          <div class="muted" id="bonusText">Come back every day to grow your streak.</div>
+        </div>
+        <button id="claimBonus" class="btn">Claim</button>
+      </div>
+
+      <h2 class="section-title">Play &amp; earn</h2>
+      <div class="grid" id="gameGrid"></div>
+
+      <div class="card tip">
+        💡 Every game is 1–2 minutes of actual thinking. Earnings are capped per day so this
+        stays a healthy break, not another endless feed.
+      </div>
+    </section>
+
+    <!-- GAME -->
+    <section id="view-game" class="view">
+      <div class="game-head">
+        <button class="btn ghost small" id="quitGame">← Back</button>
+        <div id="gameTitle" class="title"></div>
+        <div id="gameHud" class="hud"></div>
+      </div>
+      <div id="stage" class="stage"></div>
+    </section>
+
+    <!-- WALLET -->
+    <section id="view-wallet" class="view">
+      <div class="card wallet-card">
+        <div class="muted">Balance</div>
+        <div class="big"><span id="walletCoins">0</span> coins</div>
+        <div class="muted">≈ <span id="walletValue">₹0.00</span> · Lifetime <span id="lifetime">0</span></div>
+      </div>
+
+      <div class="card">
+        <div class="title">Redeem</div>
+        <p class="muted">Minimum <b id="minRedeem"></b> coins. Enter a UPI ID or PayPal email.</p>
+        <form id="redeemForm" class="stack">
+          <input id="payoutId" required placeholder="yourname@upi or you@email.com" autocomplete="off" />
+          <button class="btn" type="submit">Request payout</button>
+        </form>
+        <p class="notice">
+          ⚠️ This build is a <b>standalone demo</b>: coins are stored on your phone only and no money
+          is sent. Real payouts need a sponsor/ad budget and a payment backend — see
+          <code>playearn/README.md</code>. For real money today, check the <b>Real $</b> tab.
+        </p>
+      </div>
+
+      <h2 class="section-title">Activity</h2>
+      <ul id="history" class="list"></ul>
+    </section>
+
+    <!-- REAL MONEY -->
+    <section id="view-real" class="view">
+      <div class="card">
+        <div class="title">Get paid for real, from your phone</div>
+        <p class="muted">
+          Legit apps that pay for short, engaging tasks. Payouts are small (think coffee money,
+          not a salary) — anything promising big money for tapping is a scam.
+        </p>
+      </div>
+      <ul class="list real-list" id="realList"></ul>
+      <div class="card tip">
+        🛡️ Never pay a fee to "unlock" earnings, never share OTPs, and be wary of apps that only
+        pay out after an impossibly high threshold.
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottombar">
+    <button data-nav="home" class="active">🎮<span>Play</span></button>
+    <button data-nav="wallet">👛<span>Wallet</span></button>
+    <button data-nav="real">💸<span>Real $</span></button>
+  </nav>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div id="modalBody"></div>
+      <button class="btn" id="modalClose">OK</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
