@@ -210,13 +210,19 @@ class MyBookingsTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn(reverse("login"), response.url)
 
-    def test_shows_own_bookings_including_guest_ones_matched_by_email(self):
+    def test_shows_bookings_attached_to_the_account(self):
         linked = self._booking(user=self.user)
-        guest = self._booking()  # same e-mail, no account attached
         self.client.force_login(self.user)
         response = self.client.get(reverse("my_bookings"))
         self.assertContains(response, linked.reference)
-        self.assertContains(response, guest.reference)
+
+    def test_does_not_claim_guest_bookings_by_email(self):
+        """Sign-up never verifies e-mail, so it cannot grant access to a guest's
+        booking. See BookingPrivacyTests in test_regressions.py."""
+        guest = self._booking()  # same e-mail, no account attached
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("my_bookings"))
+        self.assertNotContains(response, guest.reference)
 
     def test_does_not_leak_other_peoples_bookings(self):
         other = self._booking(email="someone.else@example.com", full_name="Someone Else")

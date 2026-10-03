@@ -6,7 +6,8 @@ SITE = {
     "name": "Nakshatra",
     "tagline": "Vedic guidance, read carefully and explained plainly.",
     "email": "desk@nakshatra.example",
-    "phone": "+91 80 4000 1234",
+    # Placeholder in a reserved, non-routable range — replace before any real use.
+    "phone": "+91 5550 000 000",
     "hours": "Every day, 8:00 – 21:00 IST",
 }
 
