@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Signed out — {{ site.name }}{% endblock %}
+
+{% block content %}
+<section class="section wrap">
+  <div class="card center form-card" style="max-width:460px;margin-inline:auto;padding:3rem 2rem">
+    <p style="font-size:2.4rem;margin:0 0 .5rem">✦</p>
+    <h1 style="font-size:1.8rem">You're signed out</h1>
+    <p class="muted">Thank you for visiting. Your bookings are safe and will be here when you return.</p>
+    <a class="btn btn-primary" href="{% url 'home' %}">Back to the site</a>
+  </div>
+</section>
+{% endblock %}

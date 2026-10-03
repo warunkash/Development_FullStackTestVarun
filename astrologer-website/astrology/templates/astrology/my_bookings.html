@@ -1,0 +1,43 @@
+{% extends "base.html" %}{% load astro_extras %}
+{% block title %}My bookings — {{ site.name }}{% endblock %}
+
+{% block content %}
+<section class="section wrap">
+  <div class="section-head">
+    <p class="eyebrow">Your account</p>
+    <h1>My bookings</h1>
+    <p class="muted">Requests placed while signed in, plus any made as a guest using {{ user.email|default:"your account e-mail" }}.</p>
+  </div>
+
+  {% if bookings %}
+    <div class="card table-scroll">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Reference</th><th>Session</th><th>Astrologer</th>
+            <th>Requested for</th><th>Mode</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in bookings %}
+            <tr>
+              <td><a href="{{ booking.get_absolute_url }}">{{ booking.reference }}</a></td>
+              <td>{{ booking.service.name }}<br><span class="muted small">{{ booking.service.price|rupees }}</span></td>
+              <td>{{ booking.astrologer.name }}</td>
+              <td>{{ booking.preferred_datetime|date:"j M Y, H:i" }}
+                  {% if booking.is_upcoming %}<br><span class="muted small">upcoming</span>{% endif %}</td>
+              <td>{{ booking.get_mode_display }}</td>
+              <td><span class="status status-{{ booking.status }}">{{ booking.get_status_display }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="card center" style="padding:3rem 2rem">
+      <p class="muted">You have no bookings yet.</p>
+      <a class="btn btn-primary" href="{% url 'book' %}">Book your first consultation</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

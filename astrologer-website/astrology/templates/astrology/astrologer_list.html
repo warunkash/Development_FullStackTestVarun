@@ -1,0 +1,69 @@
+{% extends "base.html" %}{% load astro_extras %}
+{% block title %}Our astrologers — {{ site.name }}{% endblock %}
+{% block description %}Browse experienced Vedic astrologers, tarot readers, numerologists and Vastu consultants, and book a session.{% endblock %}
+
+{% block content %}
+<section class="section wrap">
+  <div class="section-head">
+    <p class="eyebrow">Practitioners</p>
+    <h1>Our astrologers</h1>
+    <p class="muted">Each reader here works full time in their discipline. Rates are indicative — the package price on a service page is what you actually pay.</p>
+  </div>
+
+  <form method="get" class="card" style="margin-bottom:2rem">
+    <div class="form-row">
+      <div class="field" style="margin:0">
+        <label for="q">Search by name, language or speciality</label>
+        <input type="text" id="q" name="q" value="{{ query }}" placeholder="e.g. Tamil, tarot, Vastu">
+      </div>
+      <div class="field" style="margin:0">
+        <label for="speciality">Filter by speciality</label>
+        <select id="speciality" name="speciality">
+          <option value="">All specialities</option>
+          {% for spec in specialisations %}
+            <option value="{{ spec.slug }}" {% if spec.slug == speciality %}selected{% endif %}>{{ spec.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:1.25rem;display:flex;gap:.75rem;flex-wrap:wrap">
+      <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+      {% if query or speciality %}<a class="btn btn-ghost btn-sm" href="{% url 'astrologer_list' %}">Clear</a>{% endif %}
+    </div>
+  </form>
+
+  <div class="grid grid-2">
+    {% for astrologer in astrologers %}
+      <article class="card">
+        <div class="astro-head">
+          {% if astrologer.photo_url %}
+            <img class="avatar" src="{{ astrologer.photo_url }}" alt="">
+          {% else %}
+            <div class="avatar" aria-hidden="true">{{ astrologer.initials }}</div>
+          {% endif %}
+          <div>
+            <h3 style="margin-bottom:.15rem"><a href="{{ astrologer.get_absolute_url }}">{{ astrologer.name }}</a></h3>
+            <p class="small muted" style="margin:0">
+              <span class="rating">{{ astrologer.rating|stars }}</span> {{ astrologer.rating }}
+              · {{ astrologer.years_experience }} years · {{ astrologer.consultations_done }} sessions
+            </p>
+          </div>
+        </div>
+        <p>{{ astrologer.headline }}</p>
+        <p>{% for spec in astrologer.specialisations.all %}<span class="tag">{{ spec.name }}</span>{% endfor %}</p>
+        <p class="small muted">Speaks {{ astrologer.languages }} · from {{ astrologer.rate_per_minute|rupees }}/min</p>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem">
+          <a class="btn btn-ghost btn-sm" href="{{ astrologer.get_absolute_url }}">Read profile</a>
+          {% if astrologer.is_accepting_bookings %}
+            <a class="btn btn-primary btn-sm" href="{% url 'book' %}?astrologer={{ astrologer.slug }}">Book</a>
+          {% else %}
+            <span class="tag">Not taking bookings</span>
+          {% endif %}
+        </div>
+      </article>
+    {% empty %}
+      <p class="muted">No astrologers match that search. <a href="{% url 'astrologer_list' %}">Show everyone</a>.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

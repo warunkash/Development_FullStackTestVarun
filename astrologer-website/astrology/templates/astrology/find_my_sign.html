@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Find my zodiac sign — {{ site.name }}{% endblock %}
+{% block description %}Enter your date of birth to find your sun sign and read today's horoscope.{% endblock %}
+
+{% block content %}
+<section class="section wrap">
+  <div class="section-head">
+    <p class="eyebrow">Sun sign lookup</p>
+    <h1>Find your sign</h1>
+    <p class="muted">Enter your date of birth. This gives your tropical sun sign — the one a daily horoscope column refers to.</p>
+  </div>
+
+  <form method="get" class="card form-card">
+    <div class="field">
+      <label for="dob">Date of birth</label>
+      <input type="date" id="dob" name="dob" value="{{ dob }}" required>
+      {% if error %}<p class="errorlist" style="color:var(--err);margin:.4rem 0 0">{{ error }}</p>{% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary">Find my sign</button>
+  </form>
+
+  {% if result %}
+    <div class="card form-card" style="margin-top:2rem">
+      <p class="eyebrow">Your sun sign is</p>
+      <div style="display:flex;align-items:center;gap:1.1rem">
+        <span style="font-size:3.2rem;color:var(--gold);line-height:1" aria-hidden="true">{{ result.symbol }}</span>
+        <div>
+          <h2 style="margin-bottom:.15rem">{{ result.name }}</h2>
+          <p class="muted" style="margin:0">{{ result.date_range }} · {{ result.vedic_name }} · {{ result.element }}</p>
+        </div>
+      </div>
+      <p style="margin-top:1.25rem">{{ result.summary }}</p>
+      <p>{% for trait in result.traits %}<span class="tag">{{ trait }}</span>{% endfor %}</p>
+      <a class="btn btn-primary btn-sm" href="{% url 'horoscope_detail' result.slug %}">Read today's {{ result.name }} horoscope</a>
+    </div>
+  {% endif %}
+
+  <p class="muted small" style="margin-top:2rem;max-width:70ch">
+    Note: Vedic (sidereal) astrology uses a different zodiac and may place you in the previous sign.
+    Our consultations are read sidereally from your full chart — this lookup is for the daily column only.
+  </p>
+</section>
+{% endblock %}

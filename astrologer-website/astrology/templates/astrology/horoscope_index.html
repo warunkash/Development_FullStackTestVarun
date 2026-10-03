@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Daily horoscope for {{ day|date:"j F Y" }} — {{ site.name }}{% endblock %}
+{% block description %}Today's horoscope for all twelve zodiac signs — love, career, health, mood and lucky number.{% endblock %}
+
+{% block content %}
+<section class="section wrap">
+  <div class="section-head">
+    <p class="eyebrow">{{ day|date:"l, j F Y" }}</p>
+    <h1>Today's horoscope</h1>
+    <p class="muted">A short read for every sign. For the fuller version — including the next three days and compatibility — open any sign.</p>
+  </div>
+
+  <div class="grid grid-3">
+    {% for reading in readings %}
+      <article class="card">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+          <span class="glyph" style="font-size:1.9rem;color:var(--gold)" aria-hidden="true">{{ reading.sign.symbol }}</span>
+          <div>
+            <h3 style="margin:0"><a href="{% url 'horoscope_detail' reading.sign.slug %}">{{ reading.sign.name }}</a></h3>
+            <p class="small muted" style="margin:0">{{ reading.sign.date_range }}</p>
+          </div>
+        </div>
+        <p class="small">{{ reading.general }}</p>
+        <div class="meta-row" style="margin-top:.75rem;padding-top:.9rem">
+          <div><span>Mood</span><strong style="font-size:.95rem">{{ reading.mood }}</strong></div>
+          <div><span>Number</span><strong style="font-size:.95rem">{{ reading.lucky_number }}</strong></div>
+          <div><span>Colour</span><strong style="font-size:.95rem">{{ reading.lucky_colour }}</strong></div>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+
+  <p class="muted small" style="margin-top:2rem">
+    Don't know your sign? <a href="{% url 'find_my_sign' %}">Find it from your date of birth</a>.
+  </p>
+</section>
+{% endblock %}

@@ -1,0 +1,235 @@
+/* Nakshatra — a calm night-sky palette with warm gold accents. */
+
+:root {
+  --ink:        #0b1020;
+  --ink-2:      #131a30;
+  --ink-3:      #1b2440;
+  --line:       #2a3454;
+  --text:       #e8ebf5;
+  --text-muted: #9aa5c4;
+  --gold:       #e0b357;
+  --gold-soft:  #f0d195;
+  --violet:     #8b7fd4;
+  --ok:         #4ade80;
+  --warn:       #fbbf24;
+  --err:        #f87171;
+  --radius:     14px;
+  --wrap:       1120px;
+  --shadow:     0 18px 40px -22px rgba(0, 0, 0, .85);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1100px 600px at 12% -10%, #1d2547 0%, transparent 60%),
+    radial-gradient(900px 500px at 88% 0%, #241f44 0%, transparent 55%),
+    var(--ink);
+  color: var(--text);
+  font: 16px/1.65 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  line-height: 1.2; margin: 0 0 .5em; font-weight: 600; letter-spacing: -.01em;
+  text-wrap: balance; /* avoids a single orphaned word on the last line */
+}
+h1 { font-size: clamp(2rem, 4.5vw, 3.1rem); }
+h2 { font-size: clamp(1.5rem, 3vw, 2.1rem); }
+h3 { font-size: 1.15rem; }
+p  { margin: 0 0 1rem; }
+a  { color: var(--gold-soft); text-decoration-color: rgba(224, 179, 87, .4); text-underline-offset: 3px; }
+a:hover { color: var(--gold); }
+
+.wrap { width: min(var(--wrap), 100% - 2.5rem); margin-inline: auto; }
+.muted { color: var(--text-muted); }
+.small { font-size: .875rem; }
+.plain { list-style: none; margin: 0; padding: 0; }
+.center { text-align: center; }
+
+.skip-link {
+  position: absolute; left: -9999px; top: 0; background: var(--gold);
+  color: var(--ink); padding: .6rem 1rem; z-index: 100; border-radius: 0 0 8px 0;
+}
+.skip-link:focus { left: 0; }
+
+/* --- Header ---------------------------------------------------------- */
+
+.site-header {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(11, 16, 32, .88);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.header-inner { display: flex; align-items: center; gap: 1.5rem; padding: .85rem 0; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: .65rem; text-decoration: none; color: var(--text); margin-right: auto; }
+.brand-mark { color: var(--gold); font-size: 1.6rem; }
+.brand-text strong { display: block; font-size: 1.2rem; letter-spacing: .02em; }
+.brand-text small { display: block; color: var(--text-muted); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; }
+
+.site-nav { display: flex; align-items: center; gap: 1.35rem; flex-wrap: wrap; }
+.site-nav a { color: var(--text); text-decoration: none; font-size: .95rem; }
+.site-nav a:hover { color: var(--gold); }
+.nav-toggle-label { display: none; font-size: 1.5rem; cursor: pointer; padding: .2rem .5rem; }
+
+.inline-form { display: inline; margin: 0; }
+.link-button {
+  background: none; border: 0; color: var(--text); font: inherit;
+  font-size: .95rem; cursor: pointer; padding: 0;
+}
+.link-button:hover { color: var(--gold); }
+
+@media (max-width: 860px) {
+  .nav-toggle-label { display: block; }
+  .site-nav { display: none; width: 100%; flex-direction: column; align-items: flex-start; gap: .9rem; padding-bottom: .75rem; }
+  .nav-toggle:checked ~ .site-nav { display: flex; }
+}
+
+/* --- Buttons --------------------------------------------------------- */
+
+.btn {
+  display: inline-block; padding: .78rem 1.5rem; border-radius: 999px;
+  font-size: .95rem; font-weight: 600; text-decoration: none; cursor: pointer;
+  border: 1px solid transparent; transition: transform .15s ease, box-shadow .15s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: linear-gradient(135deg, var(--gold), #c9953c); color: #241a05; box-shadow: 0 10px 24px -12px rgba(224,179,87,.9); }
+.btn-primary:hover { color: #241a05; }
+.btn-ghost { border-color: var(--line); color: var(--text); background: rgba(255,255,255,.03); }
+.btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+.btn-sm { padding: .5rem 1.05rem; font-size: .875rem; }
+
+/* --- Messages -------------------------------------------------------- */
+
+.messages { margin-top: 1.25rem; }
+.message { border-radius: 10px; padding: .8rem 1.1rem; border: 1px solid var(--line); background: var(--ink-2); }
+.message-success { border-color: rgba(74,222,128,.45); color: var(--ok); }
+.message-error   { border-color: rgba(248,113,113,.45); color: var(--err); }
+
+/* --- Sections and cards ---------------------------------------------- */
+
+.section { padding: 4.5rem 0; }
+.section-tight { padding: 2.75rem 0; }
+.section-head { max-width: 62ch; margin-bottom: 2.25rem; }
+.eyebrow { color: var(--gold); text-transform: uppercase; letter-spacing: .18em; font-size: .74rem; font-weight: 700; margin-bottom: .6rem; }
+
+.grid { display: grid; gap: 1.5rem; }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grid-4 { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+
+.card {
+  background: linear-gradient(180deg, var(--ink-2), var(--ink-3));
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 1.6rem; box-shadow: var(--shadow);
+}
+.card h3 { margin-bottom: .35rem; }
+.card-link { text-decoration: none; color: inherit; display: block; transition: border-color .15s ease, transform .15s ease; }
+.card-link:hover { border-color: var(--gold); transform: translateY(-3px); color: inherit; }
+
+.tag {
+  display: inline-block; padding: .2rem .7rem; border-radius: 999px;
+  background: rgba(139,127,212,.15); border: 1px solid rgba(139,127,212,.4);
+  color: #c5bdf0; font-size: .76rem; margin: .15rem .25rem .15rem 0;
+}
+.tag-gold { background: rgba(224,179,87,.13); border-color: rgba(224,179,87,.4); color: var(--gold-soft); }
+
+/* --- Hero ------------------------------------------------------------ */
+
+.hero { padding: 4.5rem 0 3.5rem; }
+.hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 3rem; align-items: center; }
+@media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; gap: 2rem; } }
+.hero p.lede { font-size: 1.12rem; color: var(--text-muted); max-width: 54ch; }
+.hero-actions { display: flex; gap: .85rem; flex-wrap: wrap; margin-top: 1.75rem; }
+
+.hero-card { background: linear-gradient(165deg, #1a2242, #241f44); border: 1px solid var(--line); border-radius: 20px; padding: 1.9rem; box-shadow: var(--shadow); }
+.hero-card .sign-symbol { font-size: 3.2rem; color: var(--gold); line-height: 1; }
+
+.stat-row { display: flex; gap: 2.25rem; margin-top: 2.5rem; flex-wrap: wrap; }
+.stat strong { display: block; font-size: 1.75rem; color: var(--gold); }
+.stat span { color: var(--text-muted); font-size: .85rem; }
+
+/* --- Zodiac wheel ---------------------------------------------------- */
+
+.sign-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .85rem; }
+.sign-chip {
+  display: flex; align-items: center; gap: .7rem; padding: .8rem 1rem;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--ink-2);
+  text-decoration: none; color: var(--text); transition: border-color .15s ease, transform .15s ease;
+}
+.sign-chip:hover { border-color: var(--gold); transform: translateY(-2px); color: var(--text); }
+.sign-chip .glyph { font-size: 1.5rem; color: var(--gold); }
+.sign-chip small { display: block; color: var(--text-muted); font-size: .74rem; }
+
+/* --- Reading blocks -------------------------------------------------- */
+
+.reading-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
+.reading-block { border: 1px solid var(--line); border-radius: 12px; padding: 1.1rem 1.25rem; background: rgba(255,255,255,.02); }
+.reading-block h4 { color: var(--gold); font-size: .78rem; text-transform: uppercase; letter-spacing: .14em; margin-bottom: .45rem; }
+.reading-block p { margin: 0; font-size: .95rem; }
+
+.meta-row { display: flex; gap: 1.75rem; flex-wrap: wrap; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
+.meta-row div span { display: block; color: var(--text-muted); font-size: .74rem; text-transform: uppercase; letter-spacing: .12em; }
+.meta-row div strong { color: var(--gold-soft); font-size: 1.05rem; }
+
+/* --- Astrologer cards ------------------------------------------------ */
+
+.avatar {
+  width: 64px; height: 64px; border-radius: 50%; object-fit: cover;
+  border: 2px solid var(--gold); display: grid; place-items: center;
+  background: linear-gradient(135deg, #2a3358, #3b2f5e);
+  color: var(--gold); font-size: 1.3rem; font-weight: 700; flex: none;
+}
+.astro-head { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; }
+.rating { color: var(--gold); letter-spacing: .1em; }
+
+/* --- Forms ----------------------------------------------------------- */
+
+.form-card { max-width: 760px; }
+.field { margin-bottom: 1.25rem; }
+.field label { display: block; font-size: .88rem; color: var(--text-muted); margin-bottom: .4rem; }
+.field-input, input[type="text"], input[type="email"], input[type="password"],
+input[type="date"], input[type="time"], input[type="datetime-local"],
+input[type="tel"], input[type="number"], select, textarea {
+  width: 100%; padding: .72rem .9rem; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--ink); color: var(--text);
+  font: inherit; font-size: .95rem;
+}
+textarea { resize: vertical; }
+.field-input:focus, input:focus, select:focus, textarea:focus {
+  outline: 2px solid rgba(224,179,87,.55); outline-offset: 1px; border-color: var(--gold);
+}
+.field .helptext { display: block; color: var(--text-muted); font-size: .8rem; margin-top: .35rem; }
+.field .errorlist { list-style: none; margin: .4rem 0 0; padding: 0; color: var(--err); font-size: .85rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+@media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 1.5rem; margin: 0 0 1.75rem; }
+legend { padding: 0 .6rem; color: var(--gold); font-size: .8rem; text-transform: uppercase; letter-spacing: .14em; }
+
+/* --- Tables ---------------------------------------------------------- */
+
+.table-scroll { overflow-x: auto; }
+table.data { width: 100%; border-collapse: collapse; font-size: .93rem; min-width: 640px; }
+table.data th, table.data td { padding: .8rem .9rem; text-align: left; border-bottom: 1px solid var(--line); }
+table.data th { color: var(--text-muted); font-size: .76rem; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
+
+.status { padding: .18rem .65rem; border-radius: 999px; font-size: .76rem; font-weight: 600; border: 1px solid; }
+.status-pending   { color: var(--warn); border-color: rgba(251,191,36,.45); }
+.status-confirmed { color: var(--ok);   border-color: rgba(74,222,128,.45); }
+.status-completed { color: #93c5fd;     border-color: rgba(147,197,253,.45); }
+.status-cancelled { color: var(--err);  border-color: rgba(248,113,113,.45); }
+
+/* --- Footer ---------------------------------------------------------- */
+
+.site-footer { border-top: 1px solid var(--line); background: rgba(8, 12, 26, .7); margin-top: 4rem; padding: 3rem 0 2rem; }
+.footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 2.5rem; }
+@media (max-width: 760px) { .footer-grid { grid-template-columns: 1fr; gap: 1.75rem; } }
+.footer-brand { color: var(--gold); font-size: 1.15rem; margin-bottom: .35rem; }
+.site-footer h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .14em; color: var(--text-muted); }
+.site-footer .plain li { margin-bottom: .45rem; }
+.footer-base { margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+.disclaimer { font-size: .84rem; color: var(--text-muted); max-width: 80ch; font-style: italic; }
+
+.prose { max-width: 68ch; }
+.prose p { color: var(--text-muted); }
