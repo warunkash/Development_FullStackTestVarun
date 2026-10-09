@@ -53,7 +53,7 @@
 <body>
 <header>
   <button class="round" id="restart" title="Restart level">&#x21BB;</button>
-  <div><h1 id="lvl" role="button" tabindex="0" title="Select level">Level 1</h1><div class="moves" id="moves">Moves: 0</div></div>
+  <div><h1 id="lvl" role="button" tabindex="0" title="Select level">Level 1</h1><div class="moves"><span id="moves">Moves: 0</span> &middot; <span id="timer">0:00</span></div></div>
   <button class="round" id="menu" title="New random level">&#x23ED;</button>
 </header>
 <main id="board"></main>
@@ -137,7 +137,22 @@ function generate(lv){
   throw new Error('could not generate level');
 }
 
+// Level timer: starts on the first move, stops when the level is solved, pauses while the tab is hidden
+let tAcc = 0, tStart = null, tPaused = false;
+const elapsedMs = () => tAcc + (tStart === null ? 0 : Date.now() - tStart);
+const fmtTime = ms => { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const showTimer = () => { $('timer').textContent = fmtTime(elapsedMs()); };
+function timerReset(){ tAcc = 0; tStart = null; tPaused = false; showTimer(); }
+function timerStart(){ if (tStart === null && !tPaused) tStart = Date.now(); }
+function timerStop(){ if (tStart !== null){ tAcc += Date.now() - tStart; tStart = null; } }
+setInterval(showTimer, 250);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){ if (tStart !== null){ timerStop(); tPaused = true; } }
+  else if (tPaused){ tPaused = false; tStart = Date.now(); }
+});
+
 function start(){
+  timerReset();
   if (level > unlocked){ unlocked = level; try { localStorage.setItem('ballsortUnlocked', unlocked); } catch (e) {} }
   tubes = generate(level); history = []; selected = null; moves = 0; undos = 5; hints = 3; adds = 1; hintMove = null;
   render();
@@ -169,8 +184,9 @@ function tap(i){
   else if (selected === i){ selected = null; }
   else if (canMove(tubes, selected, i)){
     history.push(JSON.stringify(tubes)); applyMove(tubes, selected, i); moves++; selected = null;
+    timerStart();
     render();
-    if (isSolved(tubes)) setTimeout(win, 350); else moveSound();
+    if (isSolved(tubes)){ timerStop(); showTimer(); setTimeout(win, 350); } else moveSound();
     return;
   } else selected = tubes[i].length ? i : null;
   render();
@@ -228,7 +244,8 @@ function win(){
   const prev = best[level];
   const isBest = prev === undefined || moves < prev;
   if (isBest){ best[level] = moves; saveBest(); }
-  $('winMsg').textContent = 'Solved in ' + moves + ' moves' +
+  timerStop(); showTimer();
+  $('winMsg').textContent = 'Solved in ' + moves + ' moves, ' + fmtTime(elapsedMs()) +
     (isBest ? (prev === undefined ? ' \u2013 best score set!' : ' \u2013 new best! (was ' + prev + ')') : ' \u00B7 Best: ' + prev);
   const n = colorsFor(level + 1), harder = n > colorsFor(level);
   $('nextHint').textContent = '\u{1F4A1} Level ' + (level + 1) + ': ' + n + ' colors, ' + (n + 2) + ' tubes' +
