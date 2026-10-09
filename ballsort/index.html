@@ -34,6 +34,7 @@
   .modal { position:fixed; inset:0; background:#000a; display:none; place-items:center; z-index:9; }
   .modal.show { display:grid; }
   .card { background:#12244d; border:2px solid var(--edge); border-radius:20px; padding:28px 36px; text-align:center; }
+  .hint-text { font-size:.9rem; opacity:.9; }
   .card h2 { margin:0 0 6px; font-size:1.8rem; } .card p { margin:0 0 18px; opacity:.8; }
   .btn { background:#2e7dff; color:#fff; border:0; border-radius:999px; padding:12px 28px; font-size:1rem; font-weight:600; cursor:pointer; }
 </style>
@@ -52,7 +53,7 @@
   <button class="round" id="mute" title="Mute sound" aria-pressed="false">&#x1F50A;</button>
 </footer>
 <button class="link" id="resetBest">Reset best scores</button>
-<div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><button class="btn" id="next">Next Level</button></div></div>
+<div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="nextHint" class="hint-text"></p><button class="btn" id="next">Next Level</button></div></div>
 
 <script>
 const CAP = 4;
@@ -106,8 +107,10 @@ function solve(start, limit = 40000){ // DFS returns list of [a,b] moves or null
   return dfs(start, []);
 }
 
+const colorsFor = lv => Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
+
 function generate(lv){
-  const nColors = Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
+  const nColors = colorsFor(lv);
   const r = rng(lv * 7919 + 13);
   for (let attempt = 0; attempt < 50; attempt++){
     const balls = [];
@@ -213,6 +216,9 @@ function win(){
   if (isBest){ best[level] = moves; saveBest(); }
   $('winMsg').textContent = 'Solved in ' + moves + ' moves' +
     (isBest ? (prev === undefined ? ' \u2013 best score set!' : ' \u2013 new best! (was ' + prev + ')') : ' \u00B7 Best: ' + prev);
+  const n = colorsFor(level + 1), harder = n > colorsFor(level);
+  $('nextHint').textContent = '\u{1F4A1} Level ' + (level + 1) + ': ' + n + ' colors, ' + (n + 2) + ' tubes' +
+    (harder ? ' \u2013 a new color joins!' : n === COLORS.length ? ' \u2013 the maximum difficulty' : ' \u2013 same colors, a new layout');
   $('win').classList.add('show');
 }
 
