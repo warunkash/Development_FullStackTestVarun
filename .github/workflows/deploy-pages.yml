@@ -1,11 +1,12 @@
-name: Deploy PlayEarn to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [master]
     paths:
       - "playearn/**"
-      - ".github/workflows/deploy-playearn.yml"
+      - "ballsort/**"
+      - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -26,8 +27,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Assemble site (PlayEarn at root, Ball Sort at /ballsort/)
+        run: |
+          mkdir -p _site/ballsort
+          cp -r playearn/. _site/
+          cp -r ballsort/. _site/ballsort/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: playearn
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
