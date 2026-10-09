@@ -57,6 +57,9 @@ const COLORS = [ ['#ff2d2d','#a30000'], ['#ff9a1f','#b25a00'], ['#ffd51f','#b38f
                  ['#b455ff','#6a1fb0'], ['#ff5fb3','#b0206f'], ['#19d3c5','#0a7c74'], ['#8d6e63','#4e342e'], ['#e0e0e0','#8a8a8a'] ];
 const $ = id => document.getElementById(id);
 let level = +(localStorage.getItem('ballsortLevel') || 1);
+let best = {}; // level -> fewest moves
+try { best = JSON.parse(localStorage.getItem('ballsortBest')) || {}; } catch (e) {}
+const saveBest = () => { try { localStorage.setItem('ballsortBest', JSON.stringify(best)); } catch (e) {} };
 let tubes, history, selected, moves, undos, hints, adds, hintMove = null;
 
 // seeded RNG so a level is the same every time
@@ -123,7 +126,7 @@ function start(){
 function render(){
   const board = $('board'); board.innerHTML = '';
   board.style.setProperty('--cap', CAP);
-  $('lvl').textContent = 'Level ' + level; $('moves').textContent = 'Moves: ' + moves;
+  $('lvl').textContent = 'Level ' + level; $('moves').textContent = 'Moves: ' + moves + ' \u00B7 Best: ' + (best[level] ?? '\u2013');
   $('undoB').textContent = undos; $('hintB').textContent = hints; $('addB').textContent = adds;
   tubes.forEach((t, i) => {
     const el = document.createElement('div');
@@ -202,7 +205,11 @@ function winSound(){
 
 function win(){
   winSound();
-  $('winMsg').textContent = 'Solved in ' + moves + ' moves';
+  const prev = best[level];
+  const isBest = prev === undefined || moves < prev;
+  if (isBest){ best[level] = moves; saveBest(); }
+  $('winMsg').textContent = 'Solved in ' + moves + ' moves' +
+    (isBest ? (prev === undefined ? ' \u2013 best score set!' : ' \u2013 new best! (was ' + prev + ')') : ' \u00B7 Best: ' + prev);
   $('win').classList.add('show');
 }
 
