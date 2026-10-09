@@ -53,7 +53,7 @@
 <body>
 <header>
   <button class="round" id="restart" title="Restart level">&#x21BB;</button>
-  <div><h1 id="lvl" role="button" tabindex="0" title="Select level">Level 1</h1><div class="moves"><span id="moves">Moves: 0</span> &middot; <span id="timer">0:00</span></div></div>
+  <div><h1 id="lvl" role="button" tabindex="0" title="Select level">Level 1</h1><div class="moves"><span id="moves">Moves: 0</span></div><div class="moves">&#x23F1; <span id="timer">0:00</span> &middot; Best: <span id="bestTime">&ndash;</span></div></div>
   <button class="round" id="menu" title="New random level">&#x23ED;</button>
 </header>
 <main id="board"></main>
@@ -65,7 +65,7 @@
 </footer>
 <button class="link" id="resetBest">Reset best scores</button>
 <div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
-<div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="nextHint" class="hint-text"></p><button class="btn" id="next">Next Level</button></div></div>
+<div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><button class="btn" id="next">Next Level</button></div></div>
 
 <script>
 const CAP = 4;
@@ -76,6 +76,9 @@ let level = +(localStorage.getItem('ballsortLevel') || 1);
 let unlocked = Math.max(level, +(localStorage.getItem('ballsortUnlocked') || 1)); // highest level reached
 let best = {}; // level -> fewest moves
 try { best = JSON.parse(localStorage.getItem('ballsortBest')) || {}; } catch (e) {}
+let bestTime = {}; // level -> fastest time in ms
+try { bestTime = JSON.parse(localStorage.getItem('ballsortBestTime')) || {}; } catch (e) {}
+const saveBestTime = () => { try { localStorage.setItem('ballsortBestTime', JSON.stringify(bestTime)); } catch (e) {} };
 const saveBest = () => { try { localStorage.setItem('ballsortBest', JSON.stringify(best)); } catch (e) {} };
 let tubes, history, selected, moves, undos, hints, adds, hintMove = null;
 
@@ -162,6 +165,7 @@ function render(){
   const board = $('board'); board.innerHTML = '';
   board.style.setProperty('--cap', CAP);
   $('lvl').textContent = 'Level ' + level; $('moves').textContent = 'Moves: ' + moves + ' \u00B7 Best: ' + (best[level] ?? '\u2013');
+  $('bestTime').textContent = bestTime[level] === undefined ? '\u2013' : fmtTime(bestTime[level]);
   $('undoB').textContent = undos; $('hintB').textContent = hints; $('addB').textContent = adds;
   tubes.forEach((t, i) => {
     const el = document.createElement('div');
@@ -245,7 +249,13 @@ function win(){
   const isBest = prev === undefined || moves < prev;
   if (isBest){ best[level] = moves; saveBest(); }
   timerStop(); showTimer();
-  $('winMsg').textContent = 'Solved in ' + moves + ' moves, ' + fmtTime(elapsedMs()) +
+  const time = elapsedMs(), prevTime = bestTime[level];
+  const isBestTime = prevTime === undefined || time < prevTime;
+  if (isBestTime){ bestTime[level] = time; saveBestTime(); }
+  $('winTime').textContent = 'Time ' + fmtTime(time) +
+    (isBestTime ? (prevTime === undefined ? ' \u2013 best time set!' : ' \u2013 new best time! (was ' + fmtTime(prevTime) + ')') : ' \u00B7 Best: ' + fmtTime(prevTime));
+  $('bestTime').textContent = fmtTime(bestTime[level]);
+  $('winMsg').textContent = 'Solved in ' + moves + ' moves' +
     (isBest ? (prev === undefined ? ' \u2013 best score set!' : ' \u2013 new best! (was ' + prev + ')') : ' \u00B7 Best: ' + prev);
   const n = colorsFor(level + 1), harder = n > colorsFor(level);
   $('nextHint').textContent = '\u{1F4A1} Level ' + (level + 1) + ': ' + n + ' colors, ' + (n + 2) + ' tubes' +
@@ -278,9 +288,9 @@ $('closeSelect').onclick = closeSelect;
 $('select').onclick = e => { if (e.target === $('select')) closeSelect(); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSelect(); });
 $('resetBest').onclick = () => {
-  if (!Object.keys(best).length){ alert('No best scores to reset yet.'); return; }
+  if (!Object.keys(best).length && !Object.keys(bestTime).length){ alert('No best scores to reset yet.'); return; }
   if (!confirm('Reset your best scores for all levels? This cannot be undone.')) return;
-  best = {}; saveBest(); render();
+  best = {}; bestTime = {}; saveBest(); saveBestTime(); render();
 };
 $('menu').onclick = () => { level++; localStorage.setItem('ballsortLevel', level); start(); };
 $('undo').onclick = () => {
