@@ -3,9 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<script>
+  try { var t = localStorage.getItem('ballsortTheme');
+        if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        document.documentElement.dataset.theme = t; } catch (e) { document.documentElement.dataset.theme = 'dark'; }
+</script>
 <title>Ball Sort Color Puzzle</title>
 <style>
-  :root { --bg1:#0b1a3a; --bg2:#050b1c; --glass:rgba(255,255,255,.08); --edge:rgba(255,255,255,.75); --txt:#fff; }
+  :root { --bg1:#0b1a3a; --bg2:#050b1c; --glass:rgba(255,255,255,.08); --edge:rgba(255,255,255,.75); --txt:#fff;
+          --card:#12244d; --tube-a:rgba(255,255,255,.14); --tube-b:rgba(255,255,255,.03); --overlay:#000a; --done:#7CFC9A; color-scheme:dark; }
+  :root[data-theme=light] { --bg1:#f4f8ff; --bg2:#c9d8f2; --glass:rgba(20,40,90,.07); --edge:rgba(20,40,90,.55); --txt:#14213d;
+          --card:#fff; --tube-a:rgba(255,255,255,.95); --tube-b:rgba(20,40,90,.06); --overlay:rgba(20,30,60,.5); --done:#1faa59; color-scheme:light; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
   html,body { height:100%; margin:0; }
   body { background:radial-gradient(ellipse at 50% 30%, var(--bg1), var(--bg2)); color:var(--txt);
@@ -19,7 +27,7 @@
   .badge { position:absolute; right:-4px; bottom:-4px; background:#e53935; border-radius:50%; width:18px; height:18px; font-size:.65rem; display:grid; place-items:center; }
   main { flex:1; width:100%; max-width:640px; display:flex; flex-wrap:wrap; justify-content:center; align-content:center; gap:44px 22px; padding:70px 12px 20px; }
   .tube { width:clamp(44px,12vw,62px); height:calc(var(--cap) * clamp(40px,11vw,56px) + 16px); border:3px solid var(--edge); border-top-width:4px;
-          border-radius:8px 8px 26px 26px; background:linear-gradient(90deg,rgba(255,255,255,.14),rgba(255,255,255,.03));
+          border-radius:8px 8px 26px 26px; background:linear-gradient(90deg,var(--tube-a),var(--tube-b));
           display:flex; flex-direction:column-reverse; align-items:center; padding:6px 0 4px; position:relative; cursor:pointer; transition:transform .15s; }
   .tube.sel { transform:translateY(-4px); }
   .tube.hint-from { box-shadow:0 0 18px 4px #ffb300; border-color:#ffb300; }
@@ -28,17 +36,17 @@
           padding:2px 7px; border-radius:999px; color:#0b1a3a; white-space:nowrap; pointer-events:none; }
   .tube.hint-from::before { content:"FROM"; background:#ffb300; }
   .tube.hint-to::before { content:"TO"; background:#4cd964; }
-  .tube.done { border-color:#7CFC9A; }
+  .tube.done { border-color:var(--done); }
   .ball { width:84%; aspect-ratio:1; border-radius:50%; flex:none; margin-top:2px; position:relative;
           background:radial-gradient(circle at 35% 30%, #fff9 0 12%, transparent 30%), radial-gradient(circle at 50% 50%, var(--c), var(--d)); box-shadow:0 2px 4px #0006; }
   .ball.lift { position:absolute; top:calc(-1 * clamp(44px,12vw,58px) - 8px); left:8%; width:84%; margin:0; animation:pop .15s ease-out; }
   @keyframes pop { from { transform:translateY(14px); } to { transform:none; } }
-  footer { display:flex; gap:28px; padding:16px 16px 8px; }
+  footer { display:flex; gap:22px; padding:16px 16px 8px; }
   .link { background:none; border:0; color:var(--txt); opacity:.55; font-size:.8rem; text-decoration:underline; cursor:pointer; padding:6px 12px 22px; }
   .link:hover { opacity:.9; }
-  .modal { position:fixed; inset:0; background:#000a; display:none; place-items:center; z-index:9; }
+  .modal { position:fixed; inset:0; background:var(--overlay); display:none; place-items:center; z-index:9; }
   .modal.show { display:grid; }
-  .card { background:#12244d; border:2px solid var(--edge); border-radius:20px; padding:28px 36px; text-align:center; }
+  .card { background:var(--card); color:var(--txt); border:2px solid var(--edge); border-radius:20px; padding:28px 36px; text-align:center; }
   h1[role=button] { cursor:pointer; }
   h1[role=button]::after { content:" \25BE"; font-size:.8em; opacity:.7; }
   .select-card { width:min(92vw,380px); padding:22px 18px; }
@@ -47,8 +55,8 @@
   .tile { aspect-ratio:1; border-radius:12px; border:2px solid var(--edge); background:var(--glass); color:var(--txt); font-size:1rem; font-weight:700;
           display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; padding:0; line-height:1.1; }
   .tile small { font-size:.6rem; font-weight:500; opacity:.75; }
-  .tile.done { border-color:#7CFC9A; }
-  .tile.cur { background:#2e7dff; border-color:#fff; }
+  .tile.done { border-color:var(--done); }
+  .tile.cur { background:#2e7dff; border-color:var(--txt); color:#fff; }
   .tile:disabled { opacity:.3; cursor:not-allowed; }
   .hint-text { font-size:.9rem; opacity:.9; }
   .card h2 { margin:0 0 6px; font-size:1.8rem; } .card p { margin:0 0 18px; opacity:.8; }
@@ -66,6 +74,7 @@
   <button class="round" id="addTube" title="Add an empty tube">+<span class="badge" id="addB">1</span></button>
   <button class="round" id="undo" title="Undo">&#x21B6;<span class="badge" id="undoB">5</span></button>
   <button class="round" id="hint" title="Hint">&#x1F4A1;<span class="badge" id="hintB">3</span></button>
+  <button class="round" id="theme" title="Switch theme"></button>
   <button class="round" id="mute" title="Mute sound" aria-pressed="false">&#x1F50A;</button>
 </footer>
 <button class="link" id="resetBest">Reset best scores</button>
@@ -216,6 +225,19 @@ $('mute').onclick = () => {
   renderMute();
 };
 renderMute();
+
+function renderTheme(){
+  const light = document.documentElement.dataset.theme === 'light';
+  $('theme').textContent = light ? '\u2600\uFE0F' : '\u{1F319}';
+  $('theme').title = light ? 'Switch to dark theme' : 'Switch to light theme';
+}
+$('theme').onclick = () => {
+  const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('ballsortTheme', next); } catch (e) {}
+  renderTheme();
+};
+renderTheme();
 
 function moveSound(){ // short soft "pop" as the ball lands
   if (muted) return;
