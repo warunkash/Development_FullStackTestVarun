@@ -47,6 +47,7 @@
   <button class="round" id="addTube" title="Add an empty tube">+<span class="badge" id="addB">1</span></button>
   <button class="round" id="undo" title="Undo">&#x21B6;<span class="badge" id="undoB">5</span></button>
   <button class="round" id="hint" title="Hint">&#x1F4A1;<span class="badge" id="hintB">3</span></button>
+  <button class="round" id="mute" title="Mute sound" aria-pressed="false">&#x1F50A;</button>
 </footer>
 <div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><button class="btn" id="next">Next Level</button></div></div>
 
@@ -153,7 +154,23 @@ function tap(i){
 }
 
 let audioCtx;
-function winSound(){ // rising C-major arpeggio, synthesised so no audio file is needed
+let muted = false;
+try { muted = localStorage.getItem('ballsortMuted') === '1'; } catch (e) {}
+function renderMute(){
+  const b = $('mute');
+  b.textContent = muted ? '\u{1F507}' : '\u{1F50A}';
+  b.title = muted ? 'Unmute sound' : 'Mute sound';
+  b.setAttribute('aria-pressed', muted);
+}
+$('mute').onclick = () => {
+  muted = !muted;
+  try { localStorage.setItem('ballsortMuted', muted ? '1' : '0'); } catch (e) {}
+  renderMute();
+};
+renderMute();
+
+function winSound(){
+  if (muted) return; // rising C-major arpeggio, synthesised so no audio file is needed
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     const t0 = audioCtx.currentTime + 0.02;
