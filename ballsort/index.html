@@ -58,6 +58,22 @@
   .tile.done { border-color:var(--done); }
   .tile.cur { background:#2e7dff; border-color:var(--txt); color:#fff; }
   .tile:disabled { opacity:.3; cursor:not-allowed; }
+  .links { display:flex; gap:0; align-items:center; }
+  .links span { opacity:.55; padding-bottom:16px; }
+  .board-card { width:min(92vw,380px); padding:22px 18px; }
+  .board-card h2 { font-size:1.4rem; }
+  .board-card select { background:var(--glass); color:var(--txt); border:2px solid var(--edge); border-radius:10px; padding:6px 10px; font-size:.95rem; margin-bottom:12px; }
+  .board-list { list-style:none; margin:0 0 16px; padding:0; text-align:left; max-height:44vh; overflow-y:auto; }
+  .board-list li { display:grid; grid-template-columns:2rem 1fr auto; gap:8px; padding:8px 10px; border-radius:10px; font-size:.95rem; align-items:center; }
+  .board-list li:nth-child(odd) { background:var(--glass); }
+  .board-list li.me { outline:2px solid #2e7dff; }
+  .board-list .nm { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+  .board-list .sc { font-size:.8rem; opacity:.8; white-space:nowrap; }
+  .board-empty { opacity:.7; padding:18px 0; }
+  .name-row { margin:0 0 14px; }
+  .name-row input { background:var(--glass); color:var(--txt); border:2px solid var(--edge); border-radius:10px; padding:8px 10px; font-size:1rem; width:70%; text-align:center; user-select:text; }
+  .btn.alt { background:transparent; color:var(--txt); border:2px solid var(--edge); }
+  .row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
   .hint-text { font-size:.9rem; opacity:.9; }
   .card h2 { margin:0 0 6px; font-size:1.8rem; } .card p { margin:0 0 18px; opacity:.8; }
   .btn { background:#2e7dff; color:#fff; border:0; border-radius:999px; padding:12px 28px; font-size:1rem; font-weight:600; cursor:pointer; }
@@ -77,9 +93,10 @@
   <button class="round" id="theme" title="Switch theme"></button>
   <button class="round" id="mute" title="Mute sound" aria-pressed="false">&#x1F50A;</button>
 </footer>
-<button class="link" id="resetBest">Reset best scores</button>
+<div class="links"><button class="link" id="openBoard">Leaderboard</button><span aria-hidden="true">&middot;</span><button class="link" id="resetBest">Reset best scores</button></div>
 <div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
-<div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><button class="btn" id="next">Next Level</button></div></div>
+<div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn" id="next">Next Level</button></div></div></div>
+<div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
 
 <script>
 const CAP = 4;
@@ -270,6 +287,50 @@ function winSound(){
   } catch (e) {}
 }
 
+// Leaderboard: top 10 runs per level, kept on this device (fewest moves, then fastest time)
+let scores = [];
+try { scores = JSON.parse(localStorage.getItem('ballsortScores')) || []; } catch (e) {}
+let playerName = '';
+try { playerName = localStorage.getItem('ballsortName') || ''; } catch (e) {}
+let lastEntry = null;
+const saveScores = () => { try { localStorage.setItem('ballsortScores', JSON.stringify(scores)); } catch (e) {} };
+const byScore = (a, b) => a.m - b.m || a.t - b.t || a.d - b.d;
+function addScore(lv, m, t){
+  const entry = { n: playerName || 'Player', l: lv, m, t, d: Date.now() };
+  scores.push(entry);
+  const ranked = scores.filter(x => x.l === lv).sort(byScore);
+  const drop = new Set(ranked.slice(10));
+  scores = scores.filter(x => !drop.has(x));
+  saveScores();
+  const i = ranked.indexOf(entry);
+  return { entry, rank: i < 10 ? i + 1 : 0 };
+}
+function openBoard(lv){
+  const sel = $('boardLevel'), max = Math.max(unlocked, level);
+  sel.innerHTML = '';
+  for (let l = 1; l <= max; l++){ const o = document.createElement('option'); o.value = l; o.textContent = 'Level ' + l; sel.appendChild(o); }
+  sel.value = lv || level;
+  renderBoard();
+  $('lbModal').classList.add('show');
+}
+function renderBoard(){
+  const lv = +$('boardLevel').value, list = $('boardList');
+  list.innerHTML = '';
+  const rows = scores.filter(x => x.l === lv).sort(byScore);
+  if (!rows.length){
+    const li = document.createElement('li'); li.className = 'board-empty'; li.style.display = 'block';
+    li.textContent = 'No scores yet \u2013 finish this level to get on the board!'; list.appendChild(li); return;
+  }
+  rows.forEach((r, i) => {
+    const li = document.createElement('li'); if (r === lastEntry) li.className = 'me';
+    const rk = document.createElement('span'); rk.textContent = '#' + (i + 1);
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.n;
+    const sc = document.createElement('span'); sc.className = 'sc'; sc.textContent = r.m + ' moves \u00B7 ' + fmtTime(r.t);
+    li.append(rk, nm, sc); list.appendChild(li);
+  });
+}
+function closeBoard(){ $('lbModal').classList.remove('show'); }
+
 function win(){
   winSound();
   const prev = best[level];
@@ -287,9 +348,29 @@ function win(){
   const n = colorsFor(level + 1), harder = n > colorsFor(level);
   $('nextHint').textContent = '\u{1F4A1} Level ' + (level + 1) + ': ' + n + ' colors, ' + (n + 2) + ' tubes' +
     (harder ? ' \u2013 a new color joins!' : n === COLORS.length ? ' \u2013 the maximum difficulty' : ' \u2013 same colors, a new layout');
+  const res = addScore(level, moves, time);
+  lastEntry = res.entry;
+  $('rankMsg').textContent = res.rank ? '\u{1F3C6} #' + res.rank + ' on the Level ' + level + ' leaderboard' : 'Not in the top 10 for this level';
+  $('playerName').value = playerName;
   $('win').classList.add('show');
 }
 
+$('playerName').oninput = () => {
+  playerName = $('playerName').value.trim().slice(0, 12);
+  try { localStorage.setItem('ballsortName', playerName); } catch (e) {}
+  if (lastEntry){ lastEntry.n = playerName || 'Player'; saveScores(); }
+};
+$('openBoard').onclick = () => openBoard();
+$('viewBoard').onclick = () => openBoard(level);
+$('boardLevel').onchange = renderBoard;
+$('closeBoard').onclick = closeBoard;
+$('lbModal').onclick = e => { if (e.target === $('lbModal')) closeBoard(); };
+$('clearBoard').onclick = () => {
+  const lv = +$('boardLevel').value;
+  if (!scores.some(x => x.l === lv)) return;
+  if (!confirm('Clear the Level ' + lv + ' leaderboard? This cannot be undone.')) return;
+  scores = scores.filter(x => x.l !== lv); if (lastEntry && lastEntry.l === lv) lastEntry = null; saveScores(); renderBoard();
+};
 $('next').onclick = () => { $('win').classList.remove('show'); level++; localStorage.setItem('ballsortLevel', level); start(); };
 $('restart').onclick = start;
 
@@ -313,7 +394,7 @@ $('lvl').onclick = openSelect;
 $('lvl').onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSelect(); } };
 $('closeSelect').onclick = closeSelect;
 $('select').onclick = e => { if (e.target === $('select')) closeSelect(); };
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSelect(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeSelect(); closeBoard(); } });
 $('resetBest').onclick = () => {
   if (!Object.keys(best).length && !Object.keys(bestTime).length){ alert('No best scores to reset yet.'); return; }
   if (!confirm('Reset your best scores for all levels? This cannot be undone.')) return;
