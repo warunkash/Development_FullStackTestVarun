@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Ball Sort Color Puzzle</title>
+<style>
+  :root { --bg1:#0b1a3a; --bg2:#050b1c; --glass:rgba(255,255,255,.08); --edge:rgba(255,255,255,.75); --txt:#fff; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+  html,body { height:100%; margin:0; }
+  body { background:radial-gradient(ellipse at 50% 30%, var(--bg1), var(--bg2)); color:var(--txt);
+         font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; display:flex; flex-direction:column; align-items:center; overflow:hidden; }
+  header { width:100%; max-width:640px; display:flex; align-items:center; justify-content:space-between; padding:14px 16px; }
+  h1 { font-size:1.4rem; margin:0; letter-spacing:.5px; }
+  .moves { font-size:.8rem; opacity:.65; text-align:center; }
+  .round { width:44px; height:44px; border-radius:50%; border:2px solid var(--edge); background:var(--glass); color:var(--txt);
+           display:grid; place-items:center; font-size:1.2rem; cursor:pointer; position:relative; transition:transform .1s; }
+  .round:active { transform:scale(.92); }
+  .badge { position:absolute; right:-4px; bottom:-4px; background:#e53935; border-radius:50%; width:18px; height:18px; font-size:.65rem; display:grid; place-items:center; }
+  main { flex:1; width:100%; max-width:640px; display:flex; flex-wrap:wrap; justify-content:center; align-content:center; gap:44px 22px; padding:70px 12px 20px; }
+  .tube { width:clamp(44px,12vw,62px); height:calc(var(--cap) * clamp(40px,11vw,56px) + 16px); border:3px solid var(--edge); border-top-width:4px;
+          border-radius:8px 8px 26px 26px; background:linear-gradient(90deg,rgba(255,255,255,.14),rgba(255,255,255,.03));
+          display:flex; flex-direction:column-reverse; align-items:center; padding:6px 0 4px; position:relative; cursor:pointer; transition:transform .15s; }
+  .tube.sel { transform:translateY(-4px); }
+  .tube.hint { box-shadow:0 0 18px 4px #ffd54f; }
+  .tube.done { border-color:#7CFC9A; }
+  .ball { width:84%; aspect-ratio:1; border-radius:50%; flex:none; margin-top:2px; position:relative;
+          background:radial-gradient(circle at 35% 30%, #fff9 0 12%, transparent 30%), radial-gradient(circle at 50% 50%, var(--c), var(--d)); box-shadow:0 2px 4px #0006; }
+  .ball.lift { position:absolute; top:calc(-1 * clamp(44px,12vw,58px) - 8px); left:8%; width:84%; margin:0; animation:pop .15s ease-out; }
+  @keyframes pop { from { transform:translateY(14px); } to { transform:none; } }
+  footer { display:flex; gap:28px; padding:16px 16px 28px; }
+  .modal { position:fixed; inset:0; background:#000a; display:none; place-items:center; z-index:9; }
+  .modal.show { display:grid; }
+  .card { background:#12244d; border:2px solid var(--edge); border-radius:20px; padding:28px 36px; text-align:center; }
+  .card h2 { margin:0 0 6px; font-size:1.8rem; } .card p { margin:0 0 18px; opacity:.8; }
+  .btn { background:#2e7dff; color:#fff; border:0; border-radius:999px; padding:12px 28px; font-size:1rem; font-weight:600; cursor:pointer; }
+</style>
+</head>
+<body>
+<header>
+  <button class="round" id="restart" title="Restart level">&#x21BB;</button>
+  <div><h1 id="lvl">Level 1</h1><div class="moves" id="moves">Moves: 0</div></div>
+  <button class="round" id="menu" title="New random level">&#x23ED;</button>
+</header>
+<main id="board"></main>
+<footer>
+  <button class="round" id="addTube" title="Add an empty tube">+<span class="badge" id="addB">1</span></button>
+  <button class="round" id="undo" title="Undo">&#x21B6;<span class="badge" id="undoB">5</span></button>
+  <button class="round" id="hint" title="Hint">&#x1F4A1;<span class="badge" id="hintB">3</span></button>
+</footer>
+<div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><button class="btn" id="next">Next Level</button></div></div>
+
+<script>
+const CAP = 4;
+const COLORS = [ ['#ff2d2d','#a30000'], ['#ff9a1f','#b25a00'], ['#ffd51f','#b38f00'], ['#2ecc40','#0b7a1d'], ['#2aa8ff','#0a5fa8'],
+                 ['#b455ff','#6a1fb0'], ['#ff5fb3','#b0206f'], ['#19d3c5','#0a7c74'], ['#8d6e63','#4e342e'], ['#e0e0e0','#8a8a8a'] ];
+const $ = id => document.getElementById(id);
+let level = +(localStorage.getItem('ballsortLevel') || 1);
+let tubes, history, selected, moves, undos, hints, adds, hintMove = null;
+
+// seeded RNG so a level is the same every time
+function rng(seed){ return () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296; }
+
+function canMove(t, a, b){ // move from a to b
+  if (a === b || !t[a].length || t[b].length >= CAP) return false;
+  const top = t[a][t[a].length-1];
+  if (t[b].length && t[b][t[b].length-1] !== top) return false;
+  // pointless: moving a pure tube into an empty one
+  if (!t[b].length && t[a].every(c => c === top)) return false;
+  return true;
+}
+function applyMove(t, a, b){
+  const top = t[a][t[a].length-1]; let n = 0;
+  while (t[a].length && t[a][t[a].length-1] === top && t[b].length < CAP){ t[b].push(t[a].pop()); n++; }
+  return n;
+}
+const isSolved = t => t.every(x => x.length === 0 || (x.length === CAP && x.every(c => c === x[0])));
+const key = t => t.map(x => x.join('')).sort().join('|');
+
+function solve(start, limit = 40000){ // DFS returns list of [a,b] moves or null
+  const seen = new Set(); let nodes = 0;
+  function dfs(t, path){
+    if (isSolved(t)) return path;
+    if (++nodes > limit) return null;
+    const k = key(t); if (seen.has(k)) return null; seen.add(k);
+    const opts = [];
+    for (let a = 0; a < t.length; a++) for (let b = 0; b < t.length; b++) if (canMove(t,a,b)){
+      let score = t[b].length ? 2 : 0; // prefer stacking on same colour
+      if (t[a].length && t[a].every(c => c === t[a][0])) score += 1;
+      opts.push([a,b,score]);
+    }
+    opts.sort((x,y) => y[2]-x[2]);
+    for (const [a,b] of opts){
+      const n = t.map(x => x.slice()); applyMove(n,a,b);
+      const r = dfs(n, path.concat([[a,b]])); if (r) return r;
+    }
+    return null;
+  }
+  return dfs(start, []);
+}
+
+function generate(lv){
+  const nColors = Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
+  const r = rng(lv * 7919 + 13);
+  for (let attempt = 0; attempt < 50; attempt++){
+    const balls = [];
+    for (let c = 0; c < nColors; c++) for (let i = 0; i < CAP; i++) balls.push(c);
+    for (let i = balls.length - 1; i > 0; i--){ const j = Math.floor(r() * (i+1)); [balls[i],balls[j]] = [balls[j],balls[i]]; }
+    const t = Array.from({length: nColors + 2}, () => []);
+    balls.forEach((c,i) => t[i % nColors].push(c));
+    if (t.slice(0,nColors).some(x => x.every(c => c === x[0]))) continue; // avoid trivially sorted tubes
+    if (solve(t)) return t;
+  }
+  throw new Error('could not generate level');
+}
+
+function start(){
+  tubes = generate(level); history = []; selected = null; moves = 0; undos = 5; hints = 3; adds = 1; hintMove = null;
+  render();
+}
+
+function render(){
+  const board = $('board'); board.innerHTML = '';
+  board.style.setProperty('--cap', CAP);
+  $('lvl').textContent = 'Level ' + level; $('moves').textContent = 'Moves: ' + moves;
+  $('undoB').textContent = undos; $('hintB').textContent = hints; $('addB').textContent = adds;
+  tubes.forEach((t, i) => {
+    const el = document.createElement('div');
+    el.className = 'tube' + (selected === i ? ' sel' : '') + (hintMove && (hintMove[0] === i || hintMove[1] === i) ? ' hint' : '') +
+                   (t.length === CAP && t.every(c => c === t[0]) ? ' done' : '');
+    t.forEach((c, k) => {
+      const b = document.createElement('div');
+      b.className = 'ball' + (selected === i && k === t.length - 1 ? ' lift' : '');
+      b.style.setProperty('--c', COLORS[c][0]); b.style.setProperty('--d', COLORS[c][1]);
+      el.appendChild(b);
+    });
+    el.onclick = () => tap(i);
+    board.appendChild(el);
+  });
+}
+
+function tap(i){
+  hintMove = null;
+  if (selected === null){ if (tubes[i].length) selected = i; }
+  else if (selected === i){ selected = null; }
+  else if (canMove(tubes, selected, i)){
+    history.push(JSON.stringify(tubes)); applyMove(tubes, selected, i); moves++; selected = null;
+    render();
+    if (isSolved(tubes)) setTimeout(win, 350);
+    return;
+  } else selected = tubes[i].length ? i : null;
+  render();
+}
+
+function win(){
+  $('winMsg').textContent = 'Solved in ' + moves + ' moves';
+  $('win').classList.add('show');
+}
+
+$('next').onclick = () => { $('win').classList.remove('show'); level++; localStorage.setItem('ballsortLevel', level); start(); };
+$('restart').onclick = start;
+$('menu').onclick = () => { level++; localStorage.setItem('ballsortLevel', level); start(); };
+$('undo').onclick = () => {
+  if (!history.length || undos <= 0) return;
+  tubes = JSON.parse(history.pop()); undos--; moves = Math.max(0, moves - 1); selected = null; hintMove = null; render();
+};
+$('addTube').onclick = () => { if (adds > 0){ adds--; tubes.push([]); render(); } };
+$('hint').onclick = () => {
+  if (hints <= 0) return;
+  const path = solve(tubes, 60000);
+  if (path && path.length){ hints--; hintMove = path[0]; selected = null; render(); }
+};
+
+start();
+</script>
+</body>
+</html>
