@@ -80,6 +80,7 @@
   .row.special { margin-bottom:12px; row-gap:8px; }
   .row.special .btn { margin:0; }
   .btn.monthly { padding:9px 20px; font-size:.95rem; background:#d81b60; }
+  .btn.yearly { padding:9px 20px; font-size:.95rem; background:#6a1b9a; }
   .btn.weekly { padding:9px 20px; font-size:.95rem; background:#7c4dff; }
   .btn.daily { margin:0 0 12px; padding:9px 20px; font-size:.95rem; background:#ff8f1f; }
   .name-row { margin:0 0 14px; }
@@ -105,15 +106,15 @@
   <button class="round" id="theme" title="Switch theme"></button>
   <button class="round" id="mute" title="Mute sound" aria-pressed="false">&#x1F50A;</button>
 </footer>
-<div class="links top"><button class="link" id="openDaily" title="Daily challenge">Daily</button><span aria-hidden="true">&middot;</span><button class="link" id="openWeekly" title="Weekly challenge">Weekly</button><span aria-hidden="true">&middot;</span><button class="link" id="openMonthly" title="Monthly challenge">Monthly</button></div>
+<div class="links top"><button class="link" id="openDaily" title="Daily challenge">Daily</button><span aria-hidden="true">&middot;</span><button class="link" id="openWeekly" title="Weekly challenge">Weekly</button><span aria-hidden="true">&middot;</span><button class="link" id="openMonthly" title="Monthly challenge">Monthly</button><span aria-hidden="true">&middot;</span><button class="link" id="openYearly" title="Yearly challenge">Yearly</button></div>
 <div class="links"><button class="link" id="openBoard">Leaderboard</button><span aria-hidden="true">&middot;</span><button class="link" id="resetBest">Reset best scores</button></div>
-<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
+<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
 <div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn alt" id="shareBtn" style="display:none">Share</button><button class="btn" id="next">Next Level</button></div></div></div>
 <div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><div class="tabs" role="tablist"><button class="tab on" id="tabWorld" role="tab">&#x1F30D; World</button><button class="tab" id="tabLocal" role="tab">This device</button></div><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
 
 <script>
 let CAP = 4;
-const capFor = lv => isMonthly(lv) ? 5 : 4;
+const capFor = lv => isYearly(lv) ? 6 : isMonthly(lv) ? 5 : 4;
 const COLORS = [ ['#ff2d2d','#a30000'], ['#ff9a1f','#b25a00'], ['#ffd51f','#b38f00'], ['#2ecc40','#0b7a1d'], ['#2aa8ff','#0a5fa8'],
                  ['#b455ff','#6a1fb0'], ['#ff5fb3','#b0206f'], ['#19d3c5','#0a7c74'], ['#8d6e63','#4e342e'], ['#e0e0e0','#8a8a8a'] ];
 const $ = id => document.getElementById(id);
@@ -125,7 +126,10 @@ const WEEKLY_MIN = 300000000, WEEKLY_COLORS = 10;
 const isSpecial = lv => lv > DAILY_MIN;
 // Monthly challenge: keys from MONTHLY_MIN up are MONTHLY_MIN + YYYYMM (UTC). The biggest board: 10 colors, 5 balls per color
 const MONTHLY_MIN = 400000000, MONTHLY_COLORS = 10;
-const isMonthly = lv => lv >= MONTHLY_MIN;
+// Yearly challenge: keys from YEARLY_MIN up are YEARLY_MIN + YYYY (UTC). The marathon: 10 colors, 6 balls per color
+const YEARLY_MIN = 500000000, YEARLY_COLORS = 10;
+const isYearly = lv => lv >= YEARLY_MIN;
+const isMonthly = lv => lv >= MONTHLY_MIN && lv < YEARLY_MIN;
 const isWeekly = lv => lv >= WEEKLY_MIN && lv < MONTHLY_MIN;
 const isDaily = lv => lv > DAILY_MIN && lv < WEEKLY_MIN;
 const dailyKey = () => { const d = new Date(); return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate(); };
@@ -144,7 +148,11 @@ const weekLabel = k => {
 const monthKey = () => { const d = new Date(); return MONTHLY_MIN + d.getUTCFullYear() * 100 + d.getUTCMonth() + 1; };
 const monthDay = k => { const ym = k - MONTHLY_MIN; return Math.floor(ym / 100) + '-' + String(ym % 100).padStart(2, '0') + '-01'; };
 const monthLabel = (k, year) => new Date(monthDay(k) + 'T00:00:00Z').toLocaleDateString(undefined, year ? { month: 'short', year: 'numeric', timeZone: 'UTC' } : { month: 'short', timeZone: 'UTC' });
-const specialInfo = lv => isMonthly(lv)
+const yearKey = () => YEARLY_MIN + new Date().getUTCFullYear();
+const yearDay = k => (k - YEARLY_MIN) + '-01-01';
+const specialInfo = lv => isYearly(lv)
+  ? { name: 'Yearly', icon: '\u{1F3C6}', label: String(lv - YEARLY_MIN), shareLabel: String(lv - YEARLY_MIN), submit: 'submit_yearly_score', get: 'get_yearly_leaderboard', arg: 'p_year', date: yearDay(lv), when: 'this year', board: 'this year\'s board', done: 'ballsortYearlyDone' }
+  : isMonthly(lv)
   ? { name: 'Monthly', icon: '\u{1F3C5}', label: monthLabel(lv), shareLabel: monthLabel(lv, true), submit: 'submit_monthly_score', get: 'get_monthly_leaderboard', arg: 'p_month', date: monthDay(lv), when: 'this month', board: 'this month\'s board', done: 'ballsortMonthlyDone' }
   : isWeekly(lv)
   ? { name: 'Weekly', icon: '\u{1F5D3}', label: weekLabel(lv), shareLabel: weekLabel(lv), submit: 'submit_weekly_score', get: 'get_weekly_leaderboard', arg: 'p_week', date: keyToDay(lv - WEEKLY_MIN), when: 'this week', board: 'this week\'s board', done: 'ballsortWeeklyDone' }
@@ -222,12 +230,12 @@ function solve(start, limit = 40000){ // DFS returns list of [a,b] moves or null
   return dfs(start, []);
 }
 
-const colorsFor = lv => isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
+const colorsFor = lv => isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
 
 function generate(lv){
   CAP = capFor(lv);
-  const nColors = colorsFor(lv), nodeLimit = isMonthly(lv) ? 200000 : 40000;
-  const r = rng(isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
+  const nColors = colorsFor(lv), nodeLimit = isYearly(lv) ? 600000 : isMonthly(lv) ? 200000 : 40000;
+  const r = rng(isYearly(lv) ? (lv - YEARLY_MIN) * 7919 + 777001 : isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
   for (let attempt = 0; attempt < 50; attempt++){
     const balls = [];
     for (let c = 0; c < nColors; c++) for (let i = 0; i < CAP; i++) balls.push(c);
@@ -414,12 +422,13 @@ function setTab(t){
 function openBoard(lv){
   const sel = $('boardLevel'), max = Math.max(unlocked, normalLevel), today = dailyKey();
   sel.innerHTML = '';
+  const oy = document.createElement('option'); oy.value = yearKey(); oy.textContent = '\u{1F3C6} Yearly challenge (this year)'; sel.appendChild(oy);
   const om = document.createElement('option'); om.value = monthKey(); om.textContent = '\u{1F3C5} Monthly challenge (this month)'; sel.appendChild(om);
   const ow = document.createElement('option'); ow.value = weekKey(); ow.textContent = '\u{1F5D3} Weekly challenge (this week)'; sel.appendChild(ow);
   const od = document.createElement('option'); od.value = today; od.textContent = '\u{1F4C5} Daily challenge (today)'; sel.appendChild(od);
   for (let l = 1; l <= max; l++){ const o = document.createElement('option'); o.value = l; o.textContent = 'Level ' + l; sel.appendChild(o); }
   const want = lv || level;
-  sel.value = isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
+  sel.value = isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
   setTab('world');
   renderBoard();
   $('lbModal').classList.add('show');
@@ -480,7 +489,7 @@ function win(){
   $('bestTime').textContent = fmtTime(bestTime[level]);
   $('winMsg').textContent = 'Solved in ' + moves + ' moves' +
     (isBest ? (prev === undefined ? ' \u2013 best score set!' : ' \u2013 new best! (was ' + prev + ')') : ' \u00B7 Best: ' + prev);
-  const sp = specialInfo(level), daily = isDaily(level), weekly = isWeekly(level), monthly = isMonthly(level), special = !!sp;
+  const sp = specialInfo(level), daily = isDaily(level), weekly = isWeekly(level), monthly = isMonthly(level), yearly = isYearly(level), special = !!sp;
   $('next').textContent = special ? 'Back to levels' : 'Next Level';
   if (special){ try { localStorage.setItem(sp.done, level); } catch (e) {} }
   const n = colorsFor(level + 1), harder = n > colorsFor(level);
@@ -490,6 +499,7 @@ function win(){
       (streak.best > n ? ' (best ' + streak.best + ')' : '') + ' Come back tomorrow to keep it going.';
     refreshDailyLabels();
   }
+  else if (yearly) $('nextHint').textContent = '\u{1F3C6} A new yearly challenge starts on January 1st (UTC).';
   else if (monthly) $('nextHint').textContent = '\u{1F3C5} A new monthly challenge starts on the 1st of every month (UTC).';
   else if (weekly) $('nextHint').textContent = '\u{1F5D3} A new weekly challenge starts every Monday (UTC).';
   else $('nextHint').textContent = '\u{1F4A1} Level ' + (level + 1) + ': ' + n + ' colors, ' + (n + 2) + ' tubes' +
@@ -516,6 +526,8 @@ $('dailyBtn').onclick = playDaily;
 $('openWeekly').onclick = playWeekly;
 $('weeklyBtn').onclick = playWeekly;
 $('openMonthly').onclick = playMonthly;
+$('openYearly').onclick = playYearly;
+$('yearlyBtn').onclick = playYearly;
 $('monthlyBtn').onclick = playMonthly;
 const PUBLIC_URL = 'https://warunkash.github.io/Development_FullStackTestVarun/ballsort/';
 function dailyShareText(run){
@@ -578,6 +590,8 @@ function openSelect(){
   $('weeklyBtn').textContent = '\u{1F5D3} Weekly Challenge' + (+wdone === weekKey() ? ' \u2713' : '');
   let mdone = ''; try { mdone = localStorage.getItem('ballsortMonthlyDone'); } catch (e) {}
   $('monthlyBtn').textContent = '\u{1F3C5} Monthly Challenge' + (+mdone === monthKey() ? ' \u2713' : '');
+  let ydone = ''; try { ydone = localStorage.getItem('ballsortYearlyDone'); } catch (e) {}
+  $('yearlyBtn').textContent = '\u{1F3C6} Yearly Challenge' + (+ydone === yearKey() ? ' \u2713' : '');
   const sn = currentStreak();
   $('dailyBtn').textContent = '\u{1F4C5} Daily Challenge' + (+done === dailyKey() ? ' \u2713' : '') + (sn ? ' \u00B7 \u{1F525}' + sn : '');
   const total = Math.max(20, Math.ceil((unlocked + 5) / 5) * 5);
@@ -594,6 +608,7 @@ function openSelect(){
   const cur = grid.querySelector('.cur'); if (cur) cur.scrollIntoView({block:'center'});
 }
 refreshDailyLabels();
+function playYearly(){ closeSelect(); closeBoard(); level = yearKey(); start(); }
 function playMonthly(){ closeSelect(); closeBoard(); level = monthKey(); start(); }
 function playWeekly(){ closeSelect(); closeBoard(); level = weekKey(); start(); }
 function playDaily(){ closeSelect(); closeBoard(); level = dailyKey(); start(); }
@@ -616,7 +631,7 @@ $('undo').onclick = () => {
 $('addTube').onclick = () => { if (adds > 0){ adds--; tubes.push([]); render(); } };
 $('hint').onclick = () => {
   if (hints <= 0) return;
-  const path = solve(tubes, isMonthly(level) ? 400000 : 60000);
+  const path = solve(tubes, isYearly(level) ? 800000 : isMonthly(level) ? 400000 : 60000);
   if (path && path.length){ hints--; hintMove = path[0]; selected = null; render(); }
   else {
     const m = $('moves'); m.textContent = 'No hint found from here \u2013 try undo';
