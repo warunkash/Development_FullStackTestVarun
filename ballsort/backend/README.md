@@ -91,6 +91,14 @@ monthly score is the number of distinct (member, day) quests it has, so replayin
 by quests, then members. Submissions are accepted for yesterday, today or tomorrow (UTC) and need at least 7 moves. The helper
 `guild_standings` is not callable by `anon`.
 
+## Clan challenge
+
+`clan_runs` plus `submit_clan_run`, `get_clan_leaderboard` and `get_clan_members`. A weekly boss fight (identified by the week's
+Monday, UTC): everyone plays the same board, and a run deals `clamp(round(3000 / moves), 10, 200)` damage (computed by the server
+in `clan_damage`). A clan is just a name players choose (no accounts); each member counts with their best run and the clan's total
+is the sum over its members. The boss has 500 HP and is defeated once a clan's total reaches 500; clans are ranked by total damage,
+then members. At least 8 moves are required; this or last week only. The helper `clan_standings` is not callable by `anon`.
+
 ## Schema
 
 See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).
