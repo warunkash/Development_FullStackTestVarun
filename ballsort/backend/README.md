@@ -31,6 +31,12 @@ Same pattern again: `weekly_scores` plus `submit_weekly_score` and `get_weekly_l
 Monday to Sunday (UTC) and is identified by its Monday. Submissions are accepted for this week or last week
 only, and the date must be a Monday. Weekly boards have 10 colors, so at least 10 moves are required.
 
+## Monthly challenge
+
+`monthly_scores` plus `submit_monthly_score` and `get_monthly_leaderboard`. A month is identified by its first
+day (UTC). Submissions are accepted for this month or last month only, and the date must be the 1st. Monthly
+boards are bigger (10 colors, 5 balls per color), so at least 10 moves are required.
+
 ## Schema
 
 See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).
