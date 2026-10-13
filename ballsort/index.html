@@ -81,6 +81,7 @@
   .row.special .btn { margin:0; }
   .btn.monthly { padding:9px 20px; font-size:.95rem; background:#d81b60; }
   .btn.seasonal { padding:9px 20px; font-size:.95rem; background:#ef6c00; }
+  .btn.guild { padding:9px 20px; font-size:.95rem; background:#37474f; }
   .btn.ladder { padding:9px 20px; font-size:.95rem; background:#00838f; }
   .btn.bracket { padding:9px 20px; font-size:.95rem; background:#6d4c41; }
   .btn.tourney { padding:9px 20px; font-size:.95rem; background:#c62828; }
@@ -130,7 +131,11 @@
 <div class="name-row"><input id="tName" maxlength="12" placeholder="Team name" autocomplete="off" aria-label="Team name"></div>
 <p class="hint-text" id="tInfo"></p><ul id="tRoster" class="roster"></ul>
 <div class="row"><button class="btn alt" id="tCancel">Cancel</button><button class="btn" id="tPlay">Play</button></div></div></div>
-<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button><button class="btn custom" id="customBtn">&#x1F39B;&#xFE0F; Custom Challenge</button><button class="btn team" id="teamBtn">&#x1F465; Team Challenge</button><button class="btn tourney" id="tourneyBtn">&#x1F3DF;&#xFE0F; Tournament</button><button class="btn bracket" id="bracketBtn">&#x1F94A; Bracket</button><button class="btn ladder" id="ladderBtn">&#x1FA9C; Ladder</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
+<div class="modal" id="guildM"><div class="card"><h2>&#x1F6E1;&#xFE0F; Guild Challenge</h2><p>Join a guild and finish the daily quest. A guild's monthly score is how many (member, day) quests its members completed.</p>
+<div class="name-row"><input id="gName" maxlength="12" placeholder="Guild name" autocomplete="off" aria-label="Guild name"></div>
+<p class="hint-text" id="gInfo"></p><ul id="gRoster" class="roster"></ul>
+<div class="row"><button class="btn alt" id="gCancel">Cancel</button><button class="btn" id="gPlay">Today's quest</button></div></div></div>
+<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button><button class="btn custom" id="customBtn">&#x1F39B;&#xFE0F; Custom Challenge</button><button class="btn team" id="teamBtn">&#x1F465; Team Challenge</button><button class="btn tourney" id="tourneyBtn">&#x1F3DF;&#xFE0F; Tournament</button><button class="btn bracket" id="bracketBtn">&#x1F94A; Bracket</button><button class="btn ladder" id="ladderBtn">&#x1FA9C; Ladder</button><button class="btn guild" id="guildBtn">&#x1F6E1;&#xFE0F; Guild</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
 <div class="modal" id="win"><div class="card"><h2 id="winTitle">&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn alt" id="shareBtn" style="display:none">Share</button><button class="btn" id="next">Next Level</button></div></div></div>
 <div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><div class="tabs" role="tablist"><button class="tab on" id="tabWorld" role="tab">&#x1F30D; World</button><button class="tab" id="tabLocal" role="tab">This device</button></div><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
 
@@ -176,7 +181,15 @@ const isBracket = lv => lv >= BRACKET_MIN && lv < LADDER_MIN;
 // Each rung has a move budget (1.5x a solver's solution); go over it and the climb ends. Ranked by rungs cleared, then total moves, then time.
 // Keys from LADDER_MIN up are LADDER_MIN + the Monday (YYYYMMDD, UTC) of that week.
 const LADDER_MIN = 1100000000, LADDER_RUNGS = 24;
-const isLadder = lv => lv >= LADDER_MIN;
+const isLadder = lv => lv >= LADDER_MIN && lv < GUILD_MIN;
+// Guild: join a guild (any name you pick, saved on this device) and play each day's guild quest (7 colors, same board for everyone).
+// A guild's monthly score is the number of distinct (member, day) quests its members finished; playing a day's quest again does not add to it.
+// Keys from GUILD_MIN up are GUILD_MIN + the day (YYYYMMDD, UTC).
+const GUILD_MIN = 1200000000, GUILD_COLORS = 7;
+const isGuild = lv => lv >= GUILD_MIN;
+const cleanGuild = t => String(t || '').replace(/[^\p{L}\p{N} ._-]/gu, '').trim().slice(0, 12);
+let guildName = ''; try { guildName = cleanGuild(localStorage.getItem('ballsortGuild')); } catch (e) {}
+
 const ladderColors = r => Math.min(3 + Math.floor((r - 1) / 2), 10);
 const ladderCap = r => Math.min(6, 4 + Math.floor(Math.max(0, r - 15) / 3)); // 4 balls per color, 5 from rung 18, 6 from rung 21
 let ladderRung = 1, ladderCleared = 0, ladderMoves = 0, ladderTime = 0, ladderBudget = 0, ladderOver = false, ladderBest = {};
@@ -245,7 +258,11 @@ const tournLabel = k => {
 };
 const bracketKey = () => BRACKET_MIN + weekKey() - WEEKLY_MIN;
 const ladderKey = () => LADDER_MIN + weekKey() - WEEKLY_MIN;
-const specialInfo = lv => isLadder(lv)
+const guildKey = () => GUILD_MIN + dailyKey();
+const guildMonth = lv => { const ym = Math.floor((lv - GUILD_MIN) / 100); return Math.floor(ym / 100) + '-' + String(ym % 100).padStart(2, '0') + '-01'; };
+const specialInfo = lv => isGuild(lv)
+  ? { name: 'Guild', icon: '\u{1F6E1}\uFE0F', label: dayLabel(lv - GUILD_MIN), shareLabel: (guildName ? guildName + ' \u00B7 ' : '') + dayLabel(lv - GUILD_MIN), submit: 'submit_guild_quest', get: 'get_guild_leaderboard', arg: 'p_day', date: keyToDay(lv - GUILD_MIN), getArg: 'p_month', getDate: guildMonth(lv), extra: () => ({ p_guild: guildName }), unit: ' quests', noTime: true, when: 'for your guild this month', board: 'this device\'s board for this guild quest', done: 'ballsortGuildDone' }
+  : isLadder(lv)
   ? { name: 'Ladder', icon: '\u{1FA9C}', label: weekLabel(WEEKLY_MIN + lv - LADDER_MIN) + ' \u00B7 R' + ladderRung, shareLabel: weekLabel(WEEKLY_MIN + lv - LADDER_MIN), submit: 'submit_ladder_score', get: 'get_ladder_leaderboard', arg: 'p_week', extra: () => ({ p_rungs: ladderCleared }), date: keyToDay(lv - LADDER_MIN), when: 'on the ladder', board: 'this week\'s ladder on this device', done: 'ballsortLadderDone' }
   : isBracket(lv)
   ? { name: 'Bracket', icon: '\u{1F94A}', label: weekLabel(WEEKLY_MIN + lv - BRACKET_MIN) + ' \u00B7 ' + (bracketRound === 1 ? 'QF' : bracketRound === 2 ? 'SF' : 'Final'), shareLabel: weekLabel(WEEKLY_MIN + lv - BRACKET_MIN), submit: 'submit_bracket_score', get: 'get_bracket_leaderboard', arg: 'p_week', extra: () => ({ p_rounds: bracketWon }), date: keyToDay(lv - BRACKET_MIN), when: 'in this bracket', board: 'this week\'s bracket on this device', done: 'ballsortBracketDone' }
@@ -339,13 +356,13 @@ function solve(start, limit = 40000){ // DFS returns list of [a,b] moves or null
   return dfs(start, []);
 }
 
-const colorsFor = lv => isLadder(lv) ? ladderColors(ladderRung) : isBracket(lv) ? BRACKET_COLORS[Math.min(bracketRound, 3) - 1] : isTournament(lv) ? TOUR_COLORS[Math.min(tourRound, TOUR_ROUNDS) - 1] : isTeam(lv) ? TEAM_COLORS : isCustom(lv) ? customOf(lv).colors : isSeasonal(lv) ? SEASONAL_COLORS : isLifetime(lv) ? LIFETIME_COLORS : isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
+const colorsFor = lv => isGuild(lv) ? GUILD_COLORS : isLadder(lv) ? ladderColors(ladderRung) : isBracket(lv) ? BRACKET_COLORS[Math.min(bracketRound, 3) - 1] : isTournament(lv) ? TOUR_COLORS[Math.min(tourRound, TOUR_ROUNDS) - 1] : isTeam(lv) ? TEAM_COLORS : isCustom(lv) ? customOf(lv).colors : isSeasonal(lv) ? SEASONAL_COLORS : isLifetime(lv) ? LIFETIME_COLORS : isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
 
 function generate(lv){
   CAP = capFor(lv);
   if (isCustom(lv)) return generateCustom(lv);
   const nColors = colorsFor(lv), nodeLimit = isLadder(lv) ? 400000 : isBracket(lv) ? 100000 : isTournament(lv) ? 100000 : isTeam(lv) ? 300000 : isSeasonal(lv) ? 600000 : isLifetime(lv) ? 1500000 : isYearly(lv) ? 600000 : isMonthly(lv) ? 200000 : 40000;
-  const r = rng(isLadder(lv) ? (lv - LADDER_MIN) * 7919 + 555557 + ladderRung * 313 : isBracket(lv) ? (lv - BRACKET_MIN) * 7919 + 424249 + bracketRound * 211 : isTournament(lv) ? (lv - TOURN_MIN) * 7919 + 31337 + tourRound * 101 : isTeam(lv) ? (lv - TEAM_MIN) * 7919 + 888883 : isSeasonal(lv) ? (lv - SEASONAL_MIN) * 7919 + 551551 : isLifetime(lv) ? 2711806 : isYearly(lv) ? (lv - YEARLY_MIN) * 7919 + 777001 : isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
+  const r = rng(isGuild(lv) ? (lv - GUILD_MIN) * 7919 + 31013 : isLadder(lv) ? (lv - LADDER_MIN) * 7919 + 555557 + ladderRung * 313 : isBracket(lv) ? (lv - BRACKET_MIN) * 7919 + 424249 + bracketRound * 211 : isTournament(lv) ? (lv - TOURN_MIN) * 7919 + 31337 + tourRound * 101 : isTeam(lv) ? (lv - TEAM_MIN) * 7919 + 888883 : isSeasonal(lv) ? (lv - SEASONAL_MIN) * 7919 + 551551 : isLifetime(lv) ? 2711806 : isYearly(lv) ? (lv - YEARLY_MIN) * 7919 + 777001 : isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
   for (let attempt = 0; attempt < 50; attempt++){
     const balls = [];
     for (let c = 0; c < nColors; c++) for (let i = 0; i < CAP; i++) balls.push(c);
@@ -560,7 +577,7 @@ async function rpc(fn, body, keepalive){
 let pendingRun = null, lastRemoteId = null, boardTab = 'world', boardReq = 0;
 async function submitRemote(keepalive){
   const run = pendingRun;
-  if (!run || run.sent || (isLadder(run.level) && ladderCleared < 1) || isCustom(run.level) || (isTeam(run.level) && !teamName)) return;
+  if (!run || run.sent || (isGuild(run.level) && !guildName) || (isLadder(run.level) && ladderCleared < 1) || isCustom(run.level) || (isTeam(run.level) && !teamName)) return;
   run.sent = true;
   try {
     const sp = specialInfo(run.level), who = { p_name: playerName || 'Player', p_moves: run.moves, p_time_ms: run.time };
@@ -586,6 +603,7 @@ function openBoard(lv){
   const sel = $('boardLevel'), max = Math.max(unlocked, normalLevel), today = dailyKey();
   sel.innerHTML = '';
   const oo = document.createElement('option'); oo.value = tournKey(); oo.textContent = '\u{1F3DF}\uFE0F Tournament (current)'; sel.appendChild(oo);
+  const og = document.createElement('option'); og.value = guildKey(); og.textContent = '\u{1F6E1}\uFE0F Guild standings (this month)'; sel.appendChild(og);
   const ol2 = document.createElement('option'); ol2.value = ladderKey(); ol2.textContent = '\u{1FA9C} Ladder (this week)'; sel.appendChild(ol2);
   const ob = document.createElement('option'); ob.value = bracketKey(); ob.textContent = '\u{1F94A} Bracket (this week)'; sel.appendChild(ob);
   const ot = document.createElement('option'); ot.value = teamKey(); ot.textContent = '\u{1F465} Team challenge (this week)'; sel.appendChild(ot);
@@ -598,7 +616,7 @@ function openBoard(lv){
   for (let l = 1; l <= max; l++){ const o = document.createElement('option'); o.value = l; o.textContent = 'Level ' + l; sel.appendChild(o); }
   const want = lv || level;
   if (isCustom(want)){ const oc = document.createElement('option'); oc.value = want; oc.textContent = '\u{1F39B}\uFE0F Custom ' + customCode(want); sel.insertBefore(oc, sel.firstChild); }
-  sel.value = isLadder(want) ? ladderKey() : isBracket(want) ? bracketKey() : isTournament(want) ? tournKey() : isTeam(want) ? teamKey() : isCustom(want) ? want : isSeasonal(want) ? seasonKey() : isLifetime(want) ? LIFETIME_MIN : isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
+  sel.value = isGuild(want) ? guildKey() : isLadder(want) ? ladderKey() : isBracket(want) ? bracketKey() : isTournament(want) ? tournKey() : isTeam(want) ? teamKey() : isCustom(want) ? want : isSeasonal(want) ? seasonKey() : isLifetime(want) ? LIFETIME_MIN : isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
   setTab(isCustom(want) ? 'local' : 'world');
   renderBoard();
   $('lbModal').classList.add('show');
@@ -612,7 +630,7 @@ function renderWorld(){
   boardMessage('Loading\u2026');
   const sp = specialInfo(lv);
   if (isCustom(lv)){ boardMessage('Custom boards are played on this device only \u2013 see the This device tab, or share the code.'); return; }
-  (sp ? rpc(sp.get, Object.assign(sp.arg ? { [sp.arg]: sp.date } : {}, { p_limit: 20 })) : rpc('get_leaderboard', { p_level: lv, p_limit: 20 })).then(rows => {
+  (sp ? rpc(sp.get, Object.assign(sp.arg ? { [sp.getArg || sp.arg]: sp.getDate || sp.date } : {}, { p_limit: 20 })) : rpc('get_leaderboard', { p_level: lv, p_limit: 20 })).then(rows => {
     if (tok !== boardReq) return;
     if (!rows.length){ boardMessage('No scores yet \u2013 be the first on the world board!'); return; }
     list.innerHTML = '';
@@ -620,7 +638,7 @@ function renderWorld(){
       const li = document.createElement('li'); if (r.id === lastRemoteId) li.className = 'me';
       const rk = document.createElement('span'); rk.textContent = '#' + r.rank;
       const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name;
-      const sc = document.createElement('span'); sc.className = 'sc'; sc.textContent = r.moves + ' moves \u00B7 ' + fmtTime(r.time_ms);
+      const sc = document.createElement('span'); sc.className = 'sc'; sc.textContent = sp && sp.noTime ? r.moves + sp.unit : r.moves + ' moves \u00B7 ' + fmtTime(r.time_ms);
       li.append(rk, nm, sc); list.appendChild(li);
     });
   }).catch(() => {
@@ -705,6 +723,7 @@ function win(){
       (streak.best > n ? ' (best ' + streak.best + ')' : '') + ' Come back tomorrow to keep it going.';
     refreshDailyLabels();
   }
+  else if (isGuild(level)) $('nextHint').textContent = '\u{1F6E1}\uFE0F ' + (guildName ? 'Quest done for guild ' + guildName + '! ' : 'Join a guild to count for it. ') + 'A new guild quest appears every day (UTC); replaying it does not add to the guild\'s score.';
   else if (isLadder(level)){
     if (ladderCleared > (ladderBest[level] || 0)){ ladderBest[level] = ladderCleared; try { localStorage.setItem('ballsortLadderBest', JSON.stringify(ladderBest)); } catch (e) {} }
     $('nextHint').textContent = '\u{1FA9C} Personal best this week: rung ' + (ladderBest[level] || 0) + '. The ladder resets every Monday (UTC).';
@@ -896,6 +915,31 @@ $('tPlay').onclick = () => {
   if (!teamSave()){ $('tInfo').textContent = 'Please enter a team name first.'; $('tName').focus(); return; }
   $('teamM').classList.remove('show'); closeBoard(); level = teamKey(); start();
 };
+function guildSave(){ guildName = cleanGuild($('gName').value); try { localStorage.setItem('ballsortGuild', guildName); } catch (e) {} return guildName; }
+function guildLoad(){
+  const info = $('gInfo'), list = $('gRoster'), name = cleanGuild($('gName').value), month = guildMonth(guildKey());
+  list.innerHTML = '';
+  if (!name){ info.textContent = 'Enter a guild name to join or start a guild.'; return; }
+  info.textContent = 'Loading guild\u2026';
+  Promise.all([rpc('get_guild_members', { p_month: month, p_guild: name }), rpc('get_guild_leaderboard', { p_month: month, p_limit: 50 })]).then(([rows, guilds]) => {
+    if (cleanGuild($('gName').value) !== name) return;
+    const i = guilds.findIndex(t => t.name.toLowerCase().startsWith(name.toLowerCase() + ' ('));
+    info.textContent = rows.length ? 'Guild ' + name + ': ' + (i >= 0 ? guilds[i].moves : 0) + ' quests this month \u00B7 ' + rows.length + (rows.length === 1 ? ' member' : ' members') + (i >= 0 ? ' \u00B7 #' + guilds[i].rank : '') : 'No quests yet this month \u2013 be the first in guild ' + name + '!';
+    rows.forEach(r => {
+      const li = document.createElement('li'), a = document.createElement('span'), b = document.createElement('span'), c = document.createElement('span');
+      a.textContent = '#' + r.rank; b.className = 'nm'; b.textContent = r.name; c.className = 'sc'; c.textContent = r.quests + (r.quests === 1 ? ' quest' : ' quests');
+      li.append(a, b, c); list.appendChild(li);
+    });
+  }).catch(() => { if (cleanGuild($('gName').value) === name) info.textContent = 'Couldn\u2019t load the guild \u2013 you can still play.'; });
+}
+let guildTimer = 0;
+$('gName').oninput = () => { clearTimeout(guildTimer); guildTimer = setTimeout(guildLoad, 400); };
+$('guildBtn').onclick = () => { closeSelect(); $('gName').value = guildName; $('guildM').classList.add('show'); guildLoad(); };
+$('gCancel').onclick = () => $('guildM').classList.remove('show');
+$('gPlay').onclick = () => {
+  if (!guildSave()){ $('gInfo').textContent = 'Please enter a guild name first.'; $('gName').focus(); return; }
+  $('guildM').classList.remove('show'); closeBoard(); level = guildKey(); start();
+};
 function playLadder(){ closeSelect(); closeBoard(); ladderRung = 1; ladderCleared = 0; ladderMoves = 0; ladderTime = 0; ladderOver = false; level = ladderKey(); start(); }
 $('ladderBtn').onclick = playLadder;
 function playBracket(){ closeSelect(); closeBoard(); bracketRound = 1; bracketWon = 0; bracketMoves = 0; bracketTime = 0; bracketOver = false; level = bracketKey(); start(); }
@@ -912,7 +956,7 @@ $('lvl').onclick = openSelect;
 $('lvl').onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSelect(); } };
 $('closeSelect').onclick = closeSelect;
 $('select').onclick = e => { if (e.target === $('select')) closeSelect(); };
-document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeSelect(); closeBoard(); $('customM').classList.remove('show'); $('teamM').classList.remove('show'); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeSelect(); closeBoard(); $('customM').classList.remove('show'); $('teamM').classList.remove('show'); $('guildM').classList.remove('show'); } });
 $('resetBest').onclick = () => {
   if (!Object.keys(best).length && !Object.keys(bestTime).length){ alert('No best scores to reset yet.'); return; }
   if (!confirm('Reset your best scores for all levels? This cannot be undone.')) return;
