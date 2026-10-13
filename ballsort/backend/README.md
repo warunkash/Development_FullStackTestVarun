@@ -43,6 +43,12 @@ boards are bigger (10 colors, 5 balls per color), so at least 10 moves are requi
 Submissions are accepted for this year or last year only. Yearly boards are the biggest (10 colors, 6 balls per
 color), so at least 10 moves are required.
 
+## Lifetime challenge
+
+`lifetime_scores` plus `submit_lifetime_score` and `get_lifetime_leaderboard`. There is one permanent board (it never
+changes) and one all-time leaderboard, so these functions take no date. Same checks as the others: at least 10 moves,
+a plausible time, and the per-IP rate limit.
+
 ## Schema
 
 See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).
