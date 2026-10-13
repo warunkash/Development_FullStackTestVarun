@@ -81,6 +81,7 @@
   .row.special .btn { margin:0; }
   .btn.monthly { padding:9px 20px; font-size:.95rem; background:#d81b60; }
   .btn.seasonal { padding:9px 20px; font-size:.95rem; background:#ef6c00; }
+  .btn.ladder { padding:9px 20px; font-size:.95rem; background:#00838f; }
   .btn.bracket { padding:9px 20px; font-size:.95rem; background:#6d4c41; }
   .btn.tourney { padding:9px 20px; font-size:.95rem; background:#c62828; }
   .btn.team { padding:9px 20px; font-size:.95rem; background:#1565c0; }
@@ -129,13 +130,13 @@
 <div class="name-row"><input id="tName" maxlength="12" placeholder="Team name" autocomplete="off" aria-label="Team name"></div>
 <p class="hint-text" id="tInfo"></p><ul id="tRoster" class="roster"></ul>
 <div class="row"><button class="btn alt" id="tCancel">Cancel</button><button class="btn" id="tPlay">Play</button></div></div></div>
-<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button><button class="btn custom" id="customBtn">&#x1F39B;&#xFE0F; Custom Challenge</button><button class="btn team" id="teamBtn">&#x1F465; Team Challenge</button><button class="btn tourney" id="tourneyBtn">&#x1F3DF;&#xFE0F; Tournament</button><button class="btn bracket" id="bracketBtn">&#x1F94A; Bracket</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
+<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button><button class="btn custom" id="customBtn">&#x1F39B;&#xFE0F; Custom Challenge</button><button class="btn team" id="teamBtn">&#x1F465; Team Challenge</button><button class="btn tourney" id="tourneyBtn">&#x1F3DF;&#xFE0F; Tournament</button><button class="btn bracket" id="bracketBtn">&#x1F94A; Bracket</button><button class="btn ladder" id="ladderBtn">&#x1FA9C; Ladder</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
 <div class="modal" id="win"><div class="card"><h2 id="winTitle">&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn alt" id="shareBtn" style="display:none">Share</button><button class="btn" id="next">Next Level</button></div></div></div>
 <div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><div class="tabs" role="tablist"><button class="tab on" id="tabWorld" role="tab">&#x1F30D; World</button><button class="tab" id="tabLocal" role="tab">This device</button></div><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
 
 <script>
 let CAP = 4;
-const capFor = lv => isTeam(lv) ? 5 : isCustom(lv) ? customOf(lv).cap : isSeasonal(lv) ? 6 : isLifetime(lv) ? 6 : isYearly(lv) ? 6 : isMonthly(lv) ? 5 : 4;
+const capFor = lv => isLadder(lv) ? ladderCap(ladderRung) : isTeam(lv) ? 5 : isCustom(lv) ? customOf(lv).cap : isSeasonal(lv) ? 6 : isLifetime(lv) ? 6 : isYearly(lv) ? 6 : isMonthly(lv) ? 5 : 4;
 const COLORS = [ ['#ff2d2d','#a30000'], ['#ff9a1f','#b25a00'], ['#ffd51f','#b38f00'], ['#2ecc40','#0b7a1d'], ['#2aa8ff','#0a5fa8'],
                  ['#b455ff','#6a1fb0'], ['#ff5fb3','#b0206f'], ['#19d3c5','#0a7c74'], ['#8d6e63','#4e342e'], ['#e0e0e0','#8a8a8a'] ];
 const $ = id => document.getElementById(id);
@@ -170,7 +171,17 @@ const isTournament = lv => lv >= TOURN_MIN && lv < BRACKET_MIN;
 const BRACKET_MIN = 1000000000, BRACKET_COLORS = [6, 7, 8], BRACKET_FACTOR = [1.3, 1.15, 1.0];
 const BRACKET_STAGES = ['Quarterfinal', 'Semifinal', 'Final'];
 const BRACKET_NAMES = ['Rex', 'Mia', 'Kai', 'Zoe', 'Leo', 'Ivy', 'Sam', 'Eli', 'Nia', 'Max', 'Ana', 'Tom', 'Uma', 'Dex', 'Fay', 'Gus'];
-const isBracket = lv => lv >= BRACKET_MIN;
+const isBracket = lv => lv >= BRACKET_MIN && lv < LADDER_MIN;
+// Ladder: a weekly climb of up to 24 rungs on boards that keep getting bigger (colors 3 -> 10, then taller tubes), played back to back.
+// Each rung has a move budget (1.5x a solver's solution); go over it and the climb ends. Ranked by rungs cleared, then total moves, then time.
+// Keys from LADDER_MIN up are LADDER_MIN + the Monday (YYYYMMDD, UTC) of that week.
+const LADDER_MIN = 1100000000, LADDER_RUNGS = 24;
+const isLadder = lv => lv >= LADDER_MIN;
+const ladderColors = r => Math.min(3 + Math.floor((r - 1) / 2), 10);
+const ladderCap = r => Math.min(6, 4 + Math.floor(Math.max(0, r - 15) / 3)); // 4 balls per color, 5 from rung 18, 6 from rung 21
+let ladderRung = 1, ladderCleared = 0, ladderMoves = 0, ladderTime = 0, ladderBudget = 0, ladderOver = false, ladderBest = {};
+try { ladderBest = JSON.parse(localStorage.getItem('ballsortLadderBest')) || {}; } catch (e) {}
+
 let bracketRound = 1, bracketWon = 0, bracketMoves = 0, bracketTime = 0, bracketTarget = 0, bracketOpp = '', bracketOver = false;
 
 let tourRound = 1, tourMoves = 0, tourTime = 0;
@@ -233,7 +244,10 @@ const tournLabel = k => {
                                               : f(a, { month: 'short', day: 'numeric' }) + '\u2013' + f(b, { month: 'short', day: 'numeric' });
 };
 const bracketKey = () => BRACKET_MIN + weekKey() - WEEKLY_MIN;
-const specialInfo = lv => isBracket(lv)
+const ladderKey = () => LADDER_MIN + weekKey() - WEEKLY_MIN;
+const specialInfo = lv => isLadder(lv)
+  ? { name: 'Ladder', icon: '\u{1FA9C}', label: weekLabel(WEEKLY_MIN + lv - LADDER_MIN) + ' \u00B7 R' + ladderRung, shareLabel: weekLabel(WEEKLY_MIN + lv - LADDER_MIN), submit: 'submit_ladder_score', get: 'get_ladder_leaderboard', arg: 'p_week', extra: () => ({ p_rungs: ladderCleared }), date: keyToDay(lv - LADDER_MIN), when: 'on the ladder', board: 'this week\'s ladder on this device', done: 'ballsortLadderDone' }
+  : isBracket(lv)
   ? { name: 'Bracket', icon: '\u{1F94A}', label: weekLabel(WEEKLY_MIN + lv - BRACKET_MIN) + ' \u00B7 ' + (bracketRound === 1 ? 'QF' : bracketRound === 2 ? 'SF' : 'Final'), shareLabel: weekLabel(WEEKLY_MIN + lv - BRACKET_MIN), submit: 'submit_bracket_score', get: 'get_bracket_leaderboard', arg: 'p_week', extra: () => ({ p_rounds: bracketWon }), date: keyToDay(lv - BRACKET_MIN), when: 'in this bracket', board: 'this week\'s bracket on this device', done: 'ballsortBracketDone' }
   : isTournament(lv)
   ? { name: 'Tournament', icon: '\u{1F3DF}\uFE0F', label: tournLabel(lv) + ' \u00B7 R' + tourRound + '/' + TOUR_ROUNDS, shareLabel: tournLabel(lv), submit: 'submit_tournament_score', get: 'get_tournament_leaderboard', arg: 'p_start', date: keyToDay(lv - TOURN_MIN), when: 'in this tournament', board: 'this tournament\'s board on this device', done: 'ballsortTournamentDone' }
@@ -325,13 +339,13 @@ function solve(start, limit = 40000){ // DFS returns list of [a,b] moves or null
   return dfs(start, []);
 }
 
-const colorsFor = lv => isBracket(lv) ? BRACKET_COLORS[Math.min(bracketRound, 3) - 1] : isTournament(lv) ? TOUR_COLORS[Math.min(tourRound, TOUR_ROUNDS) - 1] : isTeam(lv) ? TEAM_COLORS : isCustom(lv) ? customOf(lv).colors : isSeasonal(lv) ? SEASONAL_COLORS : isLifetime(lv) ? LIFETIME_COLORS : isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
+const colorsFor = lv => isLadder(lv) ? ladderColors(ladderRung) : isBracket(lv) ? BRACKET_COLORS[Math.min(bracketRound, 3) - 1] : isTournament(lv) ? TOUR_COLORS[Math.min(tourRound, TOUR_ROUNDS) - 1] : isTeam(lv) ? TEAM_COLORS : isCustom(lv) ? customOf(lv).colors : isSeasonal(lv) ? SEASONAL_COLORS : isLifetime(lv) ? LIFETIME_COLORS : isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
 
 function generate(lv){
   CAP = capFor(lv);
   if (isCustom(lv)) return generateCustom(lv);
-  const nColors = colorsFor(lv), nodeLimit = isBracket(lv) ? 100000 : isTournament(lv) ? 100000 : isTeam(lv) ? 300000 : isSeasonal(lv) ? 600000 : isLifetime(lv) ? 1500000 : isYearly(lv) ? 600000 : isMonthly(lv) ? 200000 : 40000;
-  const r = rng(isBracket(lv) ? (lv - BRACKET_MIN) * 7919 + 424249 + bracketRound * 211 : isTournament(lv) ? (lv - TOURN_MIN) * 7919 + 31337 + tourRound * 101 : isTeam(lv) ? (lv - TEAM_MIN) * 7919 + 888883 : isSeasonal(lv) ? (lv - SEASONAL_MIN) * 7919 + 551551 : isLifetime(lv) ? 2711806 : isYearly(lv) ? (lv - YEARLY_MIN) * 7919 + 777001 : isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
+  const nColors = colorsFor(lv), nodeLimit = isLadder(lv) ? 400000 : isBracket(lv) ? 100000 : isTournament(lv) ? 100000 : isTeam(lv) ? 300000 : isSeasonal(lv) ? 600000 : isLifetime(lv) ? 1500000 : isYearly(lv) ? 600000 : isMonthly(lv) ? 200000 : 40000;
+  const r = rng(isLadder(lv) ? (lv - LADDER_MIN) * 7919 + 555557 + ladderRung * 313 : isBracket(lv) ? (lv - BRACKET_MIN) * 7919 + 424249 + bracketRound * 211 : isTournament(lv) ? (lv - TOURN_MIN) * 7919 + 31337 + tourRound * 101 : isTeam(lv) ? (lv - TEAM_MIN) * 7919 + 888883 : isSeasonal(lv) ? (lv - SEASONAL_MIN) * 7919 + 551551 : isLifetime(lv) ? 2711806 : isYearly(lv) ? (lv - YEARLY_MIN) * 7919 + 777001 : isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
   for (let attempt = 0; attempt < 50; attempt++){
     const balls = [];
     for (let c = 0; c < nColors; c++) for (let i = 0; i < CAP; i++) balls.push(c);
@@ -389,6 +403,16 @@ function bracketSetup(){
   bracketTarget = Math.max(colorsFor(level) + 2, Math.round(par * BRACKET_FACTOR[bracketRound - 1]));
   bracketOpp = BRACKET_NAMES[pick];
 }
+function ladderSetup(){
+  const par = (solve(tubes, 400000) || []).length || 20;
+  ladderBudget = Math.max(colorsFor(level) + 3, Math.round(par * 1.5));
+}
+function ladderLose(){
+  if (ladderOver) return;
+  timerStop(); ladderMoves += moves; ladderTime += elapsedMs();
+  moves = ladderMoves; tAcc = ladderTime; tStart = null; ladderOver = true; ladderCleared = ladderRung - 1;
+  win();
+}
 function bracketLose(){
   if (bracketOver) return;
   timerStop(); bracketMoves += moves; bracketTime += elapsedMs();
@@ -400,13 +424,14 @@ function start(){
   if (!isSpecial(level) && level > unlocked){ unlocked = level; try { localStorage.setItem('ballsortUnlocked', unlocked); } catch (e) {} }
   tubes = generate(level); history = []; selected = null; moves = 0; undos = 5; hints = 3; adds = 1; hintMove = null;
   if (isBracket(level)) bracketSetup();
+  if (isLadder(level)) ladderSetup();
   render();
 }
 
 function render(){
   const board = $('board'); board.innerHTML = '';
   board.style.setProperty('--cap', CAP); board.classList.toggle('tall', CAP > 4 || tubes.length > 10);
-  const sp = specialInfo(level); $('lvl').textContent = sp ? sp.icon + ' ' + sp.name + ' \u00B7 ' + sp.label : 'Level ' + level; $('moves').textContent = isBracket(level) ? BRACKET_STAGES[bracketRound - 1] + ' vs ' + bracketOpp + ' \u00B7 \u2264 ' + bracketTarget + ' moves \u00B7 ' + moves : (isTournament(level) ? 'Total moves: ' + (tourMoves + moves) + ' \u00B7 Best: ' : 'Moves: ' + moves + ' \u00B7 Best: ') + (best[level] ?? '\u2013');
+  const sp = specialInfo(level); $('lvl').textContent = sp ? sp.icon + ' ' + sp.name + ' \u00B7 ' + sp.label : 'Level ' + level; $('moves').textContent = isLadder(level) ? 'Rung ' + ladderRung + '/' + LADDER_RUNGS + ' \u00B7 \u2264 ' + ladderBudget + ' moves \u00B7 ' + moves : isBracket(level) ? BRACKET_STAGES[bracketRound - 1] + ' vs ' + bracketOpp + ' \u00B7 \u2264 ' + bracketTarget + ' moves \u00B7 ' + moves : (isTournament(level) ? 'Total moves: ' + (tourMoves + moves) + ' \u00B7 Best: ' : 'Moves: ' + moves + ' \u00B7 Best: ') + (best[level] ?? '\u2013');
   $('bestTime').textContent = bestTime[level] === undefined ? '\u2013' : fmtTime(bestTime[level]);
   $('undoB').textContent = undos; $('hintB').textContent = hints; $('addB').textContent = adds;
   tubes.forEach((t, i) => {
@@ -426,6 +451,7 @@ function render(){
 
 function tap(i){
   if (isBracket(level) && (bracketOver || moves > bracketTarget)) return; // knocked out: ignore taps
+  if (isLadder(level) && (ladderOver || moves > ladderBudget)) return;
   hintMove = null;
   if (selected === null){ if (tubes[i].length) selected = i; }
   else if (selected === i){ selected = null; }
@@ -433,6 +459,7 @@ function tap(i){
     history.push(JSON.stringify(tubes)); applyMove(tubes, selected, i); moves++; selected = null;
     timerStart();
     render();
+    if (isLadder(level) && moves > ladderBudget){ timerStop(); setTimeout(ladderLose, 450); return; }
     if (isBracket(level) && moves > bracketTarget){ timerStop(); setTimeout(bracketLose, 450); return; }
     if (isSolved(tubes)){ timerStop(); showTimer(); setTimeout(win, 350); } else moveSound();
     return;
@@ -533,7 +560,7 @@ async function rpc(fn, body, keepalive){
 let pendingRun = null, lastRemoteId = null, boardTab = 'world', boardReq = 0;
 async function submitRemote(keepalive){
   const run = pendingRun;
-  if (!run || run.sent || isCustom(run.level) || (isTeam(run.level) && !teamName)) return;
+  if (!run || run.sent || (isLadder(run.level) && ladderCleared < 1) || isCustom(run.level) || (isTeam(run.level) && !teamName)) return;
   run.sent = true;
   try {
     const sp = specialInfo(run.level), who = { p_name: playerName || 'Player', p_moves: run.moves, p_time_ms: run.time };
@@ -559,6 +586,7 @@ function openBoard(lv){
   const sel = $('boardLevel'), max = Math.max(unlocked, normalLevel), today = dailyKey();
   sel.innerHTML = '';
   const oo = document.createElement('option'); oo.value = tournKey(); oo.textContent = '\u{1F3DF}\uFE0F Tournament (current)'; sel.appendChild(oo);
+  const ol2 = document.createElement('option'); ol2.value = ladderKey(); ol2.textContent = '\u{1FA9C} Ladder (this week)'; sel.appendChild(ol2);
   const ob = document.createElement('option'); ob.value = bracketKey(); ob.textContent = '\u{1F94A} Bracket (this week)'; sel.appendChild(ob);
   const ot = document.createElement('option'); ot.value = teamKey(); ot.textContent = '\u{1F465} Team challenge (this week)'; sel.appendChild(ot);
   const os = document.createElement('option'); os.value = seasonKey(); os.textContent = SEASONS[seasonParts(seasonKey()).s][1] + ' Seasonal challenge (this season)'; sel.appendChild(os);
@@ -570,7 +598,7 @@ function openBoard(lv){
   for (let l = 1; l <= max; l++){ const o = document.createElement('option'); o.value = l; o.textContent = 'Level ' + l; sel.appendChild(o); }
   const want = lv || level;
   if (isCustom(want)){ const oc = document.createElement('option'); oc.value = want; oc.textContent = '\u{1F39B}\uFE0F Custom ' + customCode(want); sel.insertBefore(oc, sel.firstChild); }
-  sel.value = isBracket(want) ? bracketKey() : isTournament(want) ? tournKey() : isTeam(want) ? teamKey() : isCustom(want) ? want : isSeasonal(want) ? seasonKey() : isLifetime(want) ? LIFETIME_MIN : isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
+  sel.value = isLadder(want) ? ladderKey() : isBracket(want) ? bracketKey() : isTournament(want) ? tournKey() : isTeam(want) ? teamKey() : isCustom(want) ? want : isSeasonal(want) ? seasonKey() : isLifetime(want) ? LIFETIME_MIN : isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
   setTab(isCustom(want) ? 'local' : 'world');
   renderBoard();
   $('lbModal').classList.add('show');
@@ -619,6 +647,16 @@ function renderBoard(){
 function closeBoard(){ $('lbModal').classList.remove('show'); }
 
 function win(){
+  if (isLadder(level) && !ladderOver){
+    timerStop(); ladderMoves += moves; ladderTime += elapsedMs(); ladderCleared = ladderRung;
+    if (ladderRung < LADDER_RUNGS){
+      winSound(); ladderRung++; start();
+      $('moves').textContent = '\u2705 Rung ' + (ladderRung - 1) + ' cleared! Now rung ' + ladderRung + '/' + LADDER_RUNGS + ' \u2013 ' + colorsFor(level) + ' colors, \u2264 ' + ladderBudget + ' moves';
+      setTimeout(render, 2800);
+      return;
+    }
+    moves = ladderMoves; tAcc = ladderTime; tStart = null; // reached the summit: the whole climb is scored
+  }
   if (isBracket(level) && !bracketOver){
     timerStop(); bracketMoves += moves; bracketTime += elapsedMs(); bracketWon = bracketRound;
     if (bracketRound < 3){
@@ -640,8 +678,8 @@ function win(){
     }
     moves = tourMoves; tAcc = tourTime; tStart = null; // the whole tournament run is what gets scored
   }
-  const out = isBracket(level) && bracketOver; // knocked out of the bracket: nothing to record as a best
-  $('winTitle').textContent = out ? '\u{1F4A5} Knocked out!' : isBracket(level) ? '\u{1F3C6} Bracket Champion!' : '\u{1F389} Level Complete!';
+  const out = (isBracket(level) && bracketOver) || (isLadder(level) && ladderOver); // knocked out: nothing to record as a best
+  $('winTitle').textContent = isLadder(level) ? (out ? '\u{1FA9C} Climb over!' : '\u{1F3D4}\uFE0F Summit reached!') : out ? '\u{1F4A5} Knocked out!' : isBracket(level) ? '\u{1F3C6} Bracket Champion!' : '\u{1F389} Level Complete!';
   if (!out) winSound();
   const prev = best[level];
   const isBest = !out && (prev === undefined || moves < prev);
@@ -653,7 +691,8 @@ function win(){
   $('winTime').textContent = 'Time ' + fmtTime(time) +
     (isBestTime ? (prevTime === undefined ? ' \u2013 best time set!' : ' \u2013 new best time! (was ' + fmtTime(prevTime) + ')') : ' \u00B7 Best: ' + fmtTime(prevTime));
   if (bestTime[level] !== undefined) $('bestTime').textContent = fmtTime(bestTime[level]);
-  $('winMsg').textContent = out ? 'Beaten by ' + bracketOpp + ' in the ' + BRACKET_STAGES[bracketRound - 1] + ' \u2013 they needed only ' + bracketTarget + ' moves. ' + bracketWon + ' of 3 matches won.'
+  $('winMsg').textContent = isLadder(level) ? (out ? 'Out of moves on rung ' + ladderRung + ' (budget ' + ladderBudget + '). You cleared ' + ladderCleared + ' of ' + LADDER_RUNGS + ' rungs in ' + moves + ' moves.' : 'All ' + LADDER_RUNGS + ' rungs cleared in ' + moves + ' moves!')
+    : out ? 'Beaten by ' + bracketOpp + ' in the ' + BRACKET_STAGES[bracketRound - 1] + ' \u2013 they needed only ' + bracketTarget + ' moves. ' + bracketWon + ' of 3 matches won.'
     : isBracket(level) ? 'All 3 matches won in ' + moves + ' moves!' : 'Solved in ' + moves + ' moves' +
     (isBest ? (prev === undefined ? ' \u2013 best score set!' : ' \u2013 new best! (was ' + prev + ')') : ' \u00B7 Best: ' + prev);
   const sp = specialInfo(level), daily = isDaily(level), weekly = isWeekly(level), monthly = isMonthly(level), yearly = isYearly(level), lifetime = isLifetime(level), seasonal = isSeasonal(level), special = !!sp;
@@ -666,6 +705,10 @@ function win(){
       (streak.best > n ? ' (best ' + streak.best + ')' : '') + ' Come back tomorrow to keep it going.';
     refreshDailyLabels();
   }
+  else if (isLadder(level)){
+    if (ladderCleared > (ladderBest[level] || 0)){ ladderBest[level] = ladderCleared; try { localStorage.setItem('ballsortLadderBest', JSON.stringify(ladderBest)); } catch (e) {} }
+    $('nextHint').textContent = '\u{1FA9C} Personal best this week: rung ' + (ladderBest[level] || 0) + '. The ladder resets every Monday (UTC).';
+  }
   else if (isBracket(level)) $('nextHint').textContent = out ? '\u{1F94A} Come back anytime this week and try the bracket again \u2013 the opponents never change.' : '\u{1F94A} Flawless run! A new bracket opens every Monday (UTC).';
   else if (isTournament(level)) $('nextHint').textContent = '\u{1F3DF}\uFE0F All ' + TOUR_ROUNDS + ' rounds cleared! A new tournament starts every 14 days (UTC).';
   else if (isTeam(level)) $('nextHint').textContent = '\u{1F465} ' + (teamName ? 'Team ' + teamName + ' is ranked by its members\' average best run. ' : '') + 'A new team board starts every Monday (UTC).';
@@ -677,9 +720,9 @@ function win(){
   else if (weekly) $('nextHint').textContent = '\u{1F5D3} A new weekly challenge starts every Monday (UTC).';
   else $('nextHint').textContent = '\u{1F4A1} Level ' + (level + 1) + ': ' + n + ' colors, ' + (n + 2) + ' tubes' +
     (harder ? ' \u2013 a new color joins!' : n === COLORS.length ? ' \u2013 the maximum difficulty' : ' \u2013 same colors, a new layout');
-  const res = out ? { entry: null, rank: 0 } : addScore(level, moves, time);
+  const res = out || isLadder(level) ? { entry: null, rank: 0 } : addScore(level, moves, time);
   lastEntry = res.entry;
-  $('rankMsg').textContent = out ? '\u{1F94A} Won ' + bracketWon + ' of 3 matches' : res.rank ? '\u{1F3C6} #' + res.rank + (sp ? ' on ' + sp.board : ' on the Level ' + level + ' leaderboard') : 'Not in the top 10 ' + (sp ? 'for ' + sp.when : 'for this level');
+  $('rankMsg').textContent = isLadder(level) ? '\u{1FA9C} Rung ' + ladderCleared + ' of ' + LADDER_RUNGS : out ? '\u{1F94A} Won ' + bracketWon + ' of 3 matches' : res.rank ? '\u{1F3C6} #' + res.rank + (sp ? ' on ' + sp.board : ' on the Level ' + level + ' leaderboard') : 'Not in the top 10 ' + (sp ? 'for ' + sp.when : 'for this level');
   $('shareBtn').style.display = special ? '' : 'none';
   $('shareBtn').textContent = 'Share';
   $('playerName').value = playerName;
@@ -711,6 +754,7 @@ function dailyShareText(run){
   const n = currentStreak();
   return [
     'Ball Sort ' + specialInfo(run.level).name + ' \u00B7 ' + specialInfo(run.level).shareLabel,
+    isLadder(run.level) ? '\u{1FA9C} Rung ' + ladderCleared + ' of ' + LADDER_RUNGS : '',
     isBracket(run.level) ? (bracketWon === 3 ? '\u{1F3C6} Champion' : '\u{1F4A5} Knocked out \u2013 won ' + bracketWon + ' of 3') : '',
     specialInfo(run.level).icon + ' ' + run.moves + ' moves \u00B7 ' + fmtTime(run.time),
     run.rank !== undefined ? '\u{1F30D} #' + run.rank + ' worldwide' : '',
@@ -770,6 +814,7 @@ function openSelect(){
   $('monthlyBtn').textContent = '\u{1F3C5} Monthly Challenge' + (+mdone === monthKey() ? ' \u2713' : '');
   let ydone = ''; try { ydone = localStorage.getItem('ballsortYearlyDone'); } catch (e) {}
   $('yearlyBtn').textContent = '\u{1F3C6} Yearly Challenge' + (+ydone === yearKey() ? ' \u2713' : '');
+  $('ladderBtn').textContent = '\u{1FA9C} Ladder' + (ladderBest[ladderKey()] ? ' \u00B7 best ' + ladderBest[ladderKey()] : '');
   let bdone = ''; try { bdone = localStorage.getItem('ballsortBracketDone'); } catch (e) {}
   $('bracketBtn').textContent = '\u{1F94A} Bracket' + (+bdone === bracketKey() ? ' \u2713' : '');
   let tdone = ''; try { tdone = localStorage.getItem('ballsortTournamentDone'); } catch (e) {}
@@ -851,6 +896,8 @@ $('tPlay').onclick = () => {
   if (!teamSave()){ $('tInfo').textContent = 'Please enter a team name first.'; $('tName').focus(); return; }
   $('teamM').classList.remove('show'); closeBoard(); level = teamKey(); start();
 };
+function playLadder(){ closeSelect(); closeBoard(); ladderRung = 1; ladderCleared = 0; ladderMoves = 0; ladderTime = 0; ladderOver = false; level = ladderKey(); start(); }
+$('ladderBtn').onclick = playLadder;
 function playBracket(){ closeSelect(); closeBoard(); bracketRound = 1; bracketWon = 0; bracketMoves = 0; bracketTime = 0; bracketOver = false; level = bracketKey(); start(); }
 $('bracketBtn').onclick = playBracket;
 function playTournament(){ closeSelect(); closeBoard(); tourRound = 1; tourMoves = 0; tourTime = 0; level = tournKey(); start(); }
@@ -879,7 +926,7 @@ $('undo').onclick = () => {
 $('addTube').onclick = () => { if (adds > 0){ adds--; tubes.push([]); render(); } };
 $('hint').onclick = () => {
   if (hints <= 0) return;
-  const path = solve(tubes, isBracket(level) ? 200000 : isTournament(level) ? 200000 : isTeam(level) ? 400000 : isCustom(level) ? 600000 : isSeasonal(level) ? 800000 : isLifetime(level) ? 2000000 : isYearly(level) ? 800000 : isMonthly(level) ? 400000 : 60000);
+  const path = solve(tubes, isLadder(level) ? 600000 : isBracket(level) ? 200000 : isTournament(level) ? 200000 : isTeam(level) ? 400000 : isCustom(level) ? 600000 : isSeasonal(level) ? 800000 : isLifetime(level) ? 2000000 : isYearly(level) ? 800000 : isMonthly(level) ? 400000 : 60000);
   if (path && path.length){ hints--; hintMove = path[0]; selected = null; render(); }
   else {
     const m = $('moves'); m.textContent = 'No hint found from here \u2013 try undo';
