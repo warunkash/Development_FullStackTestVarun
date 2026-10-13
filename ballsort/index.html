@@ -70,6 +70,9 @@
   .board-list .nm { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
   .board-list .sc { font-size:.8rem; opacity:.8; white-space:nowrap; }
   .board-empty { opacity:.7; padding:18px 0; }
+  .tabs { display:flex; gap:8px; justify-content:center; margin-bottom:10px; }
+  .tab { background:var(--glass); color:var(--txt); border:2px solid var(--edge); border-radius:999px; padding:6px 14px; font-weight:600; font-size:.9rem; cursor:pointer; }
+  .tab.on { background:#2e7dff; border-color:#2e7dff; color:#fff; }
   .name-row { margin:0 0 14px; }
   .name-row input { background:var(--glass); color:var(--txt); border:2px solid var(--edge); border-radius:10px; padding:8px 10px; font-size:1rem; width:70%; text-align:center; user-select:text; }
   .btn.alt { background:transparent; color:var(--txt); border:2px solid var(--edge); }
@@ -95,8 +98,8 @@
 </footer>
 <div class="links"><button class="link" id="openBoard">Leaderboard</button><span aria-hidden="true">&middot;</span><button class="link" id="resetBest">Reset best scores</button></div>
 <div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
-<div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn" id="next">Next Level</button></div></div></div>
-<div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
+<div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn" id="next">Next Level</button></div></div></div>
+<div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><div class="tabs" role="tablist"><button class="tab on" id="tabWorld" role="tab">&#x1F30D; World</button><button class="tab" id="tabLocal" role="tab">This device</button></div><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
 
 <script>
 const CAP = 4;
@@ -305,15 +308,73 @@ function addScore(lv, m, t){
   const i = ranked.indexOf(entry);
   return { entry, rank: i < 10 ? i + 1 : 0 };
 }
+// World leaderboard (Supabase). The key below is a publishable key: it can only call the two leaderboard functions.
+const SB_URL = 'https://tlituetpgrlfilqgkpvi.supabase.co';
+const SB_KEY = 'sb_publishable_-25c7-mcGdSOcA1xsEqhxg_hDPwOv0t';
+async function rpc(fn, body, keepalive){
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/rpc/' + fn, { method: 'POST', signal: ctl.signal, keepalive: !!keepalive,
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } finally { clearTimeout(timer); }
+}
+let pendingRun = null, lastRemoteId = null, boardTab = 'world', boardReq = 0;
+async function submitRemote(keepalive){
+  const run = pendingRun;
+  if (!run || run.sent) return;
+  run.sent = true;
+  try {
+    const r = await rpc('submit_score', { p_level: run.level, p_name: playerName || 'Player', p_moves: run.moves, p_time_ms: run.time }, keepalive);
+    if (r && r.ok){
+      lastRemoteId = r.id;
+      if (pendingRun === run) $('worldMsg').textContent = '\u{1F30D} #' + r.rank + ' worldwide on Level ' + run.level;
+    }
+  } catch (e) {
+    run.sent = false;
+  }
+}
+function setTab(t){
+  boardTab = t;
+  $('tabWorld').classList.toggle('on', t === 'world');
+  $('tabLocal').classList.toggle('on', t === 'local');
+  $('clearBoard').style.display = t === 'local' ? '' : 'none';
+}
+
 function openBoard(lv){
   const sel = $('boardLevel'), max = Math.max(unlocked, level);
   sel.innerHTML = '';
   for (let l = 1; l <= max; l++){ const o = document.createElement('option'); o.value = l; o.textContent = 'Level ' + l; sel.appendChild(o); }
   sel.value = lv || level;
+  setTab('world');
   renderBoard();
   $('lbModal').classList.add('show');
 }
+function boardMessage(text){
+  const list = $('boardList'); list.innerHTML = '';
+  const li = document.createElement('li'); li.className = 'board-empty'; li.style.display = 'block'; li.textContent = text; list.appendChild(li);
+}
+function renderWorld(){
+  const lv = +$('boardLevel').value, tok = ++boardReq, list = $('boardList');
+  boardMessage('Loading\u2026');
+  rpc('get_leaderboard', { p_level: lv, p_limit: 20 }).then(rows => {
+    if (tok !== boardReq) return;
+    if (!rows.length){ boardMessage('No scores yet \u2013 be the first on the world board!'); return; }
+    list.innerHTML = '';
+    rows.forEach(r => {
+      const li = document.createElement('li'); if (r.id === lastRemoteId) li.className = 'me';
+      const rk = document.createElement('span'); rk.textContent = '#' + r.rank;
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name;
+      const sc = document.createElement('span'); sc.className = 'sc'; sc.textContent = r.moves + ' moves \u00B7 ' + fmtTime(r.time_ms);
+      li.append(rk, nm, sc); list.appendChild(li);
+    });
+  }).catch(() => {
+    if (tok === boardReq) boardMessage("Couldn't reach the world leaderboard. Check your connection, or look at 'This device'.");
+  });
+}
 function renderBoard(){
+  if (boardTab === 'world'){ renderWorld(); return; }
   const lv = +$('boardLevel').value, list = $('boardList');
   list.innerHTML = '';
   const rows = scores.filter(x => x.l === lv).sort(byScore);
@@ -352,6 +413,8 @@ function win(){
   lastEntry = res.entry;
   $('rankMsg').textContent = res.rank ? '\u{1F3C6} #' + res.rank + ' on the Level ' + level + ' leaderboard' : 'Not in the top 10 for this level';
   $('playerName').value = playerName;
+  $('worldMsg').textContent = '';
+  pendingRun = { level, moves, time: Math.round(time), sent: false };
   $('win').classList.add('show');
 }
 
@@ -361,7 +424,15 @@ $('playerName').oninput = () => {
   if (lastEntry){ lastEntry.n = playerName || 'Player'; saveScores(); }
 };
 $('openBoard').onclick = () => openBoard();
-$('viewBoard').onclick = () => openBoard(level);
+$('viewBoard').onclick = async () => {
+  openBoard(level);
+  const run = pendingRun;
+  await submitRemote();
+  if (run && run.sent && $('lbModal').classList.contains('show') && boardTab === 'world' && +$('boardLevel').value === run.level) renderBoard();
+};
+$('tabWorld').onclick = () => { setTab('world'); renderBoard(); };
+$('tabLocal').onclick = () => { setTab('local'); renderBoard(); };
+window.addEventListener('pagehide', () => { submitRemote(true); });
 $('boardLevel').onchange = renderBoard;
 $('closeBoard').onclick = closeBoard;
 $('lbModal').onclick = e => { if (e.target === $('lbModal')) closeBoard(); };
@@ -371,7 +442,7 @@ $('clearBoard').onclick = () => {
   if (!confirm('Clear the Level ' + lv + ' leaderboard? This cannot be undone.')) return;
   scores = scores.filter(x => x.l !== lv); if (lastEntry && lastEntry.l === lv) lastEntry = null; saveScores(); renderBoard();
 };
-$('next').onclick = () => { $('win').classList.remove('show'); level++; localStorage.setItem('ballsortLevel', level); start(); };
+$('next').onclick = () => { submitRemote(); $('win').classList.remove('show'); level++; localStorage.setItem('ballsortLevel', level); start(); };
 $('restart').onclick = start;
 
 function openSelect(){
