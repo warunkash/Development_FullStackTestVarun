@@ -19,6 +19,12 @@ project's **publishable** key (it is public by design and is in `ballsort/index.
 This cannot stop a determined cheater, because the game runs on the player's device. It rejects obviously
 impossible scores and limits spam.
 
+## Daily challenge
+
+The daily challenge has its own table (`daily_scores`) and two functions, `submit_daily_score` and
+`get_daily_leaderboard`, locked down the same way. A day's board is for the UTC date; submissions are only
+accepted for yesterday, today or tomorrow (UTC), so late finishers and time zones still work.
+
 ## Schema
 
 See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).

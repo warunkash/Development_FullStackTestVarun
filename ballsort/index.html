@@ -73,6 +73,7 @@
   .tabs { display:flex; gap:8px; justify-content:center; margin-bottom:10px; }
   .tab { background:var(--glass); color:var(--txt); border:2px solid var(--edge); border-radius:999px; padding:6px 14px; font-weight:600; font-size:.9rem; cursor:pointer; }
   .tab.on { background:#2e7dff; border-color:#2e7dff; color:#fff; }
+  .btn.daily { margin:0 0 12px; padding:9px 20px; font-size:.95rem; background:#ff8f1f; }
   .name-row { margin:0 0 14px; }
   .name-row input { background:var(--glass); color:var(--txt); border:2px solid var(--edge); border-radius:10px; padding:8px 10px; font-size:1rem; width:70%; text-align:center; user-select:text; }
   .btn.alt { background:transparent; color:var(--txt); border:2px solid var(--edge); }
@@ -96,8 +97,8 @@
   <button class="round" id="theme" title="Switch theme"></button>
   <button class="round" id="mute" title="Mute sound" aria-pressed="false">&#x1F50A;</button>
 </footer>
-<div class="links"><button class="link" id="openBoard">Leaderboard</button><span aria-hidden="true">&middot;</span><button class="link" id="resetBest">Reset best scores</button></div>
-<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
+<div class="links"><button class="link" id="openDaily">Daily challenge</button><span aria-hidden="true">&middot;</span><button class="link" id="openBoard">Leaderboard</button><span aria-hidden="true">&middot;</span><button class="link" id="resetBest">Reset best scores</button></div>
+<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
 <div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn" id="next">Next Level</button></div></div></div>
 <div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><div class="tabs" role="tablist"><button class="tab on" id="tabWorld" role="tab">&#x1F30D; World</button><button class="tab" id="tabLocal" role="tab">This device</button></div><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
 
@@ -107,6 +108,14 @@ const COLORS = [ ['#ff2d2d','#a30000'], ['#ff9a1f','#b25a00'], ['#ffd51f','#b38f
                  ['#b455ff','#6a1fb0'], ['#ff5fb3','#b0206f'], ['#19d3c5','#0a7c74'], ['#8d6e63','#4e342e'], ['#e0e0e0','#8a8a8a'] ];
 const $ = id => document.getElementById(id);
 let level = +(localStorage.getItem('ballsortLevel') || 1);
+// Daily challenge: level numbers above DAILY_MIN are a date key (YYYYMMDD in UTC), the same board for everyone that day
+const DAILY_MIN = 20000000, DAILY_COLORS = 8;
+const isDaily = lv => lv > DAILY_MIN;
+const dailyKey = () => { const d = new Date(); return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate(); };
+const keyToDay = k => Math.floor(k / 10000) + '-' + String(Math.floor(k / 100) % 100).padStart(2, '0') + '-' + String(k % 100).padStart(2, '0');
+const dayLabel = k => new Date(keyToDay(k) + 'T00:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+let normalLevel = level;
+const setNormal = l => { normalLevel = level = l; try { localStorage.setItem('ballsortLevel', l); } catch (e) {} };
 let unlocked = Math.max(level, +(localStorage.getItem('ballsortUnlocked') || 1)); // highest level reached
 let best = {}; // level -> fewest moves
 try { best = JSON.parse(localStorage.getItem('ballsortBest')) || {}; } catch (e) {}
@@ -157,11 +166,11 @@ function solve(start, limit = 40000){ // DFS returns list of [a,b] moves or null
   return dfs(start, []);
 }
 
-const colorsFor = lv => Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
+const colorsFor = lv => isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
 
 function generate(lv){
   const nColors = colorsFor(lv);
-  const r = rng(lv * 7919 + 13);
+  const r = rng(isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
   for (let attempt = 0; attempt < 50; attempt++){
     const balls = [];
     for (let c = 0; c < nColors; c++) for (let i = 0; i < CAP; i++) balls.push(c);
@@ -190,7 +199,7 @@ document.addEventListener('visibilitychange', () => {
 
 function start(){
   timerReset();
-  if (level > unlocked){ unlocked = level; try { localStorage.setItem('ballsortUnlocked', unlocked); } catch (e) {} }
+  if (!isDaily(level) && level > unlocked){ unlocked = level; try { localStorage.setItem('ballsortUnlocked', unlocked); } catch (e) {} }
   tubes = generate(level); history = []; selected = null; moves = 0; undos = 5; hints = 3; adds = 1; hintMove = null;
   render();
 }
@@ -198,7 +207,7 @@ function start(){
 function render(){
   const board = $('board'); board.innerHTML = '';
   board.style.setProperty('--cap', CAP);
-  $('lvl').textContent = 'Level ' + level; $('moves').textContent = 'Moves: ' + moves + ' \u00B7 Best: ' + (best[level] ?? '\u2013');
+  $('lvl').textContent = isDaily(level) ? '\u{1F4C5} Daily \u00B7 ' + dayLabel(level) : 'Level ' + level; $('moves').textContent = 'Moves: ' + moves + ' \u00B7 Best: ' + (best[level] ?? '\u2013');
   $('bestTime').textContent = bestTime[level] === undefined ? '\u2013' : fmtTime(bestTime[level]);
   $('undoB').textContent = undos; $('hintB').textContent = hints; $('addB').textContent = adds;
   tubes.forEach((t, i) => {
@@ -326,10 +335,13 @@ async function submitRemote(keepalive){
   if (!run || run.sent) return;
   run.sent = true;
   try {
-    const r = await rpc('submit_score', { p_level: run.level, p_name: playerName || 'Player', p_moves: run.moves, p_time_ms: run.time }, keepalive);
+    const daily = isDaily(run.level);
+    const r = daily
+      ? await rpc('submit_daily_score', { p_day: keyToDay(run.level), p_name: playerName || 'Player', p_moves: run.moves, p_time_ms: run.time }, keepalive)
+      : await rpc('submit_score', { p_level: run.level, p_name: playerName || 'Player', p_moves: run.moves, p_time_ms: run.time }, keepalive);
     if (r && r.ok){
       lastRemoteId = r.id;
-      if (pendingRun === run) $('worldMsg').textContent = '\u{1F30D} #' + r.rank + ' worldwide on Level ' + run.level;
+      if (pendingRun === run) $('worldMsg').textContent = '\u{1F30D} #' + r.rank + ' worldwide ' + (daily ? 'today' : 'on Level ' + run.level);
     }
   } catch (e) {
     run.sent = false;
@@ -343,10 +355,12 @@ function setTab(t){
 }
 
 function openBoard(lv){
-  const sel = $('boardLevel'), max = Math.max(unlocked, level);
+  const sel = $('boardLevel'), max = Math.max(unlocked, normalLevel), today = dailyKey();
   sel.innerHTML = '';
+  const od = document.createElement('option'); od.value = today; od.textContent = '\u{1F4C5} Daily challenge (today)'; sel.appendChild(od);
   for (let l = 1; l <= max; l++){ const o = document.createElement('option'); o.value = l; o.textContent = 'Level ' + l; sel.appendChild(o); }
-  sel.value = lv || level;
+  const want = lv || level;
+  sel.value = isDaily(want) ? today : want;
   setTab('world');
   renderBoard();
   $('lbModal').classList.add('show');
@@ -358,7 +372,7 @@ function boardMessage(text){
 function renderWorld(){
   const lv = +$('boardLevel').value, tok = ++boardReq, list = $('boardList');
   boardMessage('Loading\u2026');
-  rpc('get_leaderboard', { p_level: lv, p_limit: 20 }).then(rows => {
+  (isDaily(lv) ? rpc('get_daily_leaderboard', { p_day: keyToDay(lv), p_limit: 20 }) : rpc('get_leaderboard', { p_level: lv, p_limit: 20 })).then(rows => {
     if (tok !== boardReq) return;
     if (!rows.length){ boardMessage('No scores yet \u2013 be the first on the world board!'); return; }
     list.innerHTML = '';
@@ -406,12 +420,16 @@ function win(){
   $('bestTime').textContent = fmtTime(bestTime[level]);
   $('winMsg').textContent = 'Solved in ' + moves + ' moves' +
     (isBest ? (prev === undefined ? ' \u2013 best score set!' : ' \u2013 new best! (was ' + prev + ')') : ' \u00B7 Best: ' + prev);
+  const daily = isDaily(level);
+  $('next').textContent = daily ? 'Back to levels' : 'Next Level';
+  if (daily){ try { localStorage.setItem('ballsortDailyDone', level); } catch (e) {} }
   const n = colorsFor(level + 1), harder = n > colorsFor(level);
-  $('nextHint').textContent = '\u{1F4A1} Level ' + (level + 1) + ': ' + n + ' colors, ' + (n + 2) + ' tubes' +
+  if (daily) $('nextHint').textContent = '\u{1F4C5} Come back tomorrow for a new daily challenge!';
+  else $('nextHint').textContent = '\u{1F4A1} Level ' + (level + 1) + ': ' + n + ' colors, ' + (n + 2) + ' tubes' +
     (harder ? ' \u2013 a new color joins!' : n === COLORS.length ? ' \u2013 the maximum difficulty' : ' \u2013 same colors, a new layout');
   const res = addScore(level, moves, time);
   lastEntry = res.entry;
-  $('rankMsg').textContent = res.rank ? '\u{1F3C6} #' + res.rank + ' on the Level ' + level + ' leaderboard' : 'Not in the top 10 for this level';
+  $('rankMsg').textContent = res.rank ? '\u{1F3C6} #' + res.rank + (daily ? ' on today\'s daily board' : ' on the Level ' + level + ' leaderboard') : 'Not in the top 10 ' + (daily ? 'for today' : 'for this level');
   $('playerName').value = playerName;
   $('worldMsg').textContent = '';
   pendingRun = { level, moves, time: Math.round(time), sent: false };
@@ -424,6 +442,8 @@ $('playerName').oninput = () => {
   if (lastEntry){ lastEntry.n = playerName || 'Player'; saveScores(); }
 };
 $('openBoard').onclick = () => openBoard();
+$('openDaily').onclick = playDaily;
+$('dailyBtn').onclick = playDaily;
 $('viewBoard').onclick = async () => {
   openBoard(level);
   const run = pendingRun;
@@ -442,11 +462,13 @@ $('clearBoard').onclick = () => {
   if (!confirm('Clear the Level ' + lv + ' leaderboard? This cannot be undone.')) return;
   scores = scores.filter(x => x.l !== lv); if (lastEntry && lastEntry.l === lv) lastEntry = null; saveScores(); renderBoard();
 };
-$('next').onclick = () => { submitRemote(); $('win').classList.remove('show'); level++; localStorage.setItem('ballsortLevel', level); start(); };
+$('next').onclick = () => { submitRemote(); $('win').classList.remove('show'); if (isDaily(level)) level = normalLevel; else setNormal(level + 1); start(); };
 $('restart').onclick = start;
 
 function openSelect(){
   const grid = $('grid'); grid.innerHTML = '';
+  let done = ''; try { done = localStorage.getItem('ballsortDailyDone'); } catch (e) {}
+  $('dailyBtn').textContent = '\u{1F4C5} Daily Challenge' + (+done === dailyKey() ? ' \u2713' : '');
   const total = Math.max(20, Math.ceil((unlocked + 5) / 5) * 5);
   for (let l = 1; l <= total; l++){
     const t = document.createElement('button');
@@ -454,12 +476,13 @@ function openSelect(){
     t.disabled = l > unlocked;
     t.innerHTML = l + (best[l] !== undefined ? '<small>' + best[l] + ' moves</small>' : t.disabled ? '<small>\u{1F512}</small>' : '');
     t.setAttribute('aria-label', 'Level ' + l + (t.disabled ? ' (locked)' : best[l] !== undefined ? ', best ' + best[l] + ' moves' : ''));
-    t.onclick = () => { closeSelect(); level = l; try { localStorage.setItem('ballsortLevel', level); } catch (e) {} start(); };
+    t.onclick = () => { closeSelect(); setNormal(l); start(); };
     grid.appendChild(t);
   }
   $('select').classList.add('show');
   const cur = grid.querySelector('.cur'); if (cur) cur.scrollIntoView({block:'center'});
 }
+function playDaily(){ closeSelect(); closeBoard(); level = dailyKey(); start(); }
 function closeSelect(){ $('select').classList.remove('show'); }
 $('lvl').onclick = openSelect;
 $('lvl').onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSelect(); } };
@@ -471,7 +494,7 @@ $('resetBest').onclick = () => {
   if (!confirm('Reset your best scores for all levels? This cannot be undone.')) return;
   best = {}; bestTime = {}; saveBest(); saveBestTime(); render();
 };
-$('menu').onclick = () => { level++; localStorage.setItem('ballsortLevel', level); start(); };
+$('menu').onclick = () => { if (isDaily(level)) level = normalLevel; else setNormal(level + 1); start(); };
 $('undo').onclick = () => {
   if (!history.length || undos <= 0) return;
   tubes = JSON.parse(history.pop()); undos--; moves = Math.max(0, moves - 1); selected = null; hintMove = null; render();
