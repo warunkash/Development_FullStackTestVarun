@@ -1145,3 +1145,141 @@ revoke execute on function public.get_guild_members(date, text) from public;
 grant execute on function public.submit_guild_quest(date, text, text, int, int) to anon, authenticated;
 grant execute on function public.get_guild_leaderboard(date, int) to anon, authenticated;
 grant execute on function public.get_guild_members(date, text) to anon, authenticated;
+
+-- Clan challenge
+create table public.clan_runs (
+  id bigint generated always as identity primary key,
+  week date not null,
+  clan text not null check (char_length(clan) between 1 and 12),
+  name text not null check (char_length(name) between 1 and 12),
+  moves int not null check (moves between 1 and 1000),
+  time_ms int not null check (time_ms between 1000 and 86400000),
+  ip_hash text,
+  created_at timestamptz not null default now()
+);
+create index clan_runs_week_idx on public.clan_runs (week, clan, name, moves);
+create index clan_runs_ip_idx on public.clan_runs (ip_hash, created_at);
+alter table public.clan_runs enable row level security;
+revoke all on public.clan_runs from anon, authenticated;
+
+-- Damage dealt by a run = clamp(round(3000 / moves), 10, 200): fewer moves hit harder. A member counts with their best run; a clan's
+-- weekly total is the sum over its members. The boss (500 HP) is defeated once a clan's total reaches 500.
+create or replace function public.clan_damage(p_moves int)
+returns int
+language sql
+immutable
+set search_path = public
+as $fn$
+  select least(200, greatest(10, round(3000.0 / greatest(p_moves, 1))::int));
+$fn$;
+
+create or replace function public.clan_standings(p_week date)
+returns table (clan text, members int, total int, rank bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  with best as (
+    select distinct on (c.clan, c.name) c.clan, c.name, c.moves
+      from public.clan_runs c
+     where c.week = p_week
+     order by c.clan, c.name, c.moves, c.time_ms, c.id
+  ), t as (
+    select b.clan, count(*)::int as members, sum(public.clan_damage(b.moves))::int as total from best b group by b.clan
+  )
+  select t.clan, t.members, t.total,
+         row_number() over (order by t.total desc, t.members desc, t.clan) as rank
+    from t;
+$fn$;
+revoke execute on function public.clan_standings(date) from public;
+revoke execute on function public.clan_standings(date) from anon, authenticated;
+
+create or replace function public.submit_clan_run(p_week date, p_clan text, p_name text, p_moves int, p_time_ms int)
+returns json
+language plpgsql
+security definer
+set search_path = public, extensions
+as $fn$
+declare
+  v_today date;
+  v_monday date;
+  v_headers json;
+  v_ip text;
+  v_hash text;
+  v_name text;
+  v_clan text;
+  v_id bigint;
+  v_rank bigint;
+  v_total int;
+begin
+  v_today := (now() at time zone 'utc')::date;
+  v_monday := v_today - (extract(isodow from v_today)::int - 1);
+  if p_week is null or p_moves is null or p_time_ms is null or extract(isodow from p_week)::int <> 1 or p_week < v_monday - 7 or p_week > v_monday
+     or btrim(coalesce(regexp_replace(coalesce(p_clan, ''), '[^[:alnum:] ._-]', '', 'g'), '')) = '' then
+    return json_build_object('ok', false, 'error', 'invalid');
+  end if;
+  if p_moves < 8 or p_moves > 1000 then
+    return json_build_object('ok', false, 'error', 'implausible_moves');
+  end if;
+  if p_time_ms < p_moves * 200 or p_time_ms > 86400000 then
+    return json_build_object('ok', false, 'error', 'implausible_time');
+  end if;
+  begin
+    v_headers := current_setting('request.headers', true)::json;
+  exception when others then
+    v_headers := '{}'::json;
+  end;
+  v_ip := coalesce(v_headers->>'cf-connecting-ip', nullif(split_part(coalesce(v_headers->>'x-forwarded-for', ''), ',', 1), ''), 'unknown');
+  select encode(hmac(v_ip, salt, 'sha256'), 'hex') into v_hash from public.leaderboard_private where id = 1;
+  if (select count(*) from public.clan_runs where ip_hash = v_hash and created_at > now() - interval '10 minutes') >= 8 then
+    return json_build_object('ok', false, 'error', 'rate_limited');
+  end if;
+  v_name := public.clean_name(p_name);
+  v_clan := public.clean_name(p_clan);
+  insert into public.clan_runs (week, clan, name, moves, time_ms, ip_hash)
+  values (p_week, v_clan, v_name, p_moves, p_time_ms, v_hash)
+  returning id into v_id;
+  select st.rank, st.total into v_rank, v_total from public.clan_standings(p_week) st where st.clan = v_clan;
+  return json_build_object('ok', true, 'id', v_id, 'rank', v_rank, 'damage', public.clan_damage(p_moves), 'total', v_total);
+end;
+$fn$;
+
+create or replace function public.get_clan_leaderboard(p_week date, p_limit int default 20)
+returns table (id bigint, name text, moves int, time_ms int, rank bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select st.rank, st.clan || ' (' || st.members || ')' || case when st.total >= 500 then ' ✔' else '' end, st.total, 0, st.rank
+    from public.clan_standings(p_week) st
+   order by st.rank
+   limit least(greatest(coalesce(p_limit, 20), 1), 50);
+$fn$;
+
+create or replace function public.get_clan_members(p_week date, p_clan text)
+returns table (name text, damage int, moves int, rank bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select b.name, public.clan_damage(b.moves), b.moves,
+         row_number() over (order by b.moves, b.name) as rank
+    from (
+      select distinct on (c.name) c.name, c.moves
+        from public.clan_runs c
+       where c.week = p_week and c.clan = public.clean_name(p_clan)
+       order by c.name, c.moves, c.time_ms, c.id
+    ) b
+   order by b.moves, b.name
+   limit 20;
+$fn$;
+
+revoke execute on function public.submit_clan_run(date, text, text, int, int) from public;
+revoke execute on function public.get_clan_leaderboard(date, int) from public;
+revoke execute on function public.get_clan_members(date, text) from public;
+grant execute on function public.submit_clan_run(date, text, text, int, int) to anon, authenticated;
+grant execute on function public.get_clan_leaderboard(date, int) to anon, authenticated;
+grant execute on function public.get_clan_members(date, text) to anon, authenticated;
