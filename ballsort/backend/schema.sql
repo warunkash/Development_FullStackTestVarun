@@ -273,3 +273,89 @@ revoke execute on function public.submit_weekly_score(date, text, int, int) from
 revoke execute on function public.get_weekly_leaderboard(date, int) from public;
 grant execute on function public.submit_weekly_score(date, text, int, int) to anon, authenticated;
 grant execute on function public.get_weekly_leaderboard(date, int) to anon, authenticated;
+
+-- Monthly challenge
+create table public.monthly_scores (
+  id bigint generated always as identity primary key,
+  month date not null,
+  name text not null check (char_length(name) between 1 and 12),
+  moves int not null check (moves between 1 and 1000),
+  time_ms int not null check (time_ms between 1000 and 86400000),
+  ip_hash text,
+  created_at timestamptz not null default now()
+);
+create index monthly_scores_rank_idx on public.monthly_scores (month, moves, time_ms, id);
+create index monthly_scores_ip_idx on public.monthly_scores (ip_hash, created_at);
+alter table public.monthly_scores enable row level security;
+revoke all on public.monthly_scores from anon, authenticated;
+
+create or replace function public.submit_monthly_score(p_month date, p_name text, p_moves int, p_time_ms int)
+returns json
+language plpgsql
+security definer
+set search_path = public, extensions
+as $fn$
+declare
+  v_this date;
+  v_headers json;
+  v_ip text;
+  v_hash text;
+  v_name text;
+  v_id bigint;
+  v_rank int;
+begin
+  v_this := date_trunc('month', now() at time zone 'utc')::date;
+  if p_month is null or p_moves is null or p_time_ms is null or extract(day from p_month)::int <> 1 or p_month < (v_this - interval '1 month')::date or p_month > v_this then
+    return json_build_object('ok', false, 'error', 'invalid');
+  end if;
+  if p_moves < 10 or p_moves > 1000 then
+    return json_build_object('ok', false, 'error', 'implausible_moves');
+  end if;
+  if p_time_ms < p_moves * 200 or p_time_ms > 86400000 then
+    return json_build_object('ok', false, 'error', 'implausible_time');
+  end if;
+  begin
+    v_headers := current_setting('request.headers', true)::json;
+  exception when others then
+    v_headers := '{}'::json;
+  end;
+  v_ip := coalesce(v_headers->>'cf-connecting-ip', nullif(split_part(coalesce(v_headers->>'x-forwarded-for', ''), ',', 1), ''), 'unknown');
+  select encode(hmac(v_ip, salt, 'sha256'), 'hex') into v_hash from public.leaderboard_private where id = 1;
+  if (select count(*) from public.monthly_scores where ip_hash = v_hash and created_at > now() - interval '10 minutes') >= 8 then
+    return json_build_object('ok', false, 'error', 'rate_limited');
+  end if;
+  v_name := public.clean_name(p_name);
+  insert into public.monthly_scores (month, name, moves, time_ms, ip_hash)
+  values (p_month, v_name, p_moves, p_time_ms, v_hash)
+  returning id into v_id;
+  select 1 + count(*) into v_rank from (
+    select s.name from public.monthly_scores s
+     where s.month = p_month and s.name <> v_name and (s.moves, s.time_ms) < (p_moves, p_time_ms)
+     group by s.name
+  ) x;
+  return json_build_object('ok', true, 'id', v_id, 'rank', v_rank);
+end;
+$fn$;
+
+create or replace function public.get_monthly_leaderboard(p_month date, p_limit int default 20)
+returns table (id bigint, name text, moves int, time_ms int, rank bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select b.id, b.name, b.moves, b.time_ms, row_number() over (order by b.moves, b.time_ms, b.id) as rank
+    from (
+      select distinct on (s.name) s.id, s.name, s.moves, s.time_ms
+        from public.monthly_scores s
+       where s.month = p_month
+       order by s.name, s.moves, s.time_ms, s.id
+    ) b
+   order by b.moves, b.time_ms, b.id
+   limit least(greatest(coalesce(p_limit, 20), 1), 50);
+$fn$;
+
+revoke execute on function public.submit_monthly_score(date, text, int, int) from public;
+revoke execute on function public.get_monthly_leaderboard(date, int) from public;
+grant execute on function public.submit_monthly_score(date, text, int, int) to anon, authenticated;
+grant execute on function public.get_monthly_leaderboard(date, int) to anon, authenticated;
