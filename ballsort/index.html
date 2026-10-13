@@ -81,6 +81,11 @@
   .row.special .btn { margin:0; }
   .btn.monthly { padding:9px 20px; font-size:.95rem; background:#d81b60; }
   .btn.seasonal { padding:9px 20px; font-size:.95rem; background:#ef6c00; }
+  .btn.custom { padding:9px 20px; font-size:.95rem; background:#455a64; }
+  .cust { display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin:0 0 12px; text-align:left; font-size:.85rem; }
+  .cust label { display:flex; flex-direction:column; gap:4px; }
+  .cust select, .cust input, #cCode { background:var(--glass); color:var(--txt); border:2px solid var(--edge); border-radius:10px; padding:7px 8px; font-size:1rem; width:100%; box-sizing:border-box; user-select:text; }
+  #cCode { text-align:center; }
   .btn.lifetime { padding:9px 20px; font-size:.95rem; background:#00695c; }
   .btn.yearly { padding:9px 20px; font-size:.95rem; background:#6a1b9a; }
   .btn.weekly { padding:9px 20px; font-size:.95rem; background:#7c4dff; }
@@ -110,13 +115,18 @@
 </footer>
 <div class="links top"><button class="link" id="openDaily" title="Daily challenge">Daily</button><span aria-hidden="true">&middot;</span><button class="link" id="openWeekly" title="Weekly challenge">Weekly</button><span aria-hidden="true">&middot;</span><button class="link" id="openMonthly" title="Monthly challenge">Monthly</button><span aria-hidden="true">&middot;</span><button class="link" id="openSeasonal" title="Seasonal challenge">Seasonal</button><span aria-hidden="true">&middot;</span><button class="link" id="openYearly" title="Yearly challenge">Yearly</button></div>
 <div class="links"><button class="link" id="openLifetime" title="Lifetime challenge">Lifetime</button><span aria-hidden="true">&middot;</span><button class="link" id="openBoard">Leaderboard</button><span aria-hidden="true">&middot;</span><button class="link" id="resetBest">Reset best scores</button></div>
-<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
+<div class="modal" id="customM"><div class="card"><h2>&#x1F39B;&#xFE0F; Custom Challenge</h2><p>Build your own board &ndash; played on this device.</p>
+<div class="cust"><label>Colors <select id="cColors"></select></label><label>Balls per color <select id="cCap"></select></label><label>Spare tubes <select id="cSpare"></select></label><label>Board # <input id="cSeed" inputmode="numeric" maxlength="5" autocomplete="off"></label></div>
+<p class="hint-text" id="cInfo"></p>
+<div class="name-row"><input id="cCode" placeholder="Paste a code, e.g. 7-5-2-48213" autocomplete="off" aria-label="Custom code"></div>
+<div class="row"><button class="btn alt" id="cRandom">&#x1F3B2; Random</button><button class="btn alt" id="cCancel">Cancel</button><button class="btn" id="cPlay">Play</button></div></div></div>
+<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button><button class="btn custom" id="customBtn">&#x1F39B;&#xFE0F; Custom Challenge</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
 <div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn alt" id="shareBtn" style="display:none">Share</button><button class="btn" id="next">Next Level</button></div></div></div>
 <div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><div class="tabs" role="tablist"><button class="tab on" id="tabWorld" role="tab">&#x1F30D; World</button><button class="tab" id="tabLocal" role="tab">This device</button></div><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
 
 <script>
 let CAP = 4;
-const capFor = lv => isSeasonal(lv) ? 6 : isLifetime(lv) ? 6 : isYearly(lv) ? 6 : isMonthly(lv) ? 5 : 4;
+const capFor = lv => isCustom(lv) ? customOf(lv).cap : isSeasonal(lv) ? 6 : isLifetime(lv) ? 6 : isYearly(lv) ? 6 : isMonthly(lv) ? 5 : 4;
 const COLORS = [ ['#ff2d2d','#a30000'], ['#ff9a1f','#b25a00'], ['#ffd51f','#b38f00'], ['#2ecc40','#0b7a1d'], ['#2aa8ff','#0a5fa8'],
                  ['#b455ff','#6a1fb0'], ['#ff5fb3','#b0206f'], ['#19d3c5','#0a7c74'], ['#8d6e63','#4e342e'], ['#e0e0e0','#8a8a8a'] ];
 const $ = id => document.getElementById(id);
@@ -132,7 +142,19 @@ const MONTHLY_MIN = 400000000, MONTHLY_COLORS = 10;
 const YEARLY_MIN = 500000000, YEARLY_COLORS = 10;
 // Lifetime challenge: one permanent board (key LIFETIME_MIN) for everyone, ever. 10 colors, 6 balls per color, only ONE spare tube
 const LIFETIME_MIN = 600000000, LIFETIME_COLORS = 10;
-const isLifetime = lv => lv >= LIFETIME_MIN;
+const isLifetime = lv => lv >= LIFETIME_MIN && lv < CUSTOM_MIN;
+// Custom challenge: you pick colors (3-10), balls per color (3-6), spare tubes (1-3, at most 12 tubes in all) and a board number (0-99999).
+// Key = CUSTOM_MIN + cfg * 100000 + seed. Played on this device only: no world leaderboard, but the code can be shared.
+const CUSTOM_MIN = 700000000;
+const isCustom = lv => lv >= CUSTOM_MIN;
+const customKey = (colors, cap, spare, seed) => CUSTOM_MIN + ((((colors - 3) * 4 + (cap - 3)) * 3 + (spare - 1)) * 100000) + seed;
+const customOf = lv => {
+  const n = lv - CUSTOM_MIN, seed = n % 100000;
+  let cfg = Math.floor(n / 100000);
+  const spare = cfg % 3 + 1; cfg = Math.floor(cfg / 3);
+  return { spare, cap: cfg % 4 + 3, colors: Math.floor(cfg / 4) + 3, seed };
+};
+const customCode = lv => { const c = customOf(lv); return c.colors + '-' + c.cap + '-' + c.spare + '-' + c.seed; };
 // Seasonal challenge: keys from SEASONAL_MIN up are SEASONAL_MIN + startYear*10 + season (0 winter Dec-Feb, 1 spring Mar-May, 2 summer Jun-Aug, 3 autumn Sep-Nov; UTC).
 // 9 colors x 6 balls, 11 tubes
 const SEASONAL_MIN = 550000000, SEASONAL_COLORS = 9;
@@ -168,7 +190,9 @@ const seasonKey = () => {
 const seasonParts = k => { const n = k - SEASONAL_MIN; return { y: Math.floor(n / 10), s: n % 10 }; };
 const seasonDay = k => { const p = seasonParts(k); return p.y + '-' + String(SEASONS[p.s][2]).padStart(2, '0') + '-01'; };
 const seasonLabel = k => { const p = seasonParts(k); return SEASONS[p.s][0] + ' ' + p.y + (p.s === 0 ? '/' + String(p.y + 1).slice(2) : ''); };
-const specialInfo = lv => isSeasonal(lv)
+const specialInfo = lv => isCustom(lv)
+  ? { name: 'Custom', icon: '\u{1F39B}\uFE0F', label: customCode(lv), shareLabel: customCode(lv), submit: null, get: null, arg: null, date: null, when: 'this custom board', board: 'this device\'s board for this custom code', done: 'ballsortCustomDone' }
+  : isSeasonal(lv)
   ? { name: 'Seasonal', icon: SEASONS[seasonParts(lv).s][1], label: SEASONS[seasonParts(lv).s][0], shareLabel: seasonLabel(lv), submit: 'submit_seasonal_score', get: 'get_seasonal_leaderboard', arg: 'p_season', date: seasonDay(lv), when: 'this season', board: 'this season\'s board', done: 'ballsortSeasonalDone' }
   : isLifetime(lv)
   ? { name: 'Lifetime', icon: '\u267E\uFE0F', label: 'Forever', shareLabel: 'the one board', submit: 'submit_lifetime_score', get: 'get_lifetime_leaderboard', arg: null, date: null, when: 'of all time', board: 'the all-time board', done: 'ballsortLifetimeDone' }
@@ -252,10 +276,11 @@ function solve(start, limit = 40000){ // DFS returns list of [a,b] moves or null
   return dfs(start, []);
 }
 
-const colorsFor = lv => isSeasonal(lv) ? SEASONAL_COLORS : isLifetime(lv) ? LIFETIME_COLORS : isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
+const colorsFor = lv => isCustom(lv) ? customOf(lv).colors : isSeasonal(lv) ? SEASONAL_COLORS : isLifetime(lv) ? LIFETIME_COLORS : isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
 
 function generate(lv){
   CAP = capFor(lv);
+  if (isCustom(lv)) return generateCustom(lv);
   const nColors = colorsFor(lv), nodeLimit = isSeasonal(lv) ? 600000 : isLifetime(lv) ? 1500000 : isYearly(lv) ? 600000 : isMonthly(lv) ? 200000 : 40000;
   const r = rng(isSeasonal(lv) ? (lv - SEASONAL_MIN) * 7919 + 551551 : isLifetime(lv) ? 2711806 : isYearly(lv) ? (lv - YEARLY_MIN) * 7919 + 777001 : isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
   for (let attempt = 0; attempt < 50; attempt++){
@@ -268,6 +293,31 @@ function generate(lv){
     if (solve(t, nodeLimit)) return t;
   }
   throw new Error('could not generate level');
+}
+
+// Custom boards: random deals first; when none is solvable (few spare tubes), fall back to a reverse-scrambled solved board, which always is
+function generateCustom(lv){
+  const { colors, cap, spare, seed } = customOf(lv), r = rng(seed * 7919 + 4242 + colors * 31 + cap * 7 + spare);
+  for (let attempt = 0; attempt < 30; attempt++){
+    const balls = [];
+    for (let c = 0; c < colors; c++) for (let i = 0; i < cap; i++) balls.push(c);
+    for (let i = balls.length - 1; i > 0; i--){ const j = Math.floor(r() * (i + 1)); [balls[i], balls[j]] = [balls[j], balls[i]]; }
+    const t = Array.from({ length: colors + spare }, () => []);
+    balls.forEach((c, i) => t[i % colors].push(c));
+    if (t.slice(0, colors).some(x => x.every(c => c === x[0]))) continue;
+    if (solve(t, 120000)) return t;
+  }
+  for (;;){
+    const t = Array.from({ length: colors + spare }, (_, i) => i < colors ? Array(cap).fill(i) : []);
+    for (let k = 0; k < 4000; k++){
+      const a = Math.floor(r() * t.length), b = Math.floor(r() * t.length);
+      if (a === b || !t[a].length || t[b].length >= cap) continue;
+      const top = t[a][t[a].length - 1], under = t[a][t[a].length - 2];
+      if (under !== undefined && under !== top) continue;
+      t[b].push(t[a].pop());
+    }
+    if (!t.every(x => !x.length || x.every(c => c === x[0]))) return t;
+  }
 }
 
 // Level timer: starts on the first move, stops when the level is solved, pauses while the tab is hidden
@@ -419,7 +469,7 @@ async function rpc(fn, body, keepalive){
 let pendingRun = null, lastRemoteId = null, boardTab = 'world', boardReq = 0;
 async function submitRemote(keepalive){
   const run = pendingRun;
-  if (!run || run.sent) return;
+  if (!run || run.sent || isCustom(run.level)) return;
   run.sent = true;
   try {
     const sp = specialInfo(run.level), who = { p_name: playerName || 'Player', p_moves: run.moves, p_time_ms: run.time };
@@ -452,8 +502,9 @@ function openBoard(lv){
   const od = document.createElement('option'); od.value = today; od.textContent = '\u{1F4C5} Daily challenge (today)'; sel.appendChild(od);
   for (let l = 1; l <= max; l++){ const o = document.createElement('option'); o.value = l; o.textContent = 'Level ' + l; sel.appendChild(o); }
   const want = lv || level;
-  sel.value = isSeasonal(want) ? seasonKey() : isLifetime(want) ? LIFETIME_MIN : isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
-  setTab('world');
+  if (isCustom(want)){ const oc = document.createElement('option'); oc.value = want; oc.textContent = '\u{1F39B}\uFE0F Custom ' + customCode(want); sel.insertBefore(oc, sel.firstChild); }
+  sel.value = isCustom(want) ? want : isSeasonal(want) ? seasonKey() : isLifetime(want) ? LIFETIME_MIN : isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
+  setTab(isCustom(want) ? 'local' : 'world');
   renderBoard();
   $('lbModal').classList.add('show');
 }
@@ -465,6 +516,7 @@ function renderWorld(){
   const lv = +$('boardLevel').value, tok = ++boardReq, list = $('boardList');
   boardMessage('Loading\u2026');
   const sp = specialInfo(lv);
+  if (isCustom(lv)){ boardMessage('Custom boards are played on this device only \u2013 see the This device tab, or share the code.'); return; }
   (sp ? rpc(sp.get, Object.assign(sp.arg ? { [sp.arg]: sp.date } : {}, { p_limit: 20 })) : rpc('get_leaderboard', { p_level: lv, p_limit: 20 })).then(rows => {
     if (tok !== boardReq) return;
     if (!rows.length){ boardMessage('No scores yet \u2013 be the first on the world board!'); return; }
@@ -523,6 +575,7 @@ function win(){
       (streak.best > n ? ' (best ' + streak.best + ')' : '') + ' Come back tomorrow to keep it going.';
     refreshDailyLabels();
   }
+  else if (isCustom(level)) $('nextHint').textContent = '\u{1F39B}\uFE0F Code ' + customCode(level) + ' \u2013 share it so friends can play the same board.';
   else if (seasonal) $('nextHint').textContent = SEASONS[seasonParts(level).s][1] + ' A new seasonal challenge starts on Mar 1, Jun 1, Sep 1 and Dec 1 (UTC).';
   else if (lifetime) $('nextHint').textContent = '\u267E\uFE0F The Lifetime board never changes \u2013 replay it to beat your best, and the world\'s.';
   else if (yearly) $('nextHint').textContent = '\u{1F3C6} A new yearly challenge starts on January 1st (UTC).';
@@ -643,6 +696,37 @@ function openSelect(){
 }
 refreshDailyLabels();
 function playSeasonal(){ closeSelect(); closeBoard(); level = seasonKey(); start(); }
+const cSel = (id, lo, hi) => { const e = $(id); e.innerHTML = ''; for (let v = lo; v <= hi; v++){ const o = document.createElement('option'); o.value = v; o.textContent = v; e.appendChild(o); } };
+cSel('cColors', 3, 10); cSel('cCap', 3, 6); cSel('cSpare', 1, 3);
+const cNum = (id, lo, hi) => Math.min(hi, Math.max(lo, parseInt($(id).value, 10) || lo));
+function customRead(){
+  const colors = cNum('cColors', 3, 10), cap = cNum('cCap', 3, 6), seed = Math.min(99999, Math.max(0, parseInt($('cSeed').value, 10) || 0));
+  const spare = Math.min(cNum('cSpare', 1, 3), 12 - colors);
+  return { colors, cap, spare, seed };
+}
+function customShow(c){
+  $('cColors').value = c.colors; $('cCap').value = c.cap; $('cSpare').value = Math.min(c.spare, 12 - c.colors); $('cSeed').value = c.seed;
+  const k = customKey(c.colors, c.cap, Math.min(c.spare, 12 - c.colors), c.seed);
+  $('cInfo').textContent = (c.colors * c.cap) + ' balls \u00B7 ' + (c.colors + Math.min(c.spare, 12 - c.colors)) + ' tubes \u00B7 code ' + customCode(k);
+  $('cCode').value = customCode(k);
+}
+function customOpen(){
+  closeSelect();
+  customShow($('cSeed').value ? customRead() : { colors: 6, cap: 4, spare: 2, seed: Math.floor(Math.random() * 100000) });
+  $('customM').classList.add('show');
+}
+['cColors', 'cCap', 'cSpare', 'cSeed'].forEach(id => { $(id).oninput = () => customShow(customRead()); });
+$('cCode').oninput = () => {
+  const m = /^\s*(\d+)\D+(\d+)\D+(\d+)\D+(\d+)\s*$/.exec($('cCode').value);
+  if (!m) return;
+  const colors = Math.min(10, Math.max(3, +m[1])), cap = Math.min(6, Math.max(3, +m[2])), spare = Math.min(3, Math.max(1, +m[3])), seed = Math.min(99999, +m[4]);
+  const c = { colors, cap, spare, seed }, keep = $('cCode').value;
+  customShow(c); $('cCode').value = keep;
+};
+$('cRandom').onclick = () => { const c = customRead(); c.seed = Math.floor(Math.random() * 100000); customShow(c); };
+$('cCancel').onclick = () => $('customM').classList.remove('show');
+$('cPlay').onclick = () => { const c = customRead(); $('customM').classList.remove('show'); closeBoard(); level = customKey(c.colors, c.cap, c.spare, c.seed); start(); };
+$('customBtn').onclick = customOpen;
 function playLifetime(){ closeSelect(); closeBoard(); level = LIFETIME_MIN; start(); }
 function playYearly(){ closeSelect(); closeBoard(); level = yearKey(); start(); }
 function playMonthly(){ closeSelect(); closeBoard(); level = monthKey(); start(); }
@@ -653,7 +737,7 @@ $('lvl').onclick = openSelect;
 $('lvl').onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSelect(); } };
 $('closeSelect').onclick = closeSelect;
 $('select').onclick = e => { if (e.target === $('select')) closeSelect(); };
-document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeSelect(); closeBoard(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeSelect(); closeBoard(); $('customM').classList.remove('show'); } });
 $('resetBest').onclick = () => {
   if (!Object.keys(best).length && !Object.keys(bestTime).length){ alert('No best scores to reset yet.'); return; }
   if (!confirm('Reset your best scores for all levels? This cannot be undone.')) return;
@@ -667,7 +751,7 @@ $('undo').onclick = () => {
 $('addTube').onclick = () => { if (adds > 0){ adds--; tubes.push([]); render(); } };
 $('hint').onclick = () => {
   if (hints <= 0) return;
-  const path = solve(tubes, isSeasonal(level) ? 800000 : isLifetime(level) ? 2000000 : isYearly(level) ? 800000 : isMonthly(level) ? 400000 : 60000);
+  const path = solve(tubes, isCustom(level) ? 600000 : isSeasonal(level) ? 800000 : isLifetime(level) ? 2000000 : isYearly(level) ? 800000 : isMonthly(level) ? 400000 : 60000);
   if (path && path.length){ hints--; hintMove = path[0]; selected = null; render(); }
   else {
     const m = $('moves'); m.textContent = 'No hint found from here \u2013 try undo';
