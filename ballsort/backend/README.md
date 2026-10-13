@@ -55,6 +55,13 @@ previous season only. Seasonal boards have 9 colors with 6 balls each, so at lea
 changes) and one all-time leaderboard, so these functions take no date. Same checks as the others: at least 10 moves,
 a plausible time, and the per-IP rate limit.
 
+## Team challenge
+
+`team_scores` plus `submit_team_score`, `get_team_leaderboard` and `get_team_members`. Everyone plays the same board for a
+week (identified by its Monday, UTC). A team is just a name players choose (no accounts), and its score is the average of its
+members' best runs (best 5 members); fewer moves wins, then more members, then faster time. Submissions are accepted for this
+week or last week. The helper `team_standings` is not callable by `anon`; only the leaderboard functions use it.
+
 ## Schema
 
 See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).
