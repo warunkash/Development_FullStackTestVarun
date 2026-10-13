@@ -1019,3 +1019,129 @@ revoke execute on function public.submit_ladder_score(date, text, int, int, int)
 revoke execute on function public.get_ladder_leaderboard(date, int) from public;
 grant execute on function public.submit_ladder_score(date, text, int, int, int) to anon, authenticated;
 grant execute on function public.get_ladder_leaderboard(date, int) to anon, authenticated;
+
+-- Guild challenge
+create table public.guild_quests (
+  id bigint generated always as identity primary key,
+  day date not null,
+  guild text not null check (char_length(guild) between 1 and 12),
+  name text not null check (char_length(name) between 1 and 12),
+  moves int not null check (moves between 1 and 1000),
+  time_ms int not null check (time_ms between 1000 and 86400000),
+  ip_hash text,
+  created_at timestamptz not null default now()
+);
+create index guild_quests_day_idx on public.guild_quests (day, guild, name);
+create index guild_quests_ip_idx on public.guild_quests (ip_hash, created_at);
+alter table public.guild_quests enable row level security;
+revoke all on public.guild_quests from anon, authenticated;
+
+-- A guild's score for a month is the number of distinct (member, day) quests its members completed that month.
+create or replace function public.guild_standings(p_month date)
+returns table (guild text, members int, quests int, rank bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  with q as (
+    select distinct g.guild, g.name, g.day
+      from public.guild_quests g
+     where g.day >= p_month and g.day < (p_month + interval '1 month')::date
+  ), t as (
+    select q.guild, count(distinct q.name)::int as members, count(*)::int as quests from q group by q.guild
+  )
+  select t.guild, t.members, t.quests,
+         row_number() over (order by t.quests desc, t.members desc, t.guild) as rank
+    from t;
+$fn$;
+revoke execute on function public.guild_standings(date) from public;
+revoke execute on function public.guild_standings(date) from anon, authenticated;
+
+create or replace function public.submit_guild_quest(p_day date, p_guild text, p_name text, p_moves int, p_time_ms int)
+returns json
+language plpgsql
+security definer
+set search_path = public, extensions
+as $fn$
+declare
+  v_today date;
+  v_headers json;
+  v_ip text;
+  v_hash text;
+  v_name text;
+  v_guild text;
+  v_month date;
+  v_id bigint;
+  v_rank bigint;
+  v_quests int;
+begin
+  v_today := (now() at time zone 'utc')::date;
+  if p_day is null or p_moves is null or p_time_ms is null or p_day < v_today - 1 or p_day > v_today + 1
+     or btrim(coalesce(regexp_replace(coalesce(p_guild, ''), '[^[:alnum:] ._-]', '', 'g'), '')) = '' then
+    return json_build_object('ok', false, 'error', 'invalid');
+  end if;
+  if p_moves < 7 or p_moves > 1000 then
+    return json_build_object('ok', false, 'error', 'implausible_moves');
+  end if;
+  if p_time_ms < p_moves * 200 or p_time_ms > 86400000 then
+    return json_build_object('ok', false, 'error', 'implausible_time');
+  end if;
+  begin
+    v_headers := current_setting('request.headers', true)::json;
+  exception when others then
+    v_headers := '{}'::json;
+  end;
+  v_ip := coalesce(v_headers->>'cf-connecting-ip', nullif(split_part(coalesce(v_headers->>'x-forwarded-for', ''), ',', 1), ''), 'unknown');
+  select encode(hmac(v_ip, salt, 'sha256'), 'hex') into v_hash from public.leaderboard_private where id = 1;
+  if (select count(*) from public.guild_quests where ip_hash = v_hash and created_at > now() - interval '10 minutes') >= 8 then
+    return json_build_object('ok', false, 'error', 'rate_limited');
+  end if;
+  v_name := public.clean_name(p_name);
+  v_guild := public.clean_name(p_guild);
+  v_month := date_trunc('month', p_day)::date;
+  insert into public.guild_quests (day, guild, name, moves, time_ms, ip_hash)
+  values (p_day, v_guild, v_name, p_moves, p_time_ms, v_hash)
+  returning id into v_id;
+  select st.rank, st.quests into v_rank, v_quests from public.guild_standings(v_month) st where st.guild = v_guild;
+  return json_build_object('ok', true, 'id', v_id, 'rank', v_rank, 'quests', v_quests);
+end;
+$fn$;
+
+create or replace function public.get_guild_leaderboard(p_month date, p_limit int default 20)
+returns table (id bigint, name text, moves int, time_ms int, rank bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select st.rank, st.guild || ' (' || st.members || ')', st.quests, 0, st.rank
+    from public.guild_standings(p_month) st
+   order by st.rank
+   limit least(greatest(coalesce(p_limit, 20), 1), 50);
+$fn$;
+
+create or replace function public.get_guild_members(p_month date, p_guild text)
+returns table (name text, quests int, rank bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select b.name, b.quests, row_number() over (order by b.quests desc, b.name) as rank
+    from (
+      select g.name, count(distinct g.day)::int as quests
+        from public.guild_quests g
+       where g.guild = public.clean_name(p_guild) and g.day >= p_month and g.day < (p_month + interval '1 month')::date
+       group by g.name
+    ) b
+   order by b.quests desc, b.name
+   limit 20;
+$fn$;
+
+revoke execute on function public.submit_guild_quest(date, text, text, int, int) from public;
+revoke execute on function public.get_guild_leaderboard(date, int) from public;
+revoke execute on function public.get_guild_members(date, text) from public;
+grant execute on function public.submit_guild_quest(date, text, text, int, int) to anon, authenticated;
+grant execute on function public.get_guild_leaderboard(date, int) to anon, authenticated;
+grant execute on function public.get_guild_members(date, text) to anon, authenticated;

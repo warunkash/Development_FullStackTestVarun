@@ -83,6 +83,14 @@ matches won, then moves, then time. At least 6 moves are required; this or last 
 with the number of rungs cleared (1-24), total moves and total time, and ranked by rungs, then moves, then time. A climb that
 clears no rung is not submitted. This or last week only.
 
+## Guild challenge
+
+`guild_quests` plus `submit_guild_quest`, `get_guild_leaderboard` and `get_guild_members`. A guild is just a name players choose
+(no accounts). Every day has one guild quest board (7 colors); finishing it records a (guild, member, day) entry. A guild's
+monthly score is the number of distinct (member, day) quests it has, so replaying a day's quest adds nothing; guilds are ranked
+by quests, then members. Submissions are accepted for yesterday, today or tomorrow (UTC) and need at least 7 moves. The helper
+`guild_standings` is not callable by `anon`.
+
 ## Schema
 
 See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).
