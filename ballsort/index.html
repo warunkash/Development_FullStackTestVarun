@@ -42,7 +42,7 @@
   .ball.lift { position:absolute; top:calc(-1 * clamp(44px,12vw,58px) - 8px); left:8%; width:84%; margin:0; animation:pop .15s ease-out; }
   @keyframes pop { from { transform:translateY(14px); } to { transform:none; } }
   footer { display:flex; gap:22px; padding:16px 16px 8px; }
-  .link { background:none; border:0; color:var(--txt); opacity:.55; font-size:.8rem; text-decoration:underline; cursor:pointer; padding:6px 12px 22px; }
+  .link { background:none; border:0; color:var(--txt); opacity:.55; font-size:.8rem; text-decoration:underline; cursor:pointer; padding:6px 10px 22px; white-space:nowrap; }
   .link:hover { opacity:.9; }
   .modal { position:fixed; inset:0; background:var(--overlay); display:none; place-items:center; z-index:9; }
   .modal.show { display:grid; }
@@ -97,7 +97,7 @@
   <button class="round" id="theme" title="Switch theme"></button>
   <button class="round" id="mute" title="Mute sound" aria-pressed="false">&#x1F50A;</button>
 </footer>
-<div class="links"><button class="link" id="openDaily">Daily challenge</button><span aria-hidden="true">&middot;</span><button class="link" id="openBoard">Leaderboard</button><span aria-hidden="true">&middot;</span><button class="link" id="resetBest">Reset best scores</button></div>
+<div class="links"><button class="link" id="openDaily" title="Daily challenge">Daily</button><span aria-hidden="true">&middot;</span><button class="link" id="openBoard">Leaderboard</button><span aria-hidden="true">&middot;</span><button class="link" id="resetBest">Reset best scores</button></div>
 <div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
 <div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn" id="next">Next Level</button></div></div></div>
 <div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><div class="tabs" role="tablist"><button class="tab on" id="tabWorld" role="tab">&#x1F30D; World</button><button class="tab" id="tabLocal" role="tab">This device</button></div><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
@@ -130,7 +130,8 @@ function recordDaily(k){
 }
 function refreshDailyLabels(){
   const n = currentStreak();
-  $('openDaily').textContent = 'Daily challenge' + (n ? ' \u{1F525}' + n : '');
+  $('openDaily').textContent = 'Daily' + (n ? ' \u{1F525}' + n : '');
+  $('openDaily').title = 'Daily challenge' + (n ? ' \u2013 ' + n + '-day streak' : '');
 }
 const setNormal = l => { normalLevel = level = l; try { localStorage.setItem('ballsortLevel', l); } catch (e) {} };
 let unlocked = Math.max(level, +(localStorage.getItem('ballsortUnlocked') || 1)); // highest level reached
