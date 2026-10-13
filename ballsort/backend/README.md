@@ -25,6 +25,12 @@ The daily challenge has its own table (`daily_scores`) and two functions, `submi
 `get_daily_leaderboard`, locked down the same way. A day's board is for the UTC date; submissions are only
 accepted for yesterday, today or tomorrow (UTC), so late finishers and time zones still work.
 
+## Weekly challenge
+
+Same pattern again: `weekly_scores` plus `submit_weekly_score` and `get_weekly_leaderboard`. A week runs
+Monday to Sunday (UTC) and is identified by its Monday. Submissions are accepted for this week or last week
+only, and the date must be a Monday. Weekly boards have 10 colors, so at least 10 moves are required.
+
 ## Schema
 
 See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).
