@@ -76,6 +76,13 @@ opponents (quarterfinal, semifinal, final); the board and opponents are the same
 Monday, UTC). A run is submitted with the number of matches won (0-3), the total moves and the total time, and is ranked by
 matches won, then moves, then time. At least 6 moves are required; this or last week only.
 
+## Ladder challenge
+
+`ladder_scores` plus `submit_ladder_score` and `get_ladder_leaderboard`. A weekly climb of up to 24 rungs on ever bigger boards
+(identified by the week's Monday, UTC); each rung has a move budget and the climb ends when it is exceeded. A climb is submitted
+with the number of rungs cleared (1-24), total moves and total time, and ranked by rungs, then moves, then time. A climb that
+clears no rung is not submitted. This or last week only.
+
 ## Schema
 
 See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).
