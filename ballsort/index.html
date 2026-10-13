@@ -51,7 +51,7 @@
   .card { background:var(--card); color:var(--txt); border:2px solid var(--edge); border-radius:20px; padding:28px 36px; text-align:center; }
   h1[role=button] { cursor:pointer; }
   h1[role=button]::after { content:" \25BE"; font-size:.8em; opacity:.7; }
-  .select-card { width:min(92vw,380px); padding:22px 18px; }
+  .select-card { width:min(92vw,380px); padding:22px 18px; max-height:94vh; overflow-y:auto; }
   .select-card h2 { font-size:1.4rem; }
   .grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; max-height:52vh; overflow-y:auto; padding:2px; margin-bottom:16px; }
   .tile { aspect-ratio:1; border-radius:12px; border:2px solid var(--edge); background:var(--glass); color:var(--txt); font-size:1rem; font-weight:700;
@@ -81,6 +81,9 @@
   .row.special .btn { margin:0; }
   .btn.monthly { padding:9px 20px; font-size:.95rem; background:#d81b60; }
   .btn.seasonal { padding:9px 20px; font-size:.95rem; background:#ef6c00; }
+  .btn.team { padding:9px 20px; font-size:.95rem; background:#1565c0; }
+  .roster { list-style:none; margin:0 0 14px; padding:0; font-size:.9rem; text-align:left; max-height:140px; overflow:auto; }
+  .roster li { display:flex; gap:8px; padding:3px 4px; } .roster li span:first-child { width:2em; opacity:.6; } .roster li .nm { flex:1; } .roster li .sc { opacity:.8; }
   .btn.custom { padding:9px 20px; font-size:.95rem; background:#455a64; }
   .cust { display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin:0 0 12px; text-align:left; font-size:.85rem; }
   .cust label { display:flex; flex-direction:column; gap:4px; }
@@ -120,13 +123,17 @@
 <p class="hint-text" id="cInfo"></p>
 <div class="name-row"><input id="cCode" placeholder="Paste a code, e.g. 7-5-2-48213" autocomplete="off" aria-label="Custom code"></div>
 <div class="row"><button class="btn alt" id="cRandom">&#x1F3B2; Random</button><button class="btn alt" id="cCancel">Cancel</button><button class="btn" id="cPlay">Play</button></div></div></div>
-<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button><button class="btn custom" id="customBtn">&#x1F39B;&#xFE0F; Custom Challenge</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
+<div class="modal" id="teamM"><div class="card"><h2>&#x1F465; Team Challenge</h2><p>Same board for everyone this week. Pick a team name, share it with friends &ndash; a team's score is the average of its members' best runs.</p>
+<div class="name-row"><input id="tName" maxlength="12" placeholder="Team name" autocomplete="off" aria-label="Team name"></div>
+<p class="hint-text" id="tInfo"></p><ul id="tRoster" class="roster"></ul>
+<div class="row"><button class="btn alt" id="tCancel">Cancel</button><button class="btn" id="tPlay">Play</button></div></div></div>
+<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button><button class="btn custom" id="customBtn">&#x1F39B;&#xFE0F; Custom Challenge</button><button class="btn team" id="teamBtn">&#x1F465; Team Challenge</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
 <div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn alt" id="shareBtn" style="display:none">Share</button><button class="btn" id="next">Next Level</button></div></div></div>
 <div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><div class="tabs" role="tablist"><button class="tab on" id="tabWorld" role="tab">&#x1F30D; World</button><button class="tab" id="tabLocal" role="tab">This device</button></div><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
 
 <script>
 let CAP = 4;
-const capFor = lv => isCustom(lv) ? customOf(lv).cap : isSeasonal(lv) ? 6 : isLifetime(lv) ? 6 : isYearly(lv) ? 6 : isMonthly(lv) ? 5 : 4;
+const capFor = lv => isTeam(lv) ? 5 : isCustom(lv) ? customOf(lv).cap : isSeasonal(lv) ? 6 : isLifetime(lv) ? 6 : isYearly(lv) ? 6 : isMonthly(lv) ? 5 : 4;
 const COLORS = [ ['#ff2d2d','#a30000'], ['#ff9a1f','#b25a00'], ['#ffd51f','#b38f00'], ['#2ecc40','#0b7a1d'], ['#2aa8ff','#0a5fa8'],
                  ['#b455ff','#6a1fb0'], ['#ff5fb3','#b0206f'], ['#19d3c5','#0a7c74'], ['#8d6e63','#4e342e'], ['#e0e0e0','#8a8a8a'] ];
 const $ = id => document.getElementById(id);
@@ -146,7 +153,13 @@ const isLifetime = lv => lv >= LIFETIME_MIN && lv < CUSTOM_MIN;
 // Custom challenge: you pick colors (3-10), balls per color (3-6), spare tubes (1-3, at most 12 tubes in all) and a board number (0-99999).
 // Key = CUSTOM_MIN + cfg * 100000 + seed. Played on this device only: no world leaderboard, but the code can be shared.
 const CUSTOM_MIN = 700000000;
-const isCustom = lv => lv >= CUSTOM_MIN;
+const isCustom = lv => lv >= CUSTOM_MIN && lv < TEAM_MIN;
+// Team challenge: keys from TEAM_MIN up are TEAM_MIN + the Monday (YYYYMMDD, UTC) of that week. Everyone gets the same board that week;
+// a team (any name you pick, saved on this device) is scored by the average of its members' best runs.
+const TEAM_MIN = 800000000, TEAM_COLORS = 9;
+const isTeam = lv => lv >= TEAM_MIN;
+const cleanTeam = t => String(t || '').replace(/[^\p{L}\p{N} ._-]/gu, '').trim().slice(0, 12);
+let teamName = ''; try { teamName = cleanTeam(localStorage.getItem('ballsortTeam')); } catch (e) {}
 const customKey = (colors, cap, spare, seed) => CUSTOM_MIN + ((((colors - 3) * 4 + (cap - 3)) * 3 + (spare - 1)) * 100000) + seed;
 const customOf = lv => {
   const n = lv - CUSTOM_MIN, seed = n % 100000;
@@ -190,7 +203,10 @@ const seasonKey = () => {
 const seasonParts = k => { const n = k - SEASONAL_MIN; return { y: Math.floor(n / 10), s: n % 10 }; };
 const seasonDay = k => { const p = seasonParts(k); return p.y + '-' + String(SEASONS[p.s][2]).padStart(2, '0') + '-01'; };
 const seasonLabel = k => { const p = seasonParts(k); return SEASONS[p.s][0] + ' ' + p.y + (p.s === 0 ? '/' + String(p.y + 1).slice(2) : ''); };
-const specialInfo = lv => isCustom(lv)
+const teamKey = () => TEAM_MIN + weekKey() - WEEKLY_MIN;
+const specialInfo = lv => isTeam(lv)
+  ? { name: 'Team', icon: '\u{1F465}', label: weekLabel(WEEKLY_MIN + lv - TEAM_MIN), shareLabel: (teamName ? teamName + ' \u00B7 ' : '') + weekLabel(WEEKLY_MIN + lv - TEAM_MIN), submit: 'submit_team_score', get: 'get_team_leaderboard', arg: 'p_week', extra: () => ({ p_team: teamName }), date: keyToDay(lv - TEAM_MIN), when: 'as a team this week', board: 'this device\'s team board this week', done: 'ballsortTeamDone' }
+  : isCustom(lv)
   ? { name: 'Custom', icon: '\u{1F39B}\uFE0F', label: customCode(lv), shareLabel: customCode(lv), submit: null, get: null, arg: null, date: null, when: 'this custom board', board: 'this device\'s board for this custom code', done: 'ballsortCustomDone' }
   : isSeasonal(lv)
   ? { name: 'Seasonal', icon: SEASONS[seasonParts(lv).s][1], label: SEASONS[seasonParts(lv).s][0], shareLabel: seasonLabel(lv), submit: 'submit_seasonal_score', get: 'get_seasonal_leaderboard', arg: 'p_season', date: seasonDay(lv), when: 'this season', board: 'this season\'s board', done: 'ballsortSeasonalDone' }
@@ -276,13 +292,13 @@ function solve(start, limit = 40000){ // DFS returns list of [a,b] moves or null
   return dfs(start, []);
 }
 
-const colorsFor = lv => isCustom(lv) ? customOf(lv).colors : isSeasonal(lv) ? SEASONAL_COLORS : isLifetime(lv) ? LIFETIME_COLORS : isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
+const colorsFor = lv => isTeam(lv) ? TEAM_COLORS : isCustom(lv) ? customOf(lv).colors : isSeasonal(lv) ? SEASONAL_COLORS : isLifetime(lv) ? LIFETIME_COLORS : isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
 
 function generate(lv){
   CAP = capFor(lv);
   if (isCustom(lv)) return generateCustom(lv);
-  const nColors = colorsFor(lv), nodeLimit = isSeasonal(lv) ? 600000 : isLifetime(lv) ? 1500000 : isYearly(lv) ? 600000 : isMonthly(lv) ? 200000 : 40000;
-  const r = rng(isSeasonal(lv) ? (lv - SEASONAL_MIN) * 7919 + 551551 : isLifetime(lv) ? 2711806 : isYearly(lv) ? (lv - YEARLY_MIN) * 7919 + 777001 : isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
+  const nColors = colorsFor(lv), nodeLimit = isTeam(lv) ? 300000 : isSeasonal(lv) ? 600000 : isLifetime(lv) ? 1500000 : isYearly(lv) ? 600000 : isMonthly(lv) ? 200000 : 40000;
+  const r = rng(isTeam(lv) ? (lv - TEAM_MIN) * 7919 + 888883 : isSeasonal(lv) ? (lv - SEASONAL_MIN) * 7919 + 551551 : isLifetime(lv) ? 2711806 : isYearly(lv) ? (lv - YEARLY_MIN) * 7919 + 777001 : isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
   for (let attempt = 0; attempt < 50; attempt++){
     const balls = [];
     for (let c = 0; c < nColors; c++) for (let i = 0; i < CAP; i++) balls.push(c);
@@ -469,11 +485,11 @@ async function rpc(fn, body, keepalive){
 let pendingRun = null, lastRemoteId = null, boardTab = 'world', boardReq = 0;
 async function submitRemote(keepalive){
   const run = pendingRun;
-  if (!run || run.sent || isCustom(run.level)) return;
+  if (!run || run.sent || isCustom(run.level) || (isTeam(run.level) && !teamName)) return;
   run.sent = true;
   try {
     const sp = specialInfo(run.level), who = { p_name: playerName || 'Player', p_moves: run.moves, p_time_ms: run.time };
-    const r = sp ? await rpc(sp.submit, Object.assign(sp.arg ? { [sp.arg]: sp.date } : {}, who), keepalive)
+    const r = sp ? await rpc(sp.submit, Object.assign(sp.arg ? { [sp.arg]: sp.date } : {}, sp.extra ? sp.extra() : {}, who), keepalive)
                  : await rpc('submit_score', Object.assign({ p_level: run.level }, who), keepalive);
     if (r && r.ok){
       lastRemoteId = r.id;
@@ -494,6 +510,7 @@ function setTab(t){
 function openBoard(lv){
   const sel = $('boardLevel'), max = Math.max(unlocked, normalLevel), today = dailyKey();
   sel.innerHTML = '';
+  const ot = document.createElement('option'); ot.value = teamKey(); ot.textContent = '\u{1F465} Team challenge (this week)'; sel.appendChild(ot);
   const os = document.createElement('option'); os.value = seasonKey(); os.textContent = SEASONS[seasonParts(seasonKey()).s][1] + ' Seasonal challenge (this season)'; sel.appendChild(os);
   const ol = document.createElement('option'); ol.value = LIFETIME_MIN; ol.textContent = '\u267E\uFE0F Lifetime challenge (all time)'; sel.appendChild(ol);
   const oy = document.createElement('option'); oy.value = yearKey(); oy.textContent = '\u{1F3C6} Yearly challenge (this year)'; sel.appendChild(oy);
@@ -503,7 +520,7 @@ function openBoard(lv){
   for (let l = 1; l <= max; l++){ const o = document.createElement('option'); o.value = l; o.textContent = 'Level ' + l; sel.appendChild(o); }
   const want = lv || level;
   if (isCustom(want)){ const oc = document.createElement('option'); oc.value = want; oc.textContent = '\u{1F39B}\uFE0F Custom ' + customCode(want); sel.insertBefore(oc, sel.firstChild); }
-  sel.value = isCustom(want) ? want : isSeasonal(want) ? seasonKey() : isLifetime(want) ? LIFETIME_MIN : isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
+  sel.value = isTeam(want) ? teamKey() : isCustom(want) ? want : isSeasonal(want) ? seasonKey() : isLifetime(want) ? LIFETIME_MIN : isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
   setTab(isCustom(want) ? 'local' : 'world');
   renderBoard();
   $('lbModal').classList.add('show');
@@ -575,6 +592,7 @@ function win(){
       (streak.best > n ? ' (best ' + streak.best + ')' : '') + ' Come back tomorrow to keep it going.';
     refreshDailyLabels();
   }
+  else if (isTeam(level)) $('nextHint').textContent = '\u{1F465} ' + (teamName ? 'Team ' + teamName + ' is ranked by its members\' average best run. ' : '') + 'A new team board starts every Monday (UTC).';
   else if (isCustom(level)) $('nextHint').textContent = '\u{1F39B}\uFE0F Code ' + customCode(level) + ' \u2013 share it so friends can play the same board.';
   else if (seasonal) $('nextHint').textContent = SEASONS[seasonParts(level).s][1] + ' A new seasonal challenge starts on Mar 1, Jun 1, Sep 1 and Dec 1 (UTC).';
   else if (lifetime) $('nextHint').textContent = '\u267E\uFE0F The Lifetime board never changes \u2013 replay it to beat your best, and the world\'s.';
@@ -727,6 +745,31 @@ $('cRandom').onclick = () => { const c = customRead(); c.seed = Math.floor(Math.
 $('cCancel').onclick = () => $('customM').classList.remove('show');
 $('cPlay').onclick = () => { const c = customRead(); $('customM').classList.remove('show'); closeBoard(); level = customKey(c.colors, c.cap, c.spare, c.seed); start(); };
 $('customBtn').onclick = customOpen;
+function teamSave(){ teamName = cleanTeam($('tName').value); try { localStorage.setItem('ballsortTeam', teamName); } catch (e) {} return teamName; }
+function teamLoad(){
+  const info = $('tInfo'), list = $('tRoster'), wk = keyToDay(weekKey() - WEEKLY_MIN), name = cleanTeam($('tName').value);
+  list.innerHTML = '';
+  if (!name){ info.textContent = 'Enter a team name to join or start a team.'; return; }
+  info.textContent = 'Loading team\u2026';
+  Promise.all([rpc('get_team_members', { p_week: wk, p_team: name }), rpc('get_team_leaderboard', { p_week: wk, p_limit: 50 })]).then(([rows, teams]) => {
+    if (cleanTeam($('tName').value) !== name) return;
+    const i = teams.findIndex(t => t.name.toLowerCase().startsWith(name.toLowerCase() + ' ('));
+    info.textContent = rows.length ? 'Team ' + name + ': ' + rows.length + (rows.length === 1 ? ' member' : ' members') + (i >= 0 ? ' \u00B7 #' + teams[i].rank + ' this week' : '') : 'No runs yet this week \u2013 be the first on team ' + name + '!';
+    rows.forEach(r => {
+      const li = document.createElement('li'), a = document.createElement('span'), b = document.createElement('span'), c = document.createElement('span');
+      a.textContent = '#' + r.rank; b.className = 'nm'; b.textContent = r.name; c.className = 'sc'; c.textContent = r.moves + ' moves \u00B7 ' + fmtTime(r.time_ms);
+      li.append(a, b, c); list.appendChild(li);
+    });
+  }).catch(() => { if (cleanTeam($('tName').value) === name) info.textContent = 'Couldn\u2019t load the team \u2013 you can still play.'; });
+}
+let teamTimer = 0;
+$('tName').oninput = () => { clearTimeout(teamTimer); teamTimer = setTimeout(teamLoad, 400); };
+$('teamBtn').onclick = () => { closeSelect(); $('tName').value = teamName; $('teamM').classList.add('show'); teamLoad(); };
+$('tCancel').onclick = () => $('teamM').classList.remove('show');
+$('tPlay').onclick = () => {
+  if (!teamSave()){ $('tInfo').textContent = 'Please enter a team name first.'; $('tName').focus(); return; }
+  $('teamM').classList.remove('show'); closeBoard(); level = teamKey(); start();
+};
 function playLifetime(){ closeSelect(); closeBoard(); level = LIFETIME_MIN; start(); }
 function playYearly(){ closeSelect(); closeBoard(); level = yearKey(); start(); }
 function playMonthly(){ closeSelect(); closeBoard(); level = monthKey(); start(); }
@@ -737,7 +780,7 @@ $('lvl').onclick = openSelect;
 $('lvl').onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSelect(); } };
 $('closeSelect').onclick = closeSelect;
 $('select').onclick = e => { if (e.target === $('select')) closeSelect(); };
-document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeSelect(); closeBoard(); $('customM').classList.remove('show'); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeSelect(); closeBoard(); $('customM').classList.remove('show'); $('teamM').classList.remove('show'); } });
 $('resetBest').onclick = () => {
   if (!Object.keys(best).length && !Object.keys(bestTime).length){ alert('No best scores to reset yet.'); return; }
   if (!confirm('Reset your best scores for all levels? This cannot be undone.')) return;
@@ -751,7 +794,7 @@ $('undo').onclick = () => {
 $('addTube').onclick = () => { if (adds > 0){ adds--; tubes.push([]); render(); } };
 $('hint').onclick = () => {
   if (hints <= 0) return;
-  const path = solve(tubes, isCustom(level) ? 600000 : isSeasonal(level) ? 800000 : isLifetime(level) ? 2000000 : isYearly(level) ? 800000 : isMonthly(level) ? 400000 : 60000);
+  const path = solve(tubes, isTeam(level) ? 400000 : isCustom(level) ? 600000 : isSeasonal(level) ? 800000 : isLifetime(level) ? 2000000 : isYearly(level) ? 800000 : isMonthly(level) ? 400000 : 60000);
   if (path && path.length){ hints--; hintMove = path[0]; selected = null; render(); }
   else {
     const m = $('moves'); m.textContent = 'No hint found from here \u2013 try undo';

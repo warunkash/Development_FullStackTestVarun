@@ -618,3 +618,132 @@ revoke execute on function public.submit_lifetime_score(text, int, int) from pub
 revoke execute on function public.get_lifetime_leaderboard(int) from public;
 grant execute on function public.submit_lifetime_score(text, int, int) to anon, authenticated;
 grant execute on function public.get_lifetime_leaderboard(int) to anon, authenticated;
+
+-- Team challenge
+create table public.team_scores (
+  id bigint generated always as identity primary key,
+  week date not null,
+  team text not null check (char_length(team) between 1 and 12),
+  name text not null check (char_length(name) between 1 and 12),
+  moves int not null check (moves between 1 and 1000),
+  time_ms int not null check (time_ms between 1000 and 86400000),
+  ip_hash text,
+  created_at timestamptz not null default now()
+);
+create index team_scores_rank_idx on public.team_scores (week, team, moves, time_ms, id);
+create index team_scores_ip_idx on public.team_scores (ip_hash, created_at);
+alter table public.team_scores enable row level security;
+revoke all on public.team_scores from anon, authenticated;
+
+-- A team's score is the average of its members' best runs (best 5 members). Fewer moves wins, then more members, then faster time.
+create or replace function public.team_standings(p_week date)
+returns table (team text, members int, avg_moves numeric, avg_time numeric, rank bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  with best as (
+    select distinct on (s.team, s.name) s.team, s.name, s.moves, s.time_ms
+      from public.team_scores s
+     where s.week = p_week
+     order by s.team, s.name, s.moves, s.time_ms, s.id
+  ), ranked as (
+    select b.*, row_number() over (partition by b.team order by b.moves, b.time_ms, b.name) as rn from best b
+  ), t as (
+    select r.team, count(*)::int as members, avg(r.moves) as avg_moves, avg(r.time_ms) as avg_time
+      from ranked r where r.rn <= 5 group by r.team
+  )
+  select t.team, t.members, t.avg_moves, t.avg_time,
+         row_number() over (order by t.avg_moves, t.members desc, t.avg_time, t.team) as rank
+    from t;
+$fn$;
+
+create or replace function public.submit_team_score(p_week date, p_team text, p_name text, p_moves int, p_time_ms int)
+returns json
+language plpgsql
+security definer
+set search_path = public, extensions
+as $fn$
+declare
+  v_today date;
+  v_monday date;
+  v_headers json;
+  v_ip text;
+  v_hash text;
+  v_name text;
+  v_team text;
+  v_id bigint;
+  v_rank bigint;
+begin
+  v_today := (now() at time zone 'utc')::date;
+  v_monday := v_today - (extract(isodow from v_today)::int - 1);
+  if p_week is null or p_moves is null or p_time_ms is null or extract(isodow from p_week)::int <> 1 or p_week < v_monday - 7 or p_week > v_monday
+     or btrim(coalesce(regexp_replace(coalesce(p_team, ''), '[^[:alnum:] ._-]', '', 'g'), '')) = '' then
+    return json_build_object('ok', false, 'error', 'invalid');
+  end if;
+  if p_moves < 9 or p_moves > 1000 then
+    return json_build_object('ok', false, 'error', 'implausible_moves');
+  end if;
+  if p_time_ms < p_moves * 200 or p_time_ms > 86400000 then
+    return json_build_object('ok', false, 'error', 'implausible_time');
+  end if;
+  begin
+    v_headers := current_setting('request.headers', true)::json;
+  exception when others then
+    v_headers := '{}'::json;
+  end;
+  v_ip := coalesce(v_headers->>'cf-connecting-ip', nullif(split_part(coalesce(v_headers->>'x-forwarded-for', ''), ',', 1), ''), 'unknown');
+  select encode(hmac(v_ip, salt, 'sha256'), 'hex') into v_hash from public.leaderboard_private where id = 1;
+  if (select count(*) from public.team_scores where ip_hash = v_hash and created_at > now() - interval '10 minutes') >= 8 then
+    return json_build_object('ok', false, 'error', 'rate_limited');
+  end if;
+  v_name := public.clean_name(p_name);
+  v_team := public.clean_name(p_team);
+  insert into public.team_scores (week, team, name, moves, time_ms, ip_hash)
+  values (p_week, v_team, v_name, p_moves, p_time_ms, v_hash)
+  returning id into v_id;
+  select st.rank into v_rank from public.team_standings(p_week) st where st.team = v_team;
+  return json_build_object('ok', true, 'id', v_id, 'rank', v_rank);
+end;
+$fn$;
+
+create or replace function public.get_team_leaderboard(p_week date, p_limit int default 20)
+returns table (id bigint, name text, moves int, time_ms int, rank bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select st.rank, st.team || ' (' || st.members || ')', round(st.avg_moves)::int, round(st.avg_time)::int, st.rank
+    from public.team_standings(p_week) st
+   order by st.rank
+   limit least(greatest(coalesce(p_limit, 20), 1), 50);
+$fn$;
+
+create or replace function public.get_team_members(p_week date, p_team text)
+returns table (name text, moves int, time_ms int, rank bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select b.name, b.moves, b.time_ms, row_number() over (order by b.moves, b.time_ms, b.name) as rank
+    from (
+      select distinct on (s.name) s.name, s.moves, s.time_ms
+        from public.team_scores s
+       where s.week = p_week and s.team = public.clean_name(p_team)
+       order by s.name, s.moves, s.time_ms, s.id
+    ) b
+   order by b.moves, b.time_ms, b.name
+   limit 20;
+$fn$;
+
+revoke execute on function public.team_standings(date) from public;
+revoke execute on function public.submit_team_score(date, text, text, int, int) from public;
+revoke execute on function public.get_team_leaderboard(date, int) from public;
+revoke execute on function public.get_team_members(date, text) from public;
+grant execute on function public.submit_team_score(date, text, text, int, int) to anon, authenticated;
+grant execute on function public.get_team_leaderboard(date, int) to anon, authenticated;
+grant execute on function public.get_team_members(date, text) to anon, authenticated;
+revoke execute on function public.team_standings(date) from anon, authenticated;
