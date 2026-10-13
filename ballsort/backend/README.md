@@ -109,4 +109,8 @@ best run. At least 9 moves are required; this or last week only.
 
 ## Schema
 
-See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).
+See `schema.sql`.
+
+## Maintenance
+
+`maintenance.sql` holds the one-off removal of the test rows and `prune_old_boards()`, a retention job (90 days for the daily to weekly style boards, 120 for guild and tournament, 400 for monthly and seasonal; `scores`, `yearly_scores` and `lifetime_scores` are kept) with an optional nightly `pg_cron` schedule. Run it yourself in the Supabase SQL editor; it is not applied automatically.
