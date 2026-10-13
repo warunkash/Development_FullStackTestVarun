@@ -69,6 +69,13 @@ counted from Monday 2026-01-05, UTC) and is identified by its first day. Players
 colors); the run's total moves and total time are what get submitted, so at least 35 moves are required. Submissions are
 accepted for the current or the previous tournament only.
 
+## Bracket challenge
+
+`bracket_scores` plus `submit_bracket_score` and `get_bracket_leaderboard`. A weekly three-match knockout against computer
+opponents (quarterfinal, semifinal, final); the board and opponents are the same for everyone that week (identified by its
+Monday, UTC). A run is submitted with the number of matches won (0-3), the total moves and the total time, and is ranked by
+matches won, then moves, then time. At least 6 moves are required; this or last week only.
+
 ## Schema
 
 See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).
