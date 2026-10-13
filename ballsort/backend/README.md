@@ -43,6 +43,12 @@ boards are bigger (10 colors, 5 balls per color), so at least 10 moves are requi
 Submissions are accepted for this year or last year only. Yearly boards are the biggest (10 colors, 6 balls per
 color), so at least 10 moves are required.
 
+## Seasonal challenge
+
+`seasonal_scores` plus `submit_seasonal_score` and `get_seasonal_leaderboard`. A season is identified by its first day
+(UTC): Dec 1 (winter), Mar 1 (spring), Jun 1 (summer) or Sep 1 (autumn). Submissions are accepted for the current or the
+previous season only. Seasonal boards have 9 colors with 6 balls each, so at least 10 moves are required.
+
 ## Lifetime challenge
 
 `lifetime_scores` plus `submit_lifetime_score` and `get_lifetime_leaderboard`. There is one permanent board (it never

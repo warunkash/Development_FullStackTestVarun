@@ -80,6 +80,7 @@
   .row.special { margin-bottom:12px; row-gap:8px; }
   .row.special .btn { margin:0; }
   .btn.monthly { padding:9px 20px; font-size:.95rem; background:#d81b60; }
+  .btn.seasonal { padding:9px 20px; font-size:.95rem; background:#ef6c00; }
   .btn.lifetime { padding:9px 20px; font-size:.95rem; background:#00695c; }
   .btn.yearly { padding:9px 20px; font-size:.95rem; background:#6a1b9a; }
   .btn.weekly { padding:9px 20px; font-size:.95rem; background:#7c4dff; }
@@ -107,15 +108,15 @@
   <button class="round" id="theme" title="Switch theme"></button>
   <button class="round" id="mute" title="Mute sound" aria-pressed="false">&#x1F50A;</button>
 </footer>
-<div class="links top"><button class="link" id="openDaily" title="Daily challenge">Daily</button><span aria-hidden="true">&middot;</span><button class="link" id="openWeekly" title="Weekly challenge">Weekly</button><span aria-hidden="true">&middot;</span><button class="link" id="openMonthly" title="Monthly challenge">Monthly</button><span aria-hidden="true">&middot;</span><button class="link" id="openYearly" title="Yearly challenge">Yearly</button></div>
+<div class="links top"><button class="link" id="openDaily" title="Daily challenge">Daily</button><span aria-hidden="true">&middot;</span><button class="link" id="openWeekly" title="Weekly challenge">Weekly</button><span aria-hidden="true">&middot;</span><button class="link" id="openMonthly" title="Monthly challenge">Monthly</button><span aria-hidden="true">&middot;</span><button class="link" id="openSeasonal" title="Seasonal challenge">Seasonal</button><span aria-hidden="true">&middot;</span><button class="link" id="openYearly" title="Yearly challenge">Yearly</button></div>
 <div class="links"><button class="link" id="openLifetime" title="Lifetime challenge">Lifetime</button><span aria-hidden="true">&middot;</span><button class="link" id="openBoard">Leaderboard</button><span aria-hidden="true">&middot;</span><button class="link" id="resetBest">Reset best scores</button></div>
-<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
+<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
 <div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn alt" id="shareBtn" style="display:none">Share</button><button class="btn" id="next">Next Level</button></div></div></div>
 <div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><div class="tabs" role="tablist"><button class="tab on" id="tabWorld" role="tab">&#x1F30D; World</button><button class="tab" id="tabLocal" role="tab">This device</button></div><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
 
 <script>
 let CAP = 4;
-const capFor = lv => isLifetime(lv) ? 6 : isYearly(lv) ? 6 : isMonthly(lv) ? 5 : 4;
+const capFor = lv => isSeasonal(lv) ? 6 : isLifetime(lv) ? 6 : isYearly(lv) ? 6 : isMonthly(lv) ? 5 : 4;
 const COLORS = [ ['#ff2d2d','#a30000'], ['#ff9a1f','#b25a00'], ['#ffd51f','#b38f00'], ['#2ecc40','#0b7a1d'], ['#2aa8ff','#0a5fa8'],
                  ['#b455ff','#6a1fb0'], ['#ff5fb3','#b0206f'], ['#19d3c5','#0a7c74'], ['#8d6e63','#4e342e'], ['#e0e0e0','#8a8a8a'] ];
 const $ = id => document.getElementById(id);
@@ -132,7 +133,11 @@ const YEARLY_MIN = 500000000, YEARLY_COLORS = 10;
 // Lifetime challenge: one permanent board (key LIFETIME_MIN) for everyone, ever. 10 colors, 6 balls per color, only ONE spare tube
 const LIFETIME_MIN = 600000000, LIFETIME_COLORS = 10;
 const isLifetime = lv => lv >= LIFETIME_MIN;
-const isYearly = lv => lv >= YEARLY_MIN && lv < LIFETIME_MIN;
+// Seasonal challenge: keys from SEASONAL_MIN up are SEASONAL_MIN + startYear*10 + season (0 winter Dec-Feb, 1 spring Mar-May, 2 summer Jun-Aug, 3 autumn Sep-Nov; UTC).
+// 9 colors x 6 balls, 11 tubes
+const SEASONAL_MIN = 550000000, SEASONAL_COLORS = 9;
+const isSeasonal = lv => lv >= SEASONAL_MIN && lv < LIFETIME_MIN;
+const isYearly = lv => lv >= YEARLY_MIN && lv < SEASONAL_MIN;
 const isMonthly = lv => lv >= MONTHLY_MIN && lv < YEARLY_MIN;
 const isWeekly = lv => lv >= WEEKLY_MIN && lv < MONTHLY_MIN;
 const isDaily = lv => lv > DAILY_MIN && lv < WEEKLY_MIN;
@@ -154,7 +159,18 @@ const monthDay = k => { const ym = k - MONTHLY_MIN; return Math.floor(ym / 100) 
 const monthLabel = (k, year) => new Date(monthDay(k) + 'T00:00:00Z').toLocaleDateString(undefined, year ? { month: 'short', year: 'numeric', timeZone: 'UTC' } : { month: 'short', timeZone: 'UTC' });
 const yearKey = () => YEARLY_MIN + new Date().getUTCFullYear();
 const yearDay = k => (k - YEARLY_MIN) + '-01-01';
-const specialInfo = lv => isLifetime(lv)
+const SEASONS = [['Winter', '\u2744\uFE0F', 12], ['Spring', '\u{1F338}', 3], ['Summer', '\u2600\uFE0F', 6], ['Autumn', '\u{1F342}', 9]];
+const seasonKey = () => {
+  const d = new Date(), m = d.getUTCMonth() + 1, y = d.getUTCFullYear();
+  const s = m === 12 || m <= 2 ? 0 : m <= 5 ? 1 : m <= 8 ? 2 : 3;
+  return SEASONAL_MIN + (m <= 2 ? y - 1 : y) * 10 + s;
+};
+const seasonParts = k => { const n = k - SEASONAL_MIN; return { y: Math.floor(n / 10), s: n % 10 }; };
+const seasonDay = k => { const p = seasonParts(k); return p.y + '-' + String(SEASONS[p.s][2]).padStart(2, '0') + '-01'; };
+const seasonLabel = k => { const p = seasonParts(k); return SEASONS[p.s][0] + ' ' + p.y + (p.s === 0 ? '/' + String(p.y + 1).slice(2) : ''); };
+const specialInfo = lv => isSeasonal(lv)
+  ? { name: 'Seasonal', icon: SEASONS[seasonParts(lv).s][1], label: SEASONS[seasonParts(lv).s][0], shareLabel: seasonLabel(lv), submit: 'submit_seasonal_score', get: 'get_seasonal_leaderboard', arg: 'p_season', date: seasonDay(lv), when: 'this season', board: 'this season\'s board', done: 'ballsortSeasonalDone' }
+  : isLifetime(lv)
   ? { name: 'Lifetime', icon: '\u267E\uFE0F', label: 'Forever', shareLabel: 'the one board', submit: 'submit_lifetime_score', get: 'get_lifetime_leaderboard', arg: null, date: null, when: 'of all time', board: 'the all-time board', done: 'ballsortLifetimeDone' }
   : isYearly(lv)
   ? { name: 'Yearly', icon: '\u{1F3C6}', label: String(lv - YEARLY_MIN), shareLabel: String(lv - YEARLY_MIN), submit: 'submit_yearly_score', get: 'get_yearly_leaderboard', arg: 'p_year', date: yearDay(lv), when: 'this year', board: 'this year\'s board', done: 'ballsortYearlyDone' }
@@ -236,12 +252,12 @@ function solve(start, limit = 40000){ // DFS returns list of [a,b] moves or null
   return dfs(start, []);
 }
 
-const colorsFor = lv => isLifetime(lv) ? LIFETIME_COLORS : isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
+const colorsFor = lv => isSeasonal(lv) ? SEASONAL_COLORS : isLifetime(lv) ? LIFETIME_COLORS : isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
 
 function generate(lv){
   CAP = capFor(lv);
-  const nColors = colorsFor(lv), nodeLimit = isLifetime(lv) ? 1500000 : isYearly(lv) ? 600000 : isMonthly(lv) ? 200000 : 40000;
-  const r = rng(isLifetime(lv) ? 2711806 : isYearly(lv) ? (lv - YEARLY_MIN) * 7919 + 777001 : isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
+  const nColors = colorsFor(lv), nodeLimit = isSeasonal(lv) ? 600000 : isLifetime(lv) ? 1500000 : isYearly(lv) ? 600000 : isMonthly(lv) ? 200000 : 40000;
+  const r = rng(isSeasonal(lv) ? (lv - SEASONAL_MIN) * 7919 + 551551 : isLifetime(lv) ? 2711806 : isYearly(lv) ? (lv - YEARLY_MIN) * 7919 + 777001 : isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
   for (let attempt = 0; attempt < 50; attempt++){
     const balls = [];
     for (let c = 0; c < nColors; c++) for (let i = 0; i < CAP; i++) balls.push(c);
@@ -428,6 +444,7 @@ function setTab(t){
 function openBoard(lv){
   const sel = $('boardLevel'), max = Math.max(unlocked, normalLevel), today = dailyKey();
   sel.innerHTML = '';
+  const os = document.createElement('option'); os.value = seasonKey(); os.textContent = SEASONS[seasonParts(seasonKey()).s][1] + ' Seasonal challenge (this season)'; sel.appendChild(os);
   const ol = document.createElement('option'); ol.value = LIFETIME_MIN; ol.textContent = '\u267E\uFE0F Lifetime challenge (all time)'; sel.appendChild(ol);
   const oy = document.createElement('option'); oy.value = yearKey(); oy.textContent = '\u{1F3C6} Yearly challenge (this year)'; sel.appendChild(oy);
   const om = document.createElement('option'); om.value = monthKey(); om.textContent = '\u{1F3C5} Monthly challenge (this month)'; sel.appendChild(om);
@@ -435,7 +452,7 @@ function openBoard(lv){
   const od = document.createElement('option'); od.value = today; od.textContent = '\u{1F4C5} Daily challenge (today)'; sel.appendChild(od);
   for (let l = 1; l <= max; l++){ const o = document.createElement('option'); o.value = l; o.textContent = 'Level ' + l; sel.appendChild(o); }
   const want = lv || level;
-  sel.value = isLifetime(want) ? LIFETIME_MIN : isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
+  sel.value = isSeasonal(want) ? seasonKey() : isLifetime(want) ? LIFETIME_MIN : isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
   setTab('world');
   renderBoard();
   $('lbModal').classList.add('show');
@@ -496,7 +513,7 @@ function win(){
   $('bestTime').textContent = fmtTime(bestTime[level]);
   $('winMsg').textContent = 'Solved in ' + moves + ' moves' +
     (isBest ? (prev === undefined ? ' \u2013 best score set!' : ' \u2013 new best! (was ' + prev + ')') : ' \u00B7 Best: ' + prev);
-  const sp = specialInfo(level), daily = isDaily(level), weekly = isWeekly(level), monthly = isMonthly(level), yearly = isYearly(level), lifetime = isLifetime(level), special = !!sp;
+  const sp = specialInfo(level), daily = isDaily(level), weekly = isWeekly(level), monthly = isMonthly(level), yearly = isYearly(level), lifetime = isLifetime(level), seasonal = isSeasonal(level), special = !!sp;
   $('next').textContent = special ? 'Back to levels' : 'Next Level';
   if (special){ try { localStorage.setItem(sp.done, level); } catch (e) {} }
   const n = colorsFor(level + 1), harder = n > colorsFor(level);
@@ -506,6 +523,7 @@ function win(){
       (streak.best > n ? ' (best ' + streak.best + ')' : '') + ' Come back tomorrow to keep it going.';
     refreshDailyLabels();
   }
+  else if (seasonal) $('nextHint').textContent = SEASONS[seasonParts(level).s][1] + ' A new seasonal challenge starts on Mar 1, Jun 1, Sep 1 and Dec 1 (UTC).';
   else if (lifetime) $('nextHint').textContent = '\u267E\uFE0F The Lifetime board never changes \u2013 replay it to beat your best, and the world\'s.';
   else if (yearly) $('nextHint').textContent = '\u{1F3C6} A new yearly challenge starts on January 1st (UTC).';
   else if (monthly) $('nextHint').textContent = '\u{1F3C5} A new monthly challenge starts on the 1st of every month (UTC).';
@@ -535,6 +553,8 @@ $('openWeekly').onclick = playWeekly;
 $('weeklyBtn').onclick = playWeekly;
 $('openMonthly').onclick = playMonthly;
 $('openYearly').onclick = playYearly;
+$('openSeasonal').onclick = playSeasonal;
+$('seasonalBtn').onclick = playSeasonal;
 $('openLifetime').onclick = playLifetime;
 $('lifetimeBtn').onclick = playLifetime;
 $('yearlyBtn').onclick = playYearly;
@@ -602,6 +622,8 @@ function openSelect(){
   $('monthlyBtn').textContent = '\u{1F3C5} Monthly Challenge' + (+mdone === monthKey() ? ' \u2713' : '');
   let ydone = ''; try { ydone = localStorage.getItem('ballsortYearlyDone'); } catch (e) {}
   $('yearlyBtn').textContent = '\u{1F3C6} Yearly Challenge' + (+ydone === yearKey() ? ' \u2713' : '');
+  let sdone = ''; try { sdone = localStorage.getItem('ballsortSeasonalDone'); } catch (e) {}
+  $('seasonalBtn').textContent = SEASONS[seasonParts(seasonKey()).s][1] + ' Seasonal Challenge' + (+sdone === seasonKey() ? ' \u2713' : '');
   let ldone = ''; try { ldone = localStorage.getItem('ballsortLifetimeDone'); } catch (e) {}
   $('lifetimeBtn').textContent = '\u267E\uFE0F Lifetime Challenge' + (+ldone === LIFETIME_MIN ? ' \u2713' : '');
   const sn = currentStreak();
@@ -620,6 +642,7 @@ function openSelect(){
   const cur = grid.querySelector('.cur'); if (cur) cur.scrollIntoView({block:'center'});
 }
 refreshDailyLabels();
+function playSeasonal(){ closeSelect(); closeBoard(); level = seasonKey(); start(); }
 function playLifetime(){ closeSelect(); closeBoard(); level = LIFETIME_MIN; start(); }
 function playYearly(){ closeSelect(); closeBoard(); level = yearKey(); start(); }
 function playMonthly(){ closeSelect(); closeBoard(); level = monthKey(); start(); }
@@ -644,7 +667,7 @@ $('undo').onclick = () => {
 $('addTube').onclick = () => { if (adds > 0){ adds--; tubes.push([]); render(); } };
 $('hint').onclick = () => {
   if (hints <= 0) return;
-  const path = solve(tubes, isLifetime(level) ? 2000000 : isYearly(level) ? 800000 : isMonthly(level) ? 400000 : 60000);
+  const path = solve(tubes, isSeasonal(level) ? 800000 : isLifetime(level) ? 2000000 : isYearly(level) ? 800000 : isMonthly(level) ? 400000 : 60000);
   if (path && path.length){ hints--; hintMove = path[0]; selected = null; render(); }
   else {
     const m = $('moves'); m.textContent = 'No hint found from here \u2013 try undo';
