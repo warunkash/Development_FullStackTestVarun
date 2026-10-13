@@ -32,7 +32,7 @@ jobs:
           mkdir -p _site/ballsort
           cp -r playearn/. _site/
           cp -r ballsort/. _site/ballsort/
-          rm -rf _site/ballsort/backend
+          rm -rf _site/ballsort/backend _site/ballsort/tests
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
