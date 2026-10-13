@@ -115,6 +115,23 @@ const dailyKey = () => { const d = new Date(); return d.getUTCFullYear() * 10000
 const keyToDay = k => Math.floor(k / 10000) + '-' + String(Math.floor(k / 100) % 100).padStart(2, '0') + '-' + String(k % 100).padStart(2, '0');
 const dayLabel = k => new Date(keyToDay(k) + 'T00:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
 let normalLevel = level;
+// Daily streak: consecutive UTC days with the daily challenge completed (kept on this device)
+let streak = { last: 0, count: 0, best: 0 };
+try { streak = Object.assign(streak, JSON.parse(localStorage.getItem('ballsortStreak')) || {}); } catch (e) {}
+const prevKey = k => { const d = new Date(Date.UTC(Math.floor(k / 10000), Math.floor(k / 100) % 100 - 1, k % 100) - 86400000); return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate(); };
+const currentStreak = () => { const t = dailyKey(); return streak.last === t || streak.last === prevKey(t) ? streak.count : 0; };
+function recordDaily(k){
+  if (k <= streak.last) return false;
+  streak.count = streak.last === prevKey(k) ? streak.count + 1 : 1;
+  streak.last = k;
+  streak.best = Math.max(streak.best, streak.count);
+  try { localStorage.setItem('ballsortStreak', JSON.stringify(streak)); } catch (e) {}
+  return true;
+}
+function refreshDailyLabels(){
+  const n = currentStreak();
+  $('openDaily').textContent = 'Daily challenge' + (n ? ' \u{1F525}' + n : '');
+}
 const setNormal = l => { normalLevel = level = l; try { localStorage.setItem('ballsortLevel', l); } catch (e) {} };
 let unlocked = Math.max(level, +(localStorage.getItem('ballsortUnlocked') || 1)); // highest level reached
 let best = {}; // level -> fewest moves
@@ -424,7 +441,12 @@ function win(){
   $('next').textContent = daily ? 'Back to levels' : 'Next Level';
   if (daily){ try { localStorage.setItem('ballsortDailyDone', level); } catch (e) {} }
   const n = colorsFor(level + 1), harder = n > colorsFor(level);
-  if (daily) $('nextHint').textContent = '\u{1F4C5} Come back tomorrow for a new daily challenge!';
+  if (daily){
+    const added = recordDaily(level), n = currentStreak();
+    $('nextHint').textContent = '\u{1F525} ' + (added ? n + '-day streak!' : 'Streak: ' + n + (n === 1 ? ' day.' : ' days.')) +
+      (streak.best > n ? ' (best ' + streak.best + ')' : '') + ' Come back tomorrow to keep it going.';
+    refreshDailyLabels();
+  }
   else $('nextHint').textContent = '\u{1F4A1} Level ' + (level + 1) + ': ' + n + ' colors, ' + (n + 2) + ' tubes' +
     (harder ? ' \u2013 a new color joins!' : n === COLORS.length ? ' \u2013 the maximum difficulty' : ' \u2013 same colors, a new layout');
   const res = addScore(level, moves, time);
@@ -468,7 +490,8 @@ $('restart').onclick = start;
 function openSelect(){
   const grid = $('grid'); grid.innerHTML = '';
   let done = ''; try { done = localStorage.getItem('ballsortDailyDone'); } catch (e) {}
-  $('dailyBtn').textContent = '\u{1F4C5} Daily Challenge' + (+done === dailyKey() ? ' \u2713' : '');
+  const sn = currentStreak();
+  $('dailyBtn').textContent = '\u{1F4C5} Daily Challenge' + (+done === dailyKey() ? ' \u2713' : '') + (sn ? ' \u00B7 \u{1F525}' + sn : '');
   const total = Math.max(20, Math.ceil((unlocked + 5) / 5) * 5);
   for (let l = 1; l <= total; l++){
     const t = document.createElement('button');
@@ -482,6 +505,7 @@ function openSelect(){
   $('select').classList.add('show');
   const cur = grid.querySelector('.cur'); if (cur) cur.scrollIntoView({block:'center'});
 }
+refreshDailyLabels();
 function playDaily(){ closeSelect(); closeBoard(); level = dailyKey(); start(); }
 function closeSelect(){ $('select').classList.remove('show'); }
 $('lvl').onclick = openSelect;
