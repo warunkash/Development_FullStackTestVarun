@@ -62,6 +62,13 @@ week (identified by its Monday, UTC). A team is just a name players choose (no a
 members' best runs (best 5 members); fewer moves wins, then more members, then faster time. Submissions are accepted for this
 week or last week. The helper `team_standings` is not callable by `anon`; only the leaderboard functions use it.
 
+## Tournament challenge
+
+`tournament_scores` plus `submit_tournament_score` and `get_tournament_leaderboard`. A tournament lasts 14 days (periods are
+counted from Monday 2026-01-05, UTC) and is identified by its first day. Players clear 5 rounds back to back (5, 6, 7, 8 and 9
+colors); the run's total moves and total time are what get submitted, so at least 35 moves are required. Submissions are
+accepted for the current or the previous tournament only.
+
 ## Schema
 
 See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).
