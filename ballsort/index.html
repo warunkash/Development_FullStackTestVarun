@@ -27,8 +27,8 @@
   .badge { position:absolute; right:-4px; bottom:-4px; background:#e53935; border-radius:50%; width:18px; height:18px; font-size:.65rem; display:grid; place-items:center; }
   main { flex:1; width:100%; max-width:640px; display:flex; flex-wrap:wrap; justify-content:center; align-content:center; gap:44px 22px; padding:70px 12px 20px; }
   main.tall { gap:28px 10px; padding:32px 12px 4px; --u:36px; }
-  main.tall .tube { width:44px; }
-  .tube { width:clamp(44px,12vw,62px); height:calc(var(--cap) * var(--u, clamp(40px,11vw,56px)) + 16px); border:3px solid var(--edge); border-top-width:4px;
+  main.tall .tube { width:var(--tw, 44px); }
+  .tube { width:var(--tw, clamp(44px,12vw,62px)); height:calc(var(--cap) * var(--u, clamp(40px,11vw,56px)) + 16px); border:3px solid var(--edge); border-top-width:4px;
           border-radius:8px 8px 26px 26px; background:linear-gradient(90deg,var(--tube-a),var(--tube-b));
           display:flex; flex-direction:column-reverse; align-items:center; padding:6px 0 4px; position:relative; cursor:pointer; transition:transform .15s; }
   .tube.sel { transform:translateY(-4px); }
@@ -41,7 +41,7 @@
   .tube.done { border-color:var(--done); }
   .ball { width:84%; aspect-ratio:1; border-radius:50%; flex:none; margin-top:2px; position:relative;
           background:radial-gradient(circle at 35% 30%, #fff9 0 12%, transparent 30%), radial-gradient(circle at 50% 50%, var(--c), var(--d)); box-shadow:0 2px 4px #0006; }
-  .ball.lift { position:absolute; top:calc(-1 * clamp(44px,12vw,58px) - 8px); left:8%; width:84%; margin:0; animation:pop .15s ease-out; }
+  .ball.lift { position:absolute; top:calc(-1 * var(--tw, clamp(44px,12vw,58px)) - 8px); left:8%; width:84%; margin:0; animation:pop .15s ease-out; }
   @keyframes pop { from { transform:translateY(14px); } to { transform:none; } }
   footer { display:flex; gap:22px; padding:16px 16px 8px; }
   .link { background:none; border:0; color:var(--txt); opacity:.55; font-size:.8rem; text-decoration:underline; cursor:pointer; padding:6px 10px 22px; white-space:nowrap; }
@@ -60,6 +60,7 @@
   .tile.done { border-color:var(--done); }
   .tile.cur { background:#2e7dff; border-color:var(--txt); color:#fff; }
   .tile:disabled { opacity:.3; cursor:not-allowed; }
+  @media (max-height:700px) { .link { padding-bottom:8px; } .links span { padding-bottom:2px; } footer { padding-top:8px; } }
   .links { display:flex; gap:0; align-items:center; }
   .links span { opacity:.55; padding-bottom:16px; }
   .board-card { width:min(92vw,380px); padding:22px 18px; }
@@ -550,6 +551,19 @@ function start(){
   render();
 }
 
+// Shrink the tubes (never below 55%) until the board and the links under it fit on short screens.
+function fit(){
+  const m = $('board'), f = [...document.querySelectorAll('.links')].pop(), t = m.querySelector('.tube');
+  m.style.removeProperty('--tw'); m.style.removeProperty('--u');
+  if (!t) return;
+  const w0 = t.offsetWidth, u0 = (t.offsetHeight - 16) / CAP;
+  for (let k = 1; k >= .55; k -= .05){
+    if (k < 1){ m.style.setProperty('--tw', Math.round(w0 * k) + 'px'); m.style.setProperty('--u', Math.round(u0 * k) + 'px'); }
+    if (f.getBoundingClientRect().bottom <= innerHeight) break;
+  }
+}
+addEventListener('resize', () => { if (tubes.length) fit(); });
+
 function render(){
   const board = $('board'); board.innerHTML = '';
   board.style.setProperty('--cap', CAP); board.classList.toggle('tall', CAP > 4 || tubes.length > 10);
@@ -569,6 +583,7 @@ function render(){
     el.onclick = () => tap(i);
     board.appendChild(el);
   });
+  fit();
 }
 
 function tap(i){
