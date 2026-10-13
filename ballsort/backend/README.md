@@ -99,6 +99,14 @@ in `clan_damage`). A clan is just a name players choose (no accounts); each memb
 is the sum over its members. The boss has 500 HP and is defeated once a clan's total reaches 500; clans are ranked by total damage,
 then members. At least 8 moves are required; this or last week only. The helper `clan_standings` is not callable by `anon`.
 
+## Mentor challenge
+
+`mentor_runs` plus `submit_mentor_run`, `get_mentor_leaderboard` and `get_mentor_run`. A weekly board (identified by the week's
+Monday, UTC) where each run is stored with its move-by-move recording (`path`: two base-12 digits per move, from tube and to tube).
+The server only checks the recording's shape (length = 2 x moves, valid digits); the client replays it on the week's board before
+showing it and refuses a recording that is not a legal, solving sequence. `get_mentor_run(week, n)` returns the n-th best player's
+best run. At least 9 moves are required; this or last week only.
+
 ## Schema
 
 See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).

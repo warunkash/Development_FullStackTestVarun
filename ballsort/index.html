@@ -81,6 +81,9 @@
   .row.special .btn { margin:0; }
   .btn.monthly { padding:9px 20px; font-size:.95rem; background:#d81b60; }
   .btn.seasonal { padding:9px 20px; font-size:.95rem; background:#ef6c00; }
+  .btn.mentor { padding:9px 20px; font-size:.95rem; background:#ad1457; }
+  .replay { position:fixed; left:50%; bottom:150px; transform:translateX(-50%); display:none; align-items:center; gap:8px; background:var(--card); color:var(--txt); border:2px solid var(--edge); border-radius:14px; padding:8px 10px; font-size:.85rem; box-shadow:0 6px 18px #0004; z-index:6; max-width:94vw; }
+  .replay.show { display:flex; } .replay .btn { padding:6px 12px; font-size:.85rem; margin:0; white-space:nowrap; } #replayTxt { min-width:7.5em; }
   .btn.coachbtn { padding:9px 20px; font-size:.95rem; background:#2e7d32; }
   .coach { position:fixed; left:50%; top:96px; transform:translateX(-50%); max-width:min(92vw,340px); background:var(--card); color:var(--txt); border:2px solid var(--edge); border-radius:14px; padding:8px 12px; font-size:.85rem; text-align:center; box-shadow:0 6px 18px #0004; z-index:5; opacity:0; pointer-events:none; transition:opacity .2s; }
   .coach.show { opacity:1; } .coach.good { border-color:#4cd964; } .coach.bad { border-color:#ff9500; } .coach.tip { border-color:#2aa8ff; }
@@ -120,6 +123,7 @@
   <button class="round" id="menu" title="New random level">&#x23ED;</button>
 </header>
 <div id="coach" class="coach" aria-live="polite"></div>
+<div id="replay" class="replay"><span id="replayTxt"></span><button class="btn" id="replayNext">Next &#x25B6;</button><button class="btn alt" id="replayExit">Exit</button></div>
 <main id="board"></main>
 <footer>
   <button class="round" id="addTube" title="Add an empty tube">+<span class="badge" id="addB">1</span></button>
@@ -149,7 +153,10 @@
 <div class="row"><button class="btn alt" id="cnCancel">Cancel</button><button class="btn" id="cnPlay">Fight the boss</button></div></div></div>
 <div class="modal" id="coachM"><div class="card"><h2>&#x1F393; Coach</h2><p>Six short lessons. The coach comments on every move and rates each lesson with up to 3 stars.</p><div class="lessons" id="lessonList"></div>
 <div class="row"><button class="btn alt" id="coachClose">Close</button></div></div></div>
-<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button><button class="btn custom" id="customBtn">&#x1F39B;&#xFE0F; Custom Challenge</button><button class="btn team" id="teamBtn">&#x1F465; Team Challenge</button><button class="btn tourney" id="tourneyBtn">&#x1F3DF;&#xFE0F; Tournament</button><button class="btn bracket" id="bracketBtn">&#x1F94A; Bracket</button><button class="btn ladder" id="ladderBtn">&#x1FA9C; Ladder</button><button class="btn guild" id="guildBtn">&#x1F6E1;&#xFE0F; Guild</button><button class="btn clan" id="clanBtn">&#x2694;&#xFE0F; Clan</button><button class="btn coachbtn" id="coachBtn">&#x1F393; Coach</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
+<div class="modal" id="mentorM"><div class="card"><h2>&#x1F9D1;&#x200D;&#x1F3EB; Mentor</h2><p>Play this week's board; your run is recorded move by move. Once you've finished it, watch the best other player's run replayed step by step.</p>
+<p class="hint-text" id="mentorInfo"></p>
+<div class="row"><button class="btn alt" id="mentorClose">Close</button><button class="btn alt" id="mentorWatch">Watch the mentor</button><button class="btn" id="mentorPlay">Play</button></div></div></div>
+<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button><button class="btn custom" id="customBtn">&#x1F39B;&#xFE0F; Custom Challenge</button><button class="btn team" id="teamBtn">&#x1F465; Team Challenge</button><button class="btn tourney" id="tourneyBtn">&#x1F3DF;&#xFE0F; Tournament</button><button class="btn bracket" id="bracketBtn">&#x1F94A; Bracket</button><button class="btn ladder" id="ladderBtn">&#x1FA9C; Ladder</button><button class="btn guild" id="guildBtn">&#x1F6E1;&#xFE0F; Guild</button><button class="btn clan" id="clanBtn">&#x2694;&#xFE0F; Clan</button><button class="btn coachbtn" id="coachBtn">&#x1F393; Coach</button><button class="btn mentor" id="mentorBtn">&#x1F9D1;&#x200D;&#x1F3EB; Mentor</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
 <div class="modal" id="win"><div class="card"><h2 id="winTitle">&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn alt" id="shareBtn" style="display:none">Share</button><button class="btn" id="next">Next Level</button></div></div></div>
 <div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><div class="tabs" role="tablist"><button class="tab on" id="tabWorld" role="tab">&#x1F30D; World</button><button class="tab" id="tabLocal" role="tab">This device</button></div><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
 
@@ -217,7 +224,15 @@ const COACH_LESSONS = [
   { name: 'Plan ahead', colors: 7, cap: 4, spare: 2, tip: 'Look two moves ahead: where will the ball under this one go? Avoid burying a color you need soon.' },
   { name: 'Graduation', colors: 8, cap: 5, spare: 2, tip: 'Taller tubes, more colors. Use everything you learned. Hints are free here too.' }
 ];
-const isCoach = lv => lv >= COACH_MIN;
+const isCoach = lv => lv >= COACH_MIN && lv < MENTOR_MIN;
+// Mentor: a weekly board (9 colors x 4 balls) where your run is recorded move by move and sent along with your score. Once you have finished
+// this week's board you can watch the mentor - the best other player's recorded solution - replayed step by step with FROM/TO markers.
+// The client replays the recording on the week's board before showing it, so a bogus recording is rejected. Keys: MENTOR_MIN + Monday (YYYYMMDD, UTC).
+const MENTOR_MIN = 1500000000, MENTOR_COLORS = 9;
+const isMentor = lv => lv >= MENTOR_MIN;
+let mentorPath = [], mentorRep = null;
+const b12 = n => n.toString(12);
+
 const coachLesson = lv => lv - COACH_MIN;
 let coachProgress = {}; try { coachProgress = JSON.parse(localStorage.getItem('ballsortCoach')) || {}; } catch (e) {}
 let coachT3 = 0, coachT2 = 0, coachLast = null, coachSaid = 0, coachTimer = 0;
@@ -299,7 +314,10 @@ const ladderKey = () => LADDER_MIN + weekKey() - WEEKLY_MIN;
 const guildKey = () => GUILD_MIN + dailyKey();
 const guildMonth = lv => { const ym = Math.floor((lv - GUILD_MIN) / 100); return Math.floor(ym / 100) + '-' + String(ym % 100).padStart(2, '0') + '-01'; };
 const clanKey = () => CLAN_MIN + weekKey() - WEEKLY_MIN;
-const specialInfo = lv => isCoach(lv)
+const mentorKey = () => MENTOR_MIN + weekKey() - WEEKLY_MIN;
+const specialInfo = lv => isMentor(lv)
+  ? { name: 'Mentor', icon: '\u{1F9D1}\u200D\u{1F3EB}', label: weekLabel(WEEKLY_MIN + lv - MENTOR_MIN), shareLabel: weekLabel(WEEKLY_MIN + lv - MENTOR_MIN), submit: 'submit_mentor_run', get: 'get_mentor_leaderboard', arg: 'p_week', extra: run => ({ p_path: run && run.path || '' }), date: keyToDay(lv - MENTOR_MIN), when: 'on the mentor board', board: 'this week\'s mentor board on this device', done: 'ballsortMentorDone' }
+  : isCoach(lv)
   ? { name: 'Coach', icon: '\u{1F393}', label: 'Lesson ' + coachLesson(lv), shareLabel: 'Lesson ' + coachLesson(lv) + ': ' + COACH_LESSONS[coachLesson(lv) - 1].name, submit: null, get: null, arg: null, date: null, when: 'for this lesson', board: 'this device\'s board for this lesson', done: 'ballsortCoachDone' }
   : isClan(lv)
   ? { name: 'Clan', icon: '\u2694\uFE0F', label: weekLabel(WEEKLY_MIN + lv - CLAN_MIN), shareLabel: (clanName ? clanName + ' \u00B7 ' : '') + weekLabel(WEEKLY_MIN + lv - CLAN_MIN), submit: 'submit_clan_run', get: 'get_clan_leaderboard', arg: 'p_week', date: keyToDay(lv - CLAN_MIN), extra: () => ({ p_clan: clanName }), unit: ' dmg', noTime: true, when: 'for your clan this week', board: 'this week\'s clan board on this device', done: 'ballsortClanDone' }
@@ -399,14 +417,14 @@ function solve(start, limit = 40000){ // DFS returns list of [a,b] moves or null
   return dfs(start, []);
 }
 
-const colorsFor = lv => isCoach(lv) ? COACH_LESSONS[Math.min(coachLesson(lv), COACH_LESSONS.length) - 1].colors : isClan(lv) ? CLAN_COLORS : isGuild(lv) ? GUILD_COLORS : isLadder(lv) ? ladderColors(ladderRung) : isBracket(lv) ? BRACKET_COLORS[Math.min(bracketRound, 3) - 1] : isTournament(lv) ? TOUR_COLORS[Math.min(tourRound, TOUR_ROUNDS) - 1] : isTeam(lv) ? TEAM_COLORS : isCustom(lv) ? customOf(lv).colors : isSeasonal(lv) ? SEASONAL_COLORS : isLifetime(lv) ? LIFETIME_COLORS : isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
+const colorsFor = lv => isMentor(lv) ? MENTOR_COLORS : isCoach(lv) ? COACH_LESSONS[Math.min(coachLesson(lv), COACH_LESSONS.length) - 1].colors : isClan(lv) ? CLAN_COLORS : isGuild(lv) ? GUILD_COLORS : isLadder(lv) ? ladderColors(ladderRung) : isBracket(lv) ? BRACKET_COLORS[Math.min(bracketRound, 3) - 1] : isTournament(lv) ? TOUR_COLORS[Math.min(tourRound, TOUR_ROUNDS) - 1] : isTeam(lv) ? TEAM_COLORS : isCustom(lv) ? customOf(lv).colors : isSeasonal(lv) ? SEASONAL_COLORS : isLifetime(lv) ? LIFETIME_COLORS : isYearly(lv) ? YEARLY_COLORS : isMonthly(lv) ? MONTHLY_COLORS : isWeekly(lv) ? WEEKLY_COLORS : isDaily(lv) ? DAILY_COLORS : Math.min(3 + Math.floor((lv - 1) / 2), COLORS.length);
 
 function generate(lv){
   CAP = capFor(lv);
   if (isCustom(lv)) return generateCustom(lv);
   if (isCoach(lv)){ const L = COACH_LESSONS[coachLesson(lv) - 1]; return generateFrom(L.colors, L.cap, L.spare, 7000 + coachLesson(lv)); }
   const nColors = colorsFor(lv), nodeLimit = isLadder(lv) ? 400000 : isBracket(lv) ? 100000 : isTournament(lv) ? 100000 : isTeam(lv) ? 300000 : isSeasonal(lv) ? 600000 : isLifetime(lv) ? 1500000 : isYearly(lv) ? 600000 : isMonthly(lv) ? 200000 : 40000;
-  const r = rng(isClan(lv) ? (lv - CLAN_MIN) * 7919 + 130013 : isGuild(lv) ? (lv - GUILD_MIN) * 7919 + 31013 : isLadder(lv) ? (lv - LADDER_MIN) * 7919 + 555557 + ladderRung * 313 : isBracket(lv) ? (lv - BRACKET_MIN) * 7919 + 424249 + bracketRound * 211 : isTournament(lv) ? (lv - TOURN_MIN) * 7919 + 31337 + tourRound * 101 : isTeam(lv) ? (lv - TEAM_MIN) * 7919 + 888883 : isSeasonal(lv) ? (lv - SEASONAL_MIN) * 7919 + 551551 : isLifetime(lv) ? 2711806 : isYearly(lv) ? (lv - YEARLY_MIN) * 7919 + 777001 : isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
+  const r = rng(isMentor(lv) ? (lv - MENTOR_MIN) * 7919 + 150015 : isClan(lv) ? (lv - CLAN_MIN) * 7919 + 130013 : isGuild(lv) ? (lv - GUILD_MIN) * 7919 + 31013 : isLadder(lv) ? (lv - LADDER_MIN) * 7919 + 555557 + ladderRung * 313 : isBracket(lv) ? (lv - BRACKET_MIN) * 7919 + 424249 + bracketRound * 211 : isTournament(lv) ? (lv - TOURN_MIN) * 7919 + 31337 + tourRound * 101 : isTeam(lv) ? (lv - TEAM_MIN) * 7919 + 888883 : isSeasonal(lv) ? (lv - SEASONAL_MIN) * 7919 + 551551 : isLifetime(lv) ? 2711806 : isYearly(lv) ? (lv - YEARLY_MIN) * 7919 + 777001 : isMonthly(lv) ? (lv - MONTHLY_MIN) * 7919 + 424243 : isWeekly(lv) ? (lv - WEEKLY_MIN - DAILY_MIN) * 7919 + 99991 : isDaily(lv) ? (lv - DAILY_MIN) * 7919 + 13 : lv * 7919 + 13);
   for (let attempt = 0; attempt < 50; attempt++){
     const balls = [];
     for (let c = 0; c < nColors; c++) for (let i = 0; i < CAP; i++) balls.push(c);
@@ -508,6 +526,7 @@ function start(){
   timerReset();
   if (!isSpecial(level) && level > unlocked){ unlocked = level; try { localStorage.setItem('ballsortUnlocked', unlocked); } catch (e) {} }
   tubes = generate(level); history = []; selected = null; moves = 0; undos = 5; hints = 3; adds = 1; hintMove = null;
+  mentorPath = []; mentorRep = null; $('replay').className = 'replay';
   if (isBracket(level)) bracketSetup();
   if (isCoach(level)) coachSetup();
   if (isLadder(level)) ladderSetup();
@@ -517,7 +536,7 @@ function start(){
 function render(){
   const board = $('board'); board.innerHTML = '';
   board.style.setProperty('--cap', CAP); board.classList.toggle('tall', CAP > 4 || tubes.length > 10);
-  const sp = specialInfo(level); $('lvl').textContent = sp ? sp.icon + ' ' + sp.name + ' \u00B7 ' + sp.label : 'Level ' + level; $('moves').textContent = isCoach(level) ? 'Lesson ' + coachLesson(level) + '/' + COACH_LESSONS.length + ' \u00B7 \u2605\u2605\u2605 \u2264 ' + coachT3 + ' \u00B7 ' + moves : isLadder(level) ? 'Rung ' + ladderRung + '/' + LADDER_RUNGS + ' \u00B7 \u2264 ' + ladderBudget + ' moves \u00B7 ' + moves : isBracket(level) ? BRACKET_STAGES[bracketRound - 1] + ' vs ' + bracketOpp + ' \u00B7 \u2264 ' + bracketTarget + ' moves \u00B7 ' + moves : (isTournament(level) ? 'Total moves: ' + (tourMoves + moves) + ' \u00B7 Best: ' : 'Moves: ' + moves + ' \u00B7 Best: ') + (best[level] ?? '\u2013');
+  const sp = specialInfo(level); $('lvl').textContent = sp ? sp.icon + ' ' + sp.name + ' \u00B7 ' + sp.label : 'Level ' + level; $('moves').textContent = mentorRep ? 'Mentor ' + mentorRep.name + ' \u00B7 move ' + mentorRep.i + '/' + mentorRep.pairs.length : isCoach(level) ? 'Lesson ' + coachLesson(level) + '/' + COACH_LESSONS.length + ' \u00B7 \u2605\u2605\u2605 \u2264 ' + coachT3 + ' \u00B7 ' + moves : isLadder(level) ? 'Rung ' + ladderRung + '/' + LADDER_RUNGS + ' \u00B7 \u2264 ' + ladderBudget + ' moves \u00B7 ' + moves : isBracket(level) ? BRACKET_STAGES[bracketRound - 1] + ' vs ' + bracketOpp + ' \u00B7 \u2264 ' + bracketTarget + ' moves \u00B7 ' + moves : (isTournament(level) ? 'Total moves: ' + (tourMoves + moves) + ' \u00B7 Best: ' : 'Moves: ' + moves + ' \u00B7 Best: ') + (best[level] ?? '\u2013');
   $('bestTime').textContent = bestTime[level] === undefined ? '\u2013' : fmtTime(bestTime[level]);
   $('undoB').textContent = undos; $('hintB').textContent = hints; $('addB').textContent = adds;
   tubes.forEach((t, i) => {
@@ -536,6 +555,7 @@ function render(){
 }
 
 function tap(i){
+  if (mentorRep) return; // watching the mentor
   if (isBracket(level) && (bracketOver || moves > bracketTarget)) return; // knocked out: ignore taps
   if (isLadder(level) && (ladderOver || moves > ladderBudget)) return;
   hintMove = null;
@@ -543,6 +563,7 @@ function tap(i){
   else if (selected === i){ selected = null; }
   else if (canMove(tubes, selected, i)){
     const note = isCoach(level) ? coachJudge(selected, i) : null;
+    if (isMentor(level)) mentorPath.push(b12(selected) + b12(i));
     history.push(JSON.stringify(tubes)); applyMove(tubes, selected, i); moves++; selected = null;
     if (note){ coachSay(note[0], note[1]); if (moves === coachT3 + 1) coachSay('bad', '3-star limit passed \u2013 aim for 2 stars (\u2264 ' + coachT2 + ' moves).', 4200); else if (moves === coachT2 + 1) coachSay('bad', 'Over the 2-star limit \u2013 just finish for 1 star.', 4200); }
     timerStart();
@@ -652,7 +673,7 @@ async function submitRemote(keepalive){
   run.sent = true;
   try {
     const sp = specialInfo(run.level), who = { p_name: playerName || 'Player', p_moves: run.moves, p_time_ms: run.time };
-    const r = sp ? await rpc(sp.submit, Object.assign(sp.arg ? { [sp.arg]: sp.date } : {}, sp.extra ? sp.extra() : {}, who), keepalive)
+    const r = sp ? await rpc(sp.submit, Object.assign(sp.arg ? { [sp.arg]: sp.date } : {}, sp.extra ? sp.extra(run) : {}, who), keepalive)
                  : await rpc('submit_score', Object.assign({ p_level: run.level }, who), keepalive);
     if (r && r.ok){
       lastRemoteId = r.id;
@@ -674,6 +695,7 @@ function openBoard(lv){
   const sel = $('boardLevel'), max = Math.max(unlocked, normalLevel), today = dailyKey();
   sel.innerHTML = '';
   const oo = document.createElement('option'); oo.value = tournKey(); oo.textContent = '\u{1F3DF}\uFE0F Tournament (current)'; sel.appendChild(oo);
+  const om2 = document.createElement('option'); om2.value = mentorKey(); om2.textContent = '\u{1F9D1}\u200D\u{1F3EB} Mentor board (this week)'; sel.appendChild(om2);
   const oc = document.createElement('option'); oc.value = clanKey(); oc.textContent = '\u2694\uFE0F Clan boss fight (this week)'; sel.appendChild(oc);
   const og = document.createElement('option'); og.value = guildKey(); og.textContent = '\u{1F6E1}\uFE0F Guild standings (this month)'; sel.appendChild(og);
   const ol2 = document.createElement('option'); ol2.value = ladderKey(); ol2.textContent = '\u{1FA9C} Ladder (this week)'; sel.appendChild(ol2);
@@ -689,7 +711,7 @@ function openBoard(lv){
   const want = lv || level;
   if (isCoach(want)){ const oc = document.createElement('option'); oc.value = want; oc.textContent = '\u{1F393} Coach lesson ' + coachLesson(want); sel.insertBefore(oc, sel.firstChild); }
   if (isCustom(want)){ const oc = document.createElement('option'); oc.value = want; oc.textContent = '\u{1F39B}\uFE0F Custom ' + customCode(want); sel.insertBefore(oc, sel.firstChild); }
-  sel.value = isCoach(want) ? want : isClan(want) ? clanKey() : isGuild(want) ? guildKey() : isLadder(want) ? ladderKey() : isBracket(want) ? bracketKey() : isTournament(want) ? tournKey() : isTeam(want) ? teamKey() : isCustom(want) ? want : isSeasonal(want) ? seasonKey() : isLifetime(want) ? LIFETIME_MIN : isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
+  sel.value = isMentor(want) ? mentorKey() : isCoach(want) ? want : isClan(want) ? clanKey() : isGuild(want) ? guildKey() : isLadder(want) ? ladderKey() : isBracket(want) ? bracketKey() : isTournament(want) ? tournKey() : isTeam(want) ? teamKey() : isCustom(want) ? want : isSeasonal(want) ? seasonKey() : isLifetime(want) ? LIFETIME_MIN : isYearly(want) ? yearKey() : isMonthly(want) ? monthKey() : isWeekly(want) ? weekKey() : isDaily(want) ? today : want;
   setTab(isCustom(want) || isCoach(want) ? 'local' : 'world');
   renderBoard();
   $('lbModal').classList.add('show');
@@ -799,6 +821,7 @@ function win(){
       (streak.best > n ? ' (best ' + streak.best + ')' : '') + ' Come back tomorrow to keep it going.';
     refreshDailyLabels();
   }
+  else if (isMentor(level)) $('nextHint').textContent = '\u{1F9D1}\u200D\u{1F3EB} Open Mentor in the level list to watch the best run on this board, step by step. A new board every Monday (UTC).';
   else if (isCoach(level)) $('nextHint').textContent = '\u{1F393} ' + (coachStars === 3 ? 'Perfect \u2013 coach is proud!' : coachStars === 2 ? 'Nice! Replay for 3 stars: fewer wasted moves.' : 'Done! Try again and watch the coach\'s tips for a better rating.') + (coachLesson(level) < COACH_LESSONS.length ? ' Next up: ' + COACH_LESSONS[coachLesson(level)].name + '.' : ' You finished the course!');
   else if (isClan(level)) $('nextHint').textContent = '\u2694\uFE0F ' + (clanName ? 'You hit the boss for ' + clanDamage(moves) + ' damage for clan ' + clanName + ' (of ' + BOSS_HP + ' HP). Fewer moves hit harder; your best run counts.' : 'Join a clan to count for it.') + ' A new boss every Monday (UTC).';
   else if (isGuild(level)) $('nextHint').textContent = '\u{1F6E1}\uFE0F ' + (guildName ? 'Quest done for guild ' + guildName + '! ' : 'Join a guild to count for it. ') + 'A new guild quest appears every day (UTC); replaying it does not add to the guild\'s score.';
@@ -824,7 +847,7 @@ function win(){
   $('shareBtn').textContent = 'Share';
   $('playerName').value = playerName;
   $('worldMsg').textContent = '';
-  pendingRun = { level, moves, time: Math.round(time), sent: false };
+  pendingRun = { level, moves, time: Math.round(time), sent: false, path: isMentor(level) ? mentorPath.join('') : '' };
   $('win').classList.add('show');
 }
 
@@ -1060,6 +1083,53 @@ function openCoach(){
 }
 $('coachBtn').onclick = openCoach;
 $('coachClose').onclick = () => $('coachM').classList.remove('show');
+const mentorWeek = () => keyToDay(weekKey() - WEEKLY_MIN);
+async function openMentor(){
+  closeSelect();
+  let done = ''; try { done = localStorage.getItem('ballsortMentorDone'); } catch (e) {}
+  const finished = +done === mentorKey();
+  $('mentorWatch').disabled = !finished;
+  $('mentorInfo').textContent = finished ? 'You finished this week\u2019s board \u2013 the mentor\u2019s replay is unlocked.' : 'Finish this week\u2019s board to unlock the mentor\u2019s replay.';
+  $('mentorM').classList.add('show');
+}
+function mentorValidate(path, moves){
+  // replay the recording on this week's board: every move must be legal and the board must end up solved
+  const pairs = [], t = generate(mentorKey()).map(x => x.slice());
+  if (path.length !== moves * 2 || !/^[0-9ab]+$/.test(path)) return null;
+  for (let k = 0; k < path.length; k += 2){
+    const f = parseInt(path[k], 12), to = parseInt(path[k + 1], 12);
+    if (f >= t.length || to >= t.length || !canMove(t, f, to)) return null;
+    applyMove(t, f, to); pairs.push([f, to]);
+  }
+  return isSolved(t) ? pairs : null;
+}
+function mentorReplayShow(){
+  const R = mentorRep, last = R.i >= R.pairs.length;
+  hintMove = last ? null : R.pairs[R.i]; selected = null; render();
+  $('replayTxt').textContent = last ? 'Mentor ' + R.name + ' solved it in ' + R.moves + ' moves.' : 'Mentor ' + R.name + ' \u00B7 move ' + R.i + '/' + R.pairs.length;
+  $('replayNext').disabled = last;
+}
+async function watchMentor(){
+  const info = $('mentorInfo'); info.textContent = 'Loading the mentor\u2019s run\u2026';
+  try {
+    const wk = mentorWeek();
+    let m = (await rpc('get_mentor_run', { p_week: wk, p_rank: 1 }))[0];
+    if (m && playerName && m.name.toLowerCase() === playerName.toLowerCase()){ const m2 = (await rpc('get_mentor_run', { p_week: wk, p_rank: 2 }))[0]; if (m2) m = m2; }
+    if (!m){ info.textContent = 'No mentor yet this week \u2013 you could be the first!'; return; }
+    const pairs = mentorValidate(m.path, m.moves);
+    if (!pairs){ info.textContent = 'That recording did not check out on this board, so it is not shown.'; return; }
+    $('mentorM').classList.remove('show'); closeBoard();
+    level = mentorKey(); start(); // loads the board, then switch into replay mode
+    mentorRep = { name: m.name, moves: m.moves, pairs, i: 0 };
+    $('replay').className = 'replay show'; mentorReplayShow();
+  } catch (e) { info.textContent = 'Couldn\u2019t reach the server \u2013 try again later.'; }
+}
+$('mentorBtn').onclick = openMentor;
+$('mentorClose').onclick = () => $('mentorM').classList.remove('show');
+$('mentorPlay').onclick = () => { $('mentorM').classList.remove('show'); closeBoard(); level = mentorKey(); start(); };
+$('mentorWatch').onclick = watchMentor;
+$('replayNext').onclick = () => { const R = mentorRep; if (!R || R.i >= R.pairs.length) return; const [f, t] = R.pairs[R.i]; applyMove(tubes, f, t); R.i++; moveSound(); mentorReplayShow(); };
+$('replayExit').onclick = () => { start(); };
 function playLadder(){ closeSelect(); closeBoard(); ladderRung = 1; ladderCleared = 0; ladderMoves = 0; ladderTime = 0; ladderOver = false; level = ladderKey(); start(); }
 $('ladderBtn').onclick = playLadder;
 function playBracket(){ closeSelect(); closeBoard(); bracketRound = 1; bracketWon = 0; bracketMoves = 0; bracketTime = 0; bracketOver = false; level = bracketKey(); start(); }
@@ -1076,7 +1146,7 @@ $('lvl').onclick = openSelect;
 $('lvl').onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSelect(); } };
 $('closeSelect').onclick = closeSelect;
 $('select').onclick = e => { if (e.target === $('select')) closeSelect(); };
-document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeSelect(); closeBoard(); $('customM').classList.remove('show'); $('teamM').classList.remove('show'); $('guildM').classList.remove('show'); $('clanM').classList.remove('show'); $('coachM').classList.remove('show'); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeSelect(); closeBoard(); $('customM').classList.remove('show'); $('teamM').classList.remove('show'); $('guildM').classList.remove('show'); $('clanM').classList.remove('show'); $('coachM').classList.remove('show'); $('mentorM').classList.remove('show'); } });
 $('resetBest').onclick = () => {
   if (!Object.keys(best).length && !Object.keys(bestTime).length){ alert('No best scores to reset yet.'); return; }
   if (!confirm('Reset your best scores for all levels? This cannot be undone.')) return;
@@ -1085,10 +1155,11 @@ $('resetBest').onclick = () => {
 $('menu').onclick = () => { if (isSpecial(level)) level = normalLevel; else setNormal(level + 1); start(); };
 $('undo').onclick = () => {
   if (!history.length || undos <= 0) return;
-  tubes = JSON.parse(history.pop()); undos--; moves = Math.max(0, moves - 1); selected = null; hintMove = null; render();
+  tubes = JSON.parse(history.pop()); undos--; moves = Math.max(0, moves - 1); if (isMentor(level)) mentorPath.pop(); selected = null; hintMove = null; render();
 };
 $('addTube').onclick = () => { if (adds > 0){ adds--; tubes.push([]); render(); } };
 $('hint').onclick = () => {
+  if (mentorRep) return;
   if (hints <= 0) return;
   const path = solve(tubes, isLadder(level) ? 600000 : isBracket(level) ? 200000 : isTournament(level) ? 200000 : isTeam(level) ? 400000 : isCustom(level) ? 600000 : isSeasonal(level) ? 800000 : isLifetime(level) ? 2000000 : isYearly(level) ? 800000 : isMonthly(level) ? 400000 : 60000);
   if (path && path.length){ hints--; hintMove = path[0]; selected = null; render(); }

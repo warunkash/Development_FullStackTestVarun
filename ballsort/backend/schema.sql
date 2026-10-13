@@ -1283,3 +1283,119 @@ revoke execute on function public.get_clan_members(date, text) from public;
 grant execute on function public.submit_clan_run(date, text, text, int, int) to anon, authenticated;
 grant execute on function public.get_clan_leaderboard(date, int) to anon, authenticated;
 grant execute on function public.get_clan_members(date, text) to anon, authenticated;
+
+-- Mentor challenge
+create table public.mentor_runs (
+  id bigint generated always as identity primary key,
+  week date not null,
+  name text not null check (char_length(name) between 1 and 12),
+  moves int not null check (moves between 1 and 600),
+  time_ms int not null check (time_ms between 1000 and 86400000),
+  path text not null check (char_length(path) between 2 and 1200),
+  ip_hash text,
+  created_at timestamptz not null default now()
+);
+create index mentor_runs_rank_idx on public.mentor_runs (week, moves, time_ms, id);
+create index mentor_runs_ip_idx on public.mentor_runs (ip_hash, created_at);
+alter table public.mentor_runs enable row level security;
+revoke all on public.mentor_runs from anon, authenticated;
+
+-- p_path is the run's moves as pairs of base-12 digits (from tube, to tube), so it has exactly 2 characters per move.
+-- The client replays it on the week's board before showing it ("watch the mentor"); the server only checks its shape.
+create or replace function public.submit_mentor_run(p_week date, p_name text, p_moves int, p_time_ms int, p_path text)
+returns json
+language plpgsql
+security definer
+set search_path = public, extensions
+as $fn$
+declare
+  v_today date;
+  v_monday date;
+  v_headers json;
+  v_ip text;
+  v_hash text;
+  v_name text;
+  v_id bigint;
+  v_rank int;
+begin
+  v_today := (now() at time zone 'utc')::date;
+  v_monday := v_today - (extract(isodow from v_today)::int - 1);
+  if p_week is null or p_moves is null or p_time_ms is null or p_path is null or extract(isodow from p_week)::int <> 1 or p_week < v_monday - 7 or p_week > v_monday then
+    return json_build_object('ok', false, 'error', 'invalid');
+  end if;
+  if p_moves < 9 or p_moves > 600 then
+    return json_build_object('ok', false, 'error', 'implausible_moves');
+  end if;
+  if char_length(p_path) <> p_moves * 2 or p_path !~ '^[0-9ab]+$' then
+    return json_build_object('ok', false, 'error', 'invalid_path');
+  end if;
+  if p_time_ms < p_moves * 200 or p_time_ms > 86400000 then
+    return json_build_object('ok', false, 'error', 'implausible_time');
+  end if;
+  begin
+    v_headers := current_setting('request.headers', true)::json;
+  exception when others then
+    v_headers := '{}'::json;
+  end;
+  v_ip := coalesce(v_headers->>'cf-connecting-ip', nullif(split_part(coalesce(v_headers->>'x-forwarded-for', ''), ',', 1), ''), 'unknown');
+  select encode(hmac(v_ip, salt, 'sha256'), 'hex') into v_hash from public.leaderboard_private where id = 1;
+  if (select count(*) from public.mentor_runs where ip_hash = v_hash and created_at > now() - interval '10 minutes') >= 8 then
+    return json_build_object('ok', false, 'error', 'rate_limited');
+  end if;
+  v_name := public.clean_name(p_name);
+  insert into public.mentor_runs (week, name, moves, time_ms, path, ip_hash)
+  values (p_week, v_name, p_moves, p_time_ms, p_path, v_hash)
+  returning id into v_id;
+  select 1 + count(*) into v_rank from (
+    select s.name from public.mentor_runs s
+     where s.week = p_week and s.name <> v_name and (s.moves, s.time_ms) < (p_moves, p_time_ms)
+     group by s.name
+  ) x;
+  return json_build_object('ok', true, 'id', v_id, 'rank', v_rank);
+end;
+$fn$;
+
+create or replace function public.get_mentor_leaderboard(p_week date, p_limit int default 20)
+returns table (id bigint, name text, moves int, time_ms int, rank bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select b.id, b.name, b.moves, b.time_ms, row_number() over (order by b.moves, b.time_ms, b.id) as rank
+    from (
+      select distinct on (s.name) s.id, s.name, s.moves, s.time_ms
+        from public.mentor_runs s
+       where s.week = p_week
+       order by s.name, s.moves, s.time_ms, s.id
+    ) b
+   order by b.moves, b.time_ms, b.id
+   limit least(greatest(coalesce(p_limit, 20), 1), 50);
+$fn$;
+
+-- The recorded run of the n-th best player (the "mentor") for a week, best run per player.
+create or replace function public.get_mentor_run(p_week date, p_rank int default 1)
+returns table (name text, moves int, time_ms int, path text)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select b.name, b.moves, b.time_ms, b.path
+    from (
+      select distinct on (s.name) s.name, s.moves, s.time_ms, s.path, s.id
+        from public.mentor_runs s
+       where s.week = p_week
+       order by s.name, s.moves, s.time_ms, s.id
+    ) b
+   order by b.moves, b.time_ms, b.id
+   offset greatest(coalesce(p_rank, 1), 1) - 1
+   limit 1;
+$fn$;
+
+revoke execute on function public.submit_mentor_run(date, text, int, int, text) from public;
+revoke execute on function public.get_mentor_leaderboard(date, int) from public;
+revoke execute on function public.get_mentor_run(date, int) from public;
+grant execute on function public.submit_mentor_run(date, text, int, int, text) to anon, authenticated;
+grant execute on function public.get_mentor_leaderboard(date, int) to anon, authenticated;
+grant execute on function public.get_mentor_run(date, int) to anon, authenticated;
