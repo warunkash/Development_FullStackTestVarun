@@ -99,7 +99,7 @@
 </footer>
 <div class="links"><button class="link" id="openDaily" title="Daily challenge">Daily</button><span aria-hidden="true">&middot;</span><button class="link" id="openBoard">Leaderboard</button><span aria-hidden="true">&middot;</span><button class="link" id="resetBest">Reset best scores</button></div>
 <div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
-<div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn" id="next">Next Level</button></div></div></div>
+<div class="modal" id="win"><div class="card"><h2>&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn alt" id="shareBtn" style="display:none">Share</button><button class="btn" id="next">Next Level</button></div></div></div>
 <div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><div class="tabs" role="tablist"><button class="tab on" id="tabWorld" role="tab">&#x1F30D; World</button><button class="tab" id="tabLocal" role="tab">This device</button></div><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
 
 <script>
@@ -359,6 +359,7 @@ async function submitRemote(keepalive){
       : await rpc('submit_score', { p_level: run.level, p_name: playerName || 'Player', p_moves: run.moves, p_time_ms: run.time }, keepalive);
     if (r && r.ok){
       lastRemoteId = r.id;
+      run.rank = r.rank;
       if (pendingRun === run) $('worldMsg').textContent = '\u{1F30D} #' + r.rank + ' worldwide ' + (daily ? 'today' : 'on Level ' + run.level);
     }
   } catch (e) {
@@ -453,6 +454,8 @@ function win(){
   const res = addScore(level, moves, time);
   lastEntry = res.entry;
   $('rankMsg').textContent = res.rank ? '\u{1F3C6} #' + res.rank + (daily ? ' on today\'s daily board' : ' on the Level ' + level + ' leaderboard') : 'Not in the top 10 ' + (daily ? 'for today' : 'for this level');
+  $('shareBtn').style.display = daily ? '' : 'none';
+  $('shareBtn').textContent = 'Share';
   $('playerName').value = playerName;
   $('worldMsg').textContent = '';
   pendingRun = { level, moves, time: Math.round(time), sent: false };
@@ -467,6 +470,39 @@ $('playerName').oninput = () => {
 $('openBoard').onclick = () => openBoard();
 $('openDaily').onclick = playDaily;
 $('dailyBtn').onclick = playDaily;
+const PUBLIC_URL = 'https://warunkash.github.io/Development_FullStackTestVarun/ballsort/';
+function dailyShareText(run){
+  const n = currentStreak();
+  return [
+    'Ball Sort Daily \u00B7 ' + dayLabel(run.level),
+    '\u{1F4C5} ' + run.moves + ' moves \u00B7 ' + fmtTime(run.time),
+    run.rank !== undefined ? '\u{1F30D} #' + run.rank + ' worldwide' : '',
+    n ? '\u{1F525} ' + n + '-day streak' : '',
+    PUBLIC_URL
+  ].filter(Boolean).join('\n');
+}
+async function copyText(text){
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:-100px;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy'); ta.remove(); return ok;
+  } catch (e) { return false; }
+}
+$('shareBtn').onclick = async () => {
+  const run = pendingRun, btn = $('shareBtn');
+  if (!run || !isDaily(run.level)) return;
+  if (!run.sent) await Promise.race([submitRemote(), new Promise(r => setTimeout(r, 2500))]);
+  const text = dailyShareText(run);
+  if (navigator.share){
+    try { await navigator.share({ title: 'Ball Sort Daily', text }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  const ok = await copyText(text);
+  btn.textContent = ok ? '\u2713 Copied!' : "Couldn't copy";
+  setTimeout(() => { if (btn.textContent !== 'Share') btn.textContent = 'Share'; }, 2000);
+};
 $('viewBoard').onclick = async () => {
   openBoard(level);
   const run = pendingRun;
