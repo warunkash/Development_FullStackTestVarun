@@ -37,6 +37,12 @@ only, and the date must be a Monday. Weekly boards have 10 colors, so at least 1
 day (UTC). Submissions are accepted for this month or last month only, and the date must be the 1st. Monthly
 boards are bigger (10 colors, 5 balls per color), so at least 10 moves are required.
 
+## Yearly challenge
+
+`yearly_scores` plus `submit_yearly_score` and `get_yearly_leaderboard`. A year is identified by January 1st (UTC).
+Submissions are accepted for this year or last year only. Yearly boards are the biggest (10 colors, 6 balls per
+color), so at least 10 moves are required.
+
 ## Schema
 
 See `schema.sql`. To clean out junk rows, delete them from the Supabase dashboard (SQL editor or table view).
