@@ -78,6 +78,11 @@
   .links.top .link { padding-bottom:4px; }
   .links.top span { padding-bottom:4px; }
   .row.special { margin-bottom:12px; row-gap:8px; }
+  .chal h3 { margin:12px 0 6px; font-size:.75rem; letter-spacing:.12em; text-transform:uppercase; opacity:.6; text-align:left; }
+  .cgrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .chal .cgrid .btn { width:100%; margin:0; padding:8px 4px; font-size:.82rem; white-space:normal; line-height:1.15; min-height:44px; display:flex; align-items:center; justify-content:center; text-align:center; }
+  #challengeClose { display:block; margin:16px auto 0; }
+  #challengesBtn { display:block; margin:0 auto 12px; }
   .row.special .btn { margin:0; }
   .btn.monthly { padding:9px 20px; font-size:.95rem; background:#d81b60; }
   .btn.seasonal { padding:9px 20px; font-size:.95rem; background:#ef6c00; }
@@ -156,7 +161,8 @@
 <div class="modal" id="mentorM"><div class="card"><h2>&#x1F9D1;&#x200D;&#x1F3EB; Mentor</h2><p>Play this week's board; your run is recorded move by move. Once you've finished it, watch the best other player's run replayed step by step.</p>
 <p class="hint-text" id="mentorInfo"></p>
 <div class="row"><button class="btn alt" id="mentorClose">Close</button><button class="btn alt" id="mentorWatch">Watch the mentor</button><button class="btn" id="mentorPlay">Play</button></div></div></div>
-<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><div class="row special"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button><button class="btn custom" id="customBtn">&#x1F39B;&#xFE0F; Custom Challenge</button><button class="btn team" id="teamBtn">&#x1F465; Team Challenge</button><button class="btn tourney" id="tourneyBtn">&#x1F3DF;&#xFE0F; Tournament</button><button class="btn bracket" id="bracketBtn">&#x1F94A; Bracket</button><button class="btn ladder" id="ladderBtn">&#x1FA9C; Ladder</button><button class="btn guild" id="guildBtn">&#x1F6E1;&#xFE0F; Guild</button><button class="btn clan" id="clanBtn">&#x2694;&#xFE0F; Clan</button><button class="btn coachbtn" id="coachBtn">&#x1F393; Coach</button><button class="btn mentor" id="mentorBtn">&#x1F9D1;&#x200D;&#x1F3EB; Mentor</button></div><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
+<div class="modal" id="challengeM"><div class="card select-card chal"><h2>Challenges</h2><h3>Calendar</h3><div class="cgrid"><button class="btn daily" id="dailyBtn">&#x1F4C5; Daily Challenge</button><button class="btn weekly" id="weeklyBtn">&#x1F5D3; Weekly Challenge</button><button class="btn monthly" id="monthlyBtn">&#x1F3C5; Monthly Challenge</button><button class="btn seasonal" id="seasonalBtn">&#x1F342; Seasonal Challenge</button><button class="btn yearly" id="yearlyBtn">&#x1F3C6; Yearly Challenge</button><button class="btn lifetime" id="lifetimeBtn">&#x267E;&#xFE0F; Lifetime Challenge</button></div><h3>Competitive</h3><div class="cgrid"><button class="btn tourney" id="tourneyBtn">&#x1F3DF;&#xFE0F; Tournament</button><button class="btn bracket" id="bracketBtn">&#x1F94A; Bracket</button><button class="btn ladder" id="ladderBtn">&#x1FA9C; Ladder</button><button class="btn mentor" id="mentorBtn">&#x1F9D1;&#x200D;&#x1F3EB; Mentor</button></div><h3>Social</h3><div class="cgrid"><button class="btn team" id="teamBtn">&#x1F465; Team</button><button class="btn guild" id="guildBtn">&#x1F6E1;&#xFE0F; Guild</button><button class="btn clan" id="clanBtn">&#x2694;&#xFE0F; Clan</button></div><h3>Practice</h3><div class="cgrid"><button class="btn coachbtn" id="coachBtn">&#x1F393; Coach</button><button class="btn custom" id="customBtn">&#x1F39B;&#xFE0F; Custom</button></div><button class="btn" id="challengeClose">Back</button></div></div>
+<div class="modal" id="select"><div class="card select-card"><h2>Select Level</h2><button class="btn" id="challengesBtn">&#x1F3C1; Challenges</button><div class="grid" id="grid"></div><button class="btn" id="closeSelect">Close</button></div></div>
 <div class="modal" id="win"><div class="card"><h2 id="winTitle">&#x1F389; Level Complete!</h2><p id="winMsg"></p><p id="winTime" class="hint-text"></p><p id="nextHint" class="hint-text"></p><p id="rankMsg" class="hint-text"></p><p id="worldMsg" class="hint-text"></p><div class="name-row"><input id="playerName" maxlength="12" placeholder="Your name" autocomplete="off" aria-label="Your name"></div><div class="row"><button class="btn alt" id="viewBoard">Leaderboard</button><button class="btn alt" id="shareBtn" style="display:none">Share</button><button class="btn" id="next">Next Level</button></div></div></div>
 <div class="modal" id="lbModal"><div class="card board-card"><h2>&#x1F3C6; Leaderboard</h2><div class="tabs" role="tablist"><button class="tab on" id="tabWorld" role="tab">&#x1F30D; World</button><button class="tab" id="tabLocal" role="tab">This device</button></div><select id="boardLevel" aria-label="Level"></select><ol class="board-list" id="boardList"></ol><div class="row"><button class="btn alt" id="clearBoard">Clear</button><button class="btn" id="closeBoard">Close</button></div></div></div>
 
@@ -931,11 +937,11 @@ function openSelect(){
   const grid = $('grid'); grid.innerHTML = '';
   let done = ''; try { done = localStorage.getItem('ballsortDailyDone'); } catch (e) {}
   let wdone = ''; try { wdone = localStorage.getItem('ballsortWeeklyDone'); } catch (e) {}
-  $('weeklyBtn').textContent = '\u{1F5D3} Weekly Challenge' + (+wdone === weekKey() ? ' \u2713' : '');
+  $('weeklyBtn').textContent = '\u{1F5D3} Weekly' + (+wdone === weekKey() ? ' \u2713' : '');
   let mdone = ''; try { mdone = localStorage.getItem('ballsortMonthlyDone'); } catch (e) {}
-  $('monthlyBtn').textContent = '\u{1F3C5} Monthly Challenge' + (+mdone === monthKey() ? ' \u2713' : '');
+  $('monthlyBtn').textContent = '\u{1F3C5} Monthly' + (+mdone === monthKey() ? ' \u2713' : '');
   let ydone = ''; try { ydone = localStorage.getItem('ballsortYearlyDone'); } catch (e) {}
-  $('yearlyBtn').textContent = '\u{1F3C6} Yearly Challenge' + (+ydone === yearKey() ? ' \u2713' : '');
+  $('yearlyBtn').textContent = '\u{1F3C6} Yearly' + (+ydone === yearKey() ? ' \u2713' : '');
   $('ladderBtn').textContent = '\u{1FA9C} Ladder' + (ladderBest[ladderKey()] ? ' \u00B7 best ' + ladderBest[ladderKey()] : '');
   $('coachBtn').textContent = '\u{1F393} Coach' + (Object.values(coachProgress).filter(v => v > 0).length ? ' \u00B7 ' + Object.values(coachProgress).filter(v => v > 0).length + '/' + COACH_LESSONS.length : '');
   let bdone = ''; try { bdone = localStorage.getItem('ballsortBracketDone'); } catch (e) {}
@@ -943,11 +949,11 @@ function openSelect(){
   let tdone = ''; try { tdone = localStorage.getItem('ballsortTournamentDone'); } catch (e) {}
   $('tourneyBtn').textContent = '\u{1F3DF}\uFE0F Tournament' + (+tdone === tournKey() ? ' \u2713' : '');
   let sdone = ''; try { sdone = localStorage.getItem('ballsortSeasonalDone'); } catch (e) {}
-  $('seasonalBtn').textContent = SEASONS[seasonParts(seasonKey()).s][1] + ' Seasonal Challenge' + (+sdone === seasonKey() ? ' \u2713' : '');
+  $('seasonalBtn').textContent = SEASONS[seasonParts(seasonKey()).s][1] + ' Seasonal' + (+sdone === seasonKey() ? ' \u2713' : '');
   let ldone = ''; try { ldone = localStorage.getItem('ballsortLifetimeDone'); } catch (e) {}
-  $('lifetimeBtn').textContent = '\u267E\uFE0F Lifetime Challenge' + (+ldone === LIFETIME_MIN ? ' \u2713' : '');
+  $('lifetimeBtn').textContent = '\u267E\uFE0F Lifetime' + (+ldone === LIFETIME_MIN ? ' \u2713' : '');
   const sn = currentStreak();
-  $('dailyBtn').textContent = '\u{1F4C5} Daily Challenge' + (+done === dailyKey() ? ' \u2713' : '') + (sn ? ' \u00B7 \u{1F525}' + sn : '');
+  $('dailyBtn').textContent = '\u{1F4C5} Daily' + (+done === dailyKey() ? ' \u2713' : '') + (sn ? ' \u00B7 \u{1F525}' + sn : '');
   const total = Math.max(20, Math.ceil((unlocked + 5) / 5) * 5);
   for (let l = 1; l <= total; l++){
     const t = document.createElement('button');
@@ -1141,7 +1147,9 @@ function playYearly(){ closeSelect(); closeBoard(); level = yearKey(); start(); 
 function playMonthly(){ closeSelect(); closeBoard(); level = monthKey(); start(); }
 function playWeekly(){ closeSelect(); closeBoard(); level = weekKey(); start(); }
 function playDaily(){ closeSelect(); closeBoard(); level = dailyKey(); start(); }
-function closeSelect(){ $('select').classList.remove('show'); }
+function closeSelect(){ $('select').classList.remove('show'); $('challengeM').classList.remove('show'); }
+$('challengesBtn').onclick = () => { $('select').classList.remove('show'); $('challengeM').classList.add('show'); };
+$('challengeClose').onclick = () => { $('challengeM').classList.remove('show'); openSelect(); };
 $('lvl').onclick = openSelect;
 $('lvl').onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSelect(); } };
 $('closeSelect').onclick = closeSelect;
