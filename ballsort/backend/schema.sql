@@ -445,3 +445,85 @@ revoke execute on function public.submit_yearly_score(date, text, int, int) from
 revoke execute on function public.get_yearly_leaderboard(date, int) from public;
 grant execute on function public.submit_yearly_score(date, text, int, int) to anon, authenticated;
 grant execute on function public.get_yearly_leaderboard(date, int) to anon, authenticated;
+
+-- Lifetime challenge
+create table public.lifetime_scores (
+  id bigint generated always as identity primary key,
+  name text not null check (char_length(name) between 1 and 12),
+  moves int not null check (moves between 1 and 1000),
+  time_ms int not null check (time_ms between 1000 and 86400000),
+  ip_hash text,
+  created_at timestamptz not null default now()
+);
+create index lifetime_scores_rank_idx on public.lifetime_scores (moves, time_ms, id);
+create index lifetime_scores_ip_idx on public.lifetime_scores (ip_hash, created_at);
+alter table public.lifetime_scores enable row level security;
+revoke all on public.lifetime_scores from anon, authenticated;
+
+create or replace function public.submit_lifetime_score(p_name text, p_moves int, p_time_ms int)
+returns json
+language plpgsql
+security definer
+set search_path = public, extensions
+as $fn$
+declare
+  v_headers json;
+  v_ip text;
+  v_hash text;
+  v_name text;
+  v_id bigint;
+  v_rank int;
+begin
+  if p_moves is null or p_time_ms is null then
+    return json_build_object('ok', false, 'error', 'invalid');
+  end if;
+  if p_moves < 10 or p_moves > 1000 then
+    return json_build_object('ok', false, 'error', 'implausible_moves');
+  end if;
+  if p_time_ms < p_moves * 200 or p_time_ms > 86400000 then
+    return json_build_object('ok', false, 'error', 'implausible_time');
+  end if;
+  begin
+    v_headers := current_setting('request.headers', true)::json;
+  exception when others then
+    v_headers := '{}'::json;
+  end;
+  v_ip := coalesce(v_headers->>'cf-connecting-ip', nullif(split_part(coalesce(v_headers->>'x-forwarded-for', ''), ',', 1), ''), 'unknown');
+  select encode(hmac(v_ip, salt, 'sha256'), 'hex') into v_hash from public.leaderboard_private where id = 1;
+  if (select count(*) from public.lifetime_scores where ip_hash = v_hash and created_at > now() - interval '10 minutes') >= 8 then
+    return json_build_object('ok', false, 'error', 'rate_limited');
+  end if;
+  v_name := public.clean_name(p_name);
+  insert into public.lifetime_scores (name, moves, time_ms, ip_hash)
+  values (v_name, p_moves, p_time_ms, v_hash)
+  returning id into v_id;
+  select 1 + count(*) into v_rank from (
+    select s.name from public.lifetime_scores s
+     where s.name <> v_name and (s.moves, s.time_ms) < (p_moves, p_time_ms)
+     group by s.name
+  ) x;
+  return json_build_object('ok', true, 'id', v_id, 'rank', v_rank);
+end;
+$fn$;
+
+create or replace function public.get_lifetime_leaderboard(p_limit int default 20)
+returns table (id bigint, name text, moves int, time_ms int, rank bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select b.id, b.name, b.moves, b.time_ms, row_number() over (order by b.moves, b.time_ms, b.id) as rank
+    from (
+      select distinct on (s.name) s.id, s.name, s.moves, s.time_ms
+        from public.lifetime_scores s
+       order by s.name, s.moves, s.time_ms, s.id
+    ) b
+   order by b.moves, b.time_ms, b.id
+   limit least(greatest(coalesce(p_limit, 20), 1), 50);
+$fn$;
+
+revoke execute on function public.submit_lifetime_score(text, int, int) from public;
+revoke execute on function public.get_lifetime_leaderboard(int) from public;
+grant execute on function public.submit_lifetime_score(text, int, int) to anon, authenticated;
+grant execute on function public.get_lifetime_leaderboard(int) to anon, authenticated;
