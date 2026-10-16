@@ -6,6 +6,7 @@ on:
     paths:
       - "playearn/**"
       - "ballsort/**"
+      - "highway-aid/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
@@ -27,11 +28,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-      - name: Assemble site (PlayEarn at root, Ball Sort at /ballsort/)
+      - name: Assemble site (PlayEarn at root, Ball Sort at /ballsort/, Highway Aid at /highway-aid/)
         run: |
           mkdir -p _site/ballsort
           cp -r playearn/. _site/
           cp -r ballsort/. _site/ballsort/
+          mkdir -p _site/highway-aid
+          cp -r highway-aid/. _site/highway-aid/
           rm -rf _site/ballsort/backend _site/ballsort/tests
       - uses: actions/upload-pages-artifact@v3
         with:
