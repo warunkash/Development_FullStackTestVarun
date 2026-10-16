@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#c8102e">
+  <title>Highway Aid</title>
+  <meta name="description" content="Roadside help for your car: share your exact location, call highway helplines, and request towing, fuel, tyre or battery help in one tap.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>🚗 Highway Aid</h1>
+    <label class="region">
+      <span class="sr">Region</span>
+      <select id="region"></select>
+    </label>
+  </header>
+
+  <main>
+    <section class="card loc" aria-live="polite">
+      <div class="loc-head">
+        <h2>Your location</h2>
+        <button id="refresh" class="link" type="button">Refresh</button>
+      </div>
+      <p id="loc-status" class="big">Locating…</p>
+      <p id="loc-detail" class="muted"></p>
+      <label class="field">
+        <span>Landmark / km marker (optional)</span>
+        <input id="landmark" placeholder="e.g. NH48, km 132, near toll plaza" autocomplete="off">
+      </label>
+      <div class="row">
+        <button id="share-loc" type="button">Share location</button>
+        <button id="open-map" type="button" class="ghost">Open in Maps</button>
+      </div>
+    </section>
+
+    <a id="sos" class="sos" href="tel:112">
+      <strong>SOS</strong>
+      <span id="sos-label">Call emergency 112</span>
+    </a>
+
+    <section>
+      <h2>What do you need?</h2>
+      <div class="grid" id="services"></div>
+    </section>
+
+    <section class="card">
+      <h2>Helplines</h2>
+      <ul id="helplines" class="lines"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Your vehicle &amp; contact</h2>
+      <p class="muted">Saved only on this phone. Included in help requests.</p>
+      <form id="profile" autocomplete="off">
+        <label class="field"><span>Vehicle (make, model, colour)</span><input name="vehicle" placeholder="White Honda City"></label>
+        <label class="field"><span>Number plate</span><input name="plate" placeholder="MH 12 AB 1234"></label>
+        <label class="field"><span>Your name</span><input name="name"></label>
+        <label class="field"><span>Insurer / roadside assistance number</span><input name="roadside" type="tel" inputmode="tel"></label>
+        <label class="field"><span>Emergency contact number</span><input name="contact" type="tel" inputmode="tel"></label>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>While you wait: stay safe</h2>
+      <ul id="tips" class="tips"></ul>
+    </section>
+  </main>
+
+  <dialog id="sheet">
+    <form method="dialog" class="sheet-body">
+      <h3 id="sheet-title"></h3>
+      <label class="field"><span>Details for the responder</span>
+        <textarea id="sheet-note" rows="2" placeholder="Anything extra, e.g. rear-left tyre, no spare"></textarea>
+      </label>
+      <label class="field"><span>Message (editable)</span>
+        <textarea id="sheet-msg" rows="7"></textarea>
+      </label>
+      <div class="row">
+        <a id="sheet-call" class="btn" href="#">Call helpline</a>
+        <a id="sheet-sms" class="btn ghost" href="#">SMS</a>
+      </div>
+      <div class="row">
+        <a id="sheet-wa" class="btn ghost" href="#" target="_blank" rel="noopener">WhatsApp</a>
+        <button id="sheet-copy" type="button" class="ghost">Copy</button>
+      </div>
+      <button class="link close" value="close">Close</button>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
