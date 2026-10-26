@@ -53,14 +53,12 @@ function summary(m, c = CHIT) {
     .map((r) => Math.pow(1 + r, 12) - 1)
     .filter((a) => a > -0.5);
   const annualRate = annuals.length ? annuals[0] : null;
-  const alt = (a) => npv(Math.pow(1 + a, 1 / 12) - 1, m, c);
   return {
     month: m, payout, pool, discount: pool - payout, totalPaid,
     net: payout - totalPaid,
     paidBefore: c.installment * m, // incl. the winning month's instalment
     paidAfter: c.installment * (n - m),
     annualRate,
-    npvAt: alt, // value today of winning in month m, at an alternative annual rate
   };
 }
 

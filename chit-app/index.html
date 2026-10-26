@@ -2,14 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f6f43">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <title>Chit Schedule</title>
+<meta name="description" content="31-month chit fund schedule: payout, discount, net gain and effective rate for each month.">
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="schedule.css">
 </head>
 <body>
 <main class="wide">
-  <nav><a href="index.html">Calculator</a><a href="schedule.html" class="on">Schedule</a></nav>
   <h1>Chit Schedule</h1>
   <p class="sub">₹2,50,000 chit · 40 members · ₹6,250 a month · 31 months</p>
 
@@ -31,6 +33,7 @@
   </section>
 </main>
 <script src="chit.js"></script>
-<script src="schedule.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');</script>
