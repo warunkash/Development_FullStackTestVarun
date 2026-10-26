@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chit Calculator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <h1>Chit Calculator</h1>
+  <p class="sub">₹2,50,000 chit · 40 members · ₹6,250 a month · 31 months</p>
+
+  <section class="card">
+    <label for="month">If you win the auction in month</label>
+    <input id="month" type="range" min="1" max="31" value="1">
+    <div class="month-val" id="monthVal">1</div>
+
+    <dl id="out"></dl>
+
+    <div class="rate" id="rate"></div>
+    <p class="note" id="note"></p>
+  </section>
+
+  <section class="card">
+    <label for="alt">Your alternative savings rate (% a year)</label>
+    <input id="alt" type="number" min="0" max="100" step="0.5" value="7">
+    <p class="note">Value today of winning in the chosen month, compared with what you could earn elsewhere:</p>
+    <div class="rate" id="npv"></div>
+  </section>
+
+  <section class="card">
+    <h2>All months</h2>
+    <table>
+      <thead><tr><th>Month</th><th>Payout</th><th>Net</th><th>Effective rate / yr</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p class="note">Net = payout − ₹1,93,750 total paid (no dividends). Months 12–18 have no single rate: you save before winning and borrow after, so no one rate balances it. Rates are the yearly equivalent of the monthly IRR of all 31 instalments plus the payout.</p>
+  </section>
+</main>
+<script src="chit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
