@@ -1,0 +1,11 @@
+const assert = require("assert");
+const { CHIT, summary } = require("./chit.js");
+assert.equal(CHIT.payouts.length, 31);
+assert.equal(summary(1).totalPaid, 193750);
+assert.equal(summary(1).net, -43750);
+assert.equal(summary(31).net, 46250);
+assert.equal(summary(21).net, 2250);
+assert(Math.abs(summary(1).annualRate - 0.2399) < 1e-3);
+assert(Math.abs(summary(31).annualRate - 0.1796) < 1e-3);
+assert.equal(summary(15).annualRate, null);
+console.log("ok");
