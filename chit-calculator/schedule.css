@@ -1,0 +1,19 @@
+main.wide{max-width:760px}
+nav{display:flex;gap:6px;margin-bottom:14px}
+nav a{padding:6px 14px;border-radius:999px;color:var(--mut);text-decoration:none;font-weight:600;font-size:.9rem}
+nav a.on{background:var(--acc);color:var(--card)}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+@media(min-width:560px){.tiles{grid-template-columns:repeat(4,1fr)}}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.tile b{display:block;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.tile span{color:var(--mut);font-size:.8rem}
+#chart svg{width:100%;height:auto;display:block}
+#chart .bar{fill:var(--neg);opacity:.75}#chart .bar.gain{fill:var(--acc)}
+#chart .ref{stroke:var(--ink);stroke-dasharray:4 4;opacity:.6}
+#chart text{fill:var(--mut);font-size:10px}
+.bar-cell{position:relative;min-width:130px;padding-right:8px}
+.bar-cell i{position:absolute;left:0;top:50%;height:60%;transform:translateY(-50%);background:var(--acc);opacity:.2;border-radius:4px 0 0 4px}
+.bar-cell span{position:relative}
+tr.be td{border-bottom:2px solid var(--acc)}
+tbody tr:hover{background:var(--bg)}
+@media(max-width:520px){.hide-s{display:none}}

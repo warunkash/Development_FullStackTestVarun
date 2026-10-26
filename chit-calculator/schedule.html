@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chit Schedule</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="schedule.css">
+</head>
+<body>
+<main class="wide">
+  <nav><a href="index.html">Calculator</a><a href="schedule.html" class="on">Schedule</a></nav>
+  <h1>Chit Schedule</h1>
+  <p class="sub">₹2,50,000 chit · 40 members · ₹6,250 a month · 31 months</p>
+
+  <section class="tiles" id="tiles"></section>
+
+  <section class="card">
+    <h2>Payout by month</h2>
+    <div id="chart"></div>
+    <p class="note">The dashed line is the ₹1,93,750 you pay in total. Bars above it are a net gain.</p>
+  </section>
+
+  <section class="card">
+    <h2>Month by month</h2>
+    <table id="sched">
+      <thead><tr><th>Month</th><th>Payout</th><th class="hide-s">Discount</th><th>Net</th><th>Rate / yr</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p class="note">Net = payout − total paid (no dividends). Rate is the yearly equivalent of the monthly IRR; “—” (months 12–18) means no single rate balances the saver-then-borrower cash flow.</p>
+  </section>
+</main>
+<script src="chit.js"></script>
+<script src="schedule.js"></script>
+</body>
+</html>
