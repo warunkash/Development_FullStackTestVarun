@@ -12,3 +12,7 @@ Each site in `data.js` has `area`, `dept`, `sector` and `status` fields; the pag
 - `blocked` (5): server answered 403/406 to the automated check (ABDM, TGBIE, IRCTC, UNESCO, Voters' portal); likely fine in a browser.
 - `down` (17): no response from the cloud sandbox used for checking (GWMC, NIT Warangal, Kakatiya Univ., Aarogyasri, MeeSeva, Tourism, Registration, Civil Supplies, Agriculture, Health, SSC Board, eCourts, PM-JAY, PM-KISAN, India.gov.in, plus the unconfirmed Bhu Bharati and Warangal Police URLs). Likely geo-blocking, so this is not proof they are dead.
 Dharani was replaced by Bhu Bharati (Apr 2025). Run `node check-links.js` from an Indian/unrestricted network to refresh statuses, then update `status` in `data.js`.
+
+## Language & hosting
+- English/Telugu toggle (`i18n.js` for UI + label translations; `tn`/`td` in `data.js` for site titles/purposes). Telugu is machine-drafted — please have a native speaker review it. Use `?lang=te` to open in Telugu.
+- Deployed via `.github/workflows/deploy-pages.yml` to `https://<owner>.github.io/<repo>/warangal-portal/` alongside the other apps (one Pages site per repo).
