@@ -418,7 +418,7 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "MeitY / NIC",
   "sector": "Citizen Services",
-  "status": "down",
+  "status": "ok",
   "tn": "జాతీయ పోర్టల్ ఆఫ్ ఇండియా",
   "td": "అన్ని ప్రభుత్వ వెబ్‌సైట్లకు ముఖద్వారం."
  },
@@ -462,7 +462,7 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "UNESCO World Heritage Centre",
   "sector": "Tourism & Culture",
-  "status": "blocked",
+  "status": "ok",
   "tn": "యునెస్కో – రామప్ప దేవాలయం",
   "td": "కాకతీయ రుద్రేశ్వర (రామప్ప) ఆలయ ప్రపంచ వారసత్వ గుర్తింపు."
  },
