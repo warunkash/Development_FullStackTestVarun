@@ -8,7 +8,7 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}
 header{padding:32px 16px 20px;max-width:1100px;margin:auto}h1{margin:0 0 4px;font-size:clamp(1.6rem,4vw,2.4rem)}h1 span{color:var(--acc)}
 header p{margin:0;color:var(--mut)}main{max-width:1100px;margin:auto;padding:0 16px 48px}
-.bar{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}input{flex:1 1 240px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+.bar{display:flex;margin:16px 0}input{flex:1 1 240px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
 button.chip{padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer;font:inherit}
 button.chip[aria-pressed=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
 h2{font-size:1.1rem;margin:28px 0 10px;color:var(--acc)}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
@@ -16,26 +16,43 @@ a.card{display:block;padding:14px;background:var(--card);border:1px solid var(--
 a.card:hover,a.card:focus-visible{border-color:var(--acc);outline:none;box-shadow:0 2px 10px #0002}
 .card b{display:block}.card small{color:var(--mut);display:block;margin:4px 0 8px}.tag{font-size:.75rem;font-weight:600;text-transform:uppercase}
 .local{color:var(--local)}.state{color:var(--state)}.central{color:var(--central)}
+.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}.ctl>span{min-width:64px;color:var(--mut);font-size:.85rem}.chips{display:flex;gap:8px;flex-wrap:wrap}
+.sum{color:var(--mut);margin:14px 0 0}h2 small{color:var(--mut);font-weight:400}.card em{display:block;font-size:.78rem;color:var(--mut);font-style:normal}
+.badge{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;margin-bottom:6px;border:1px solid currentColor}
+.badge.ok{color:var(--local)}.badge.blocked{color:#b45309}.badge.down{color:#b91c1c}
+@media(prefers-color-scheme:dark){.badge.blocked{color:#fbbf24}.badge.down{color:#f87171}}
 footer{max-width:1100px;margin:auto;padding:0 16px 32px;color:var(--mut);font-size:.85rem}#none{display:none;color:var(--mut);padding:24px 0}
 </style></head><body>
-<header><h1><span>Warangal</span> Citizen Portal</h1><p>Local, Telangana and Government of India websites for residents of Warangal &amp; Hanumakonda — in one place.</p></header>
+<header><h1><span>Warangal</span> Citizen Portal</h1><p>Local, Telangana and Government of India websites for residents of Warangal &amp; Hanumakonda — grouped by sector, department, area and link status.</p></header>
 <main>
-<div class="bar"><input id="q" type="search" placeholder="Search services, e.g. property tax, ration card, passport…" aria-label="Search">
-<div id="lv" role="group" aria-label="Level"></div></div>
+<div class="bar"><input id="q" type="search" placeholder="Search by title, purpose, department… e.g. property tax, ration card" aria-label="Search"></div>
+<div class="ctl"><span>Group by</span><div id="gb" role="group" aria-label="Group by"></div></div>
+<div class="ctl"><span>Area</span><div id="ar" role="group" aria-label="Area"></div></div>
+<div class="ctl"><span>Status</span><div id="st" role="group" aria-label="Status"></div></div>
+<p id="sum" class="sum"></p>
 <div id="out"></div><p id="none">No matching sites.</p>
 </main>
-<footer>Unofficial directory; not run by any government body. Links open the official sites — verify before entering personal data.</footer>
+<footer>Unofficial directory; not run by any government body. Status reflects a single automated check on <span id="chk"></span> from outside India: "Not reachable" means no response from the test environment (often geo-blocking), not that the site is permanently down. Verify before entering personal data.</footer>
 <script src="data.js"></script>
 <script>
-const LV=[["all","All"],["local","Warangal"],["state","Telangana"],["central","India"]],LN={local:"Warangal",state:"Telangana",central:"India"};
-let lv="all";const $=s=>document.querySelector(s),esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-$("#lv").style.display="flex";$("#lv").style.gap="8px";$("#lv").style.flexWrap="wrap";
-$("#lv").innerHTML=LV.map(([k,t])=>`<button class="chip" data-k="${k}" aria-pressed="${k===lv}">${t}</button>`).join("");
-$("#lv").onclick=e=>{const k=e.target.dataset.k;if(!k)return;lv=k;document.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===k));render()};
-$("#q").oninput=render;
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const GB=[["sector","Sector"],["dept","Department"],["area","Area"],["status","Status"]];
+const ST={ok:["Working","Responded normally"],blocked:["Reachable (blocks bots)","Server answered but rejects automated checks; likely works in a browser"],down:["Not reachable","No response from the test environment; may be geo-blocked or moved"]};
+const ORDER={status:["ok","blocked","down"],area:["Warangal / Hanumakonda","Telangana State","India (Central)"]};
+const AREAS=["all",...ORDER.area];
+const f={gb:"sector",ar:"all",st:"all"};
+function chips(id,opts,key){const el=$(id);el.className="chips";el.innerHTML=opts.map(([k,t])=>`<button class="chip" data-k="${esc(k)}" aria-pressed="${f[key]===k}">${esc(t)}</button>`).join("");
+el.onclick=e=>{const k=e.target.dataset.k;if(k==null)return;f[key]=k;chips(id,opts,key);render()}}
+chips("#gb",GB,"gb");chips("#ar",AREAS.map(a=>[a,a==="all"?"All":a]),"ar");
+chips("#st",[["all","All"],["ok","Working"],["blocked","Reachable (blocks bots)"],["down","Not reachable"]],"st");
+$("#chk").textContent=window.CHECKED;$("#q").oninput=render;
 function render(){const q=$("#q").value.trim().toLowerCase(),g={};
-SITES.filter(s=>(lv==="all"||s.l===lv)&&(!q||(s.n+s.d+s.c).toLowerCase().includes(q))).forEach(s=>(g[s.c]=g[s.c]||[]).push(s));
-$("#out").innerHTML=Object.entries(g).map(([c,a])=>`<h2>${esc(c)}</h2><div class="grid">${a.map(s=>`<a class="card" href="${esc(s.u)}" target="_blank" rel="noopener noreferrer"><span class="tag ${s.l}">${LN[s.l]}</span><b>${esc(s.n)}</b><small>${esc(s.d)}</small></a>`).join("")}</div>`).join("");
-$("#none").style.display=Object.keys(g).length?"none":"block"}
+const list=SITES.filter(s=>(f.ar==="all"||s.area===f.ar)&&(f.st==="all"||s.status===f.st)&&(!q||[s.n,s.d,s.dept,s.sector,s.area].join(" ").toLowerCase().includes(q)));
+list.forEach(s=>{const k=f.gb==="status"?s.status:s[f.gb];(g[k]=g[k]||[]).push(s)});
+const ord=ORDER[f.gb],keys=Object.keys(g).sort((a,b)=>ord?ord.indexOf(a)-ord.indexOf(b):a.localeCompare(b));
+const cnt=k=>SITES.filter(s=>s.status===k).length;
+$("#sum").textContent=`${SITES.length} sites · ${cnt("ok")} working · ${cnt("blocked")} reachable but block bots · ${cnt("down")} not reachable (from test)`;
+$("#out").innerHTML=keys.map(k=>`<h2>${esc(f.gb==="status"?ST[k][0]:k)} <small>(${g[k].length})</small></h2><div class="grid">${g[k].map(s=>`<a class="card" href="${esc(s.u)}" target="_blank" rel="noopener noreferrer"><span class="badge ${s.status}" title="${esc(ST[s.status][1])}">${ST[s.status][0]}</span><b>${esc(s.n)}</b><small>${esc(s.d)}</small><em>${esc(s.dept)} · ${esc(s.sector)} · ${esc(s.area)}</em></a>`).join("")}</div>`).join("");
+$("#none").style.display=keys.length?"none":"block"}
 render();
 </script></body></html>
