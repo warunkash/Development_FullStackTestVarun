@@ -5,7 +5,7 @@ window.SITES = [
   {c:"Local Administration",l:"local",n:"Warangal District",d:"Official district administration portal: collectorate, departments, grievances, notices.",u:"https://warangal.telangana.gov.in"},
   {c:"Local Administration",l:"local",n:"Hanumakonda District",d:"Official portal of Hanumakonda district (part of the Warangal twin-city region).",u:"https://hanumakonda.telangana.gov.in"},
   {c:"Local Administration",l:"local",n:"Greater Warangal Municipal Corporation (GWMC)",d:"Property tax, trade licences, birth/death certificates, building permissions, sanitation.",u:"https://www.gwmc.gov.in"},
-  {c:"Local Administration",l:"local",n:"Warangal Police Commissionerate",d:"Police services, FIR status, citizen services (via Telangana Police).",u:"https://www.tspolice.gov.in"},
+  {c:"Local Administration",l:"local",n:"Warangal Police Commissionerate",d:"Commissionerate covering Warangal, Hanumakonda and Jangaon: police services and notices.",u:"https://warangalpolice.telangana.gov.in"},
   {c:"Local Administration",l:"local",n:"Warangal District Court (eCourts)",d:"Case status, cause lists and orders.",u:"https://districts.ecourts.gov.in/warangal"},
   // Education
   {c:"Education",l:"local",n:"Kakatiya University",d:"State university in Warangal: admissions, results, exams.",u:"https://kakatiya.ac.in"},
@@ -27,7 +27,7 @@ window.SITES = [
   {c:"Utilities & Transport",l:"central",n:"South Central Railway (Kazipet Jn.)",d:"Zone information for Kazipet/Warangal stations.",u:"https://scr.indianrailways.gov.in"},
   {c:"Utilities & Transport",l:"central",n:"IRCTC",d:"Train tickets and PNR status.",u:"https://www.irctc.co.in"},
   // Revenue & land
-  {c:"Land & Revenue",l:"state",n:"Dharani / Bhu Bharathi",d:"Land records, mutations and property registration slots.",u:"https://dharani.telangana.gov.in"},
+  {c:"Land & Revenue",l:"state",n:"Bhu Bharati (replaced Dharani)",d:"Land records (RoR), mutations, appeals and registration slots.",u:"https://bhubharati.telangana.gov.in"},
   {c:"Land & Revenue",l:"state",n:"Registration & Stamps",d:"Encumbrance certificates, document search, stamp duty.",u:"https://registration.telangana.gov.in"},
   {c:"Land & Revenue",l:"state",n:"MeeSeva",d:"150+ citizen services: certificates, bills, applications.",u:"https://ts.meeseva.telangana.gov.in"},
   // Welfare
