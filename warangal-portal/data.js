@@ -11,7 +11,9 @@ window.SITES = [
   "area": "Warangal / Hanumakonda",
   "dept": "District Administration (Collectorate)",
   "sector": "Governance",
-  "status": "ok"
+  "status": "ok",
+  "tn": "వరంగల్ జిల్లా",
+  "td": "జిల్లా కలెక్టరేట్, శాఖలు, ఫిర్యాదులు, ప్రకటనల అధికారిక పోర్టల్."
  },
  {
   "n": "Hanumakonda District",
@@ -20,7 +22,9 @@ window.SITES = [
   "area": "Warangal / Hanumakonda",
   "dept": "District Administration (Collectorate)",
   "sector": "Governance",
-  "status": "ok"
+  "status": "ok",
+  "tn": "హనుమకొండ జిల్లా",
+  "td": "హనుమకొండ జిల్లా పరిపాలన అధికారిక పోర్టల్ (వరంగల్ జంట నగర ప్రాంతం)."
  },
  {
   "n": "Greater Warangal Municipal Corporation (GWMC)",
@@ -29,7 +33,9 @@ window.SITES = [
   "area": "Warangal / Hanumakonda",
   "dept": "Municipal Administration (GWMC)",
   "sector": "Governance",
-  "status": "down"
+  "status": "down",
+  "tn": "గ్రేటర్ వరంగల్ మునిసిపల్ కార్పొరేషన్ (GWMC)",
+  "td": "ఆస్తి పన్ను, ట్రేడ్ లైసెన్సులు, జనన/మరణ ధృవపత్రాలు, భవన అనుమతులు, పారిశుధ్యం."
  },
  {
   "n": "Warangal Police Commissionerate",
@@ -38,7 +44,9 @@ window.SITES = [
   "area": "Warangal / Hanumakonda",
   "dept": "Home / Police",
   "sector": "Governance",
-  "status": "down"
+  "status": "down",
+  "tn": "వరంగల్ పోలీస్ కమిషనరేట్",
+  "td": "వరంగల్, హనుమకొండ, జనగామ పరిధిలో పోలీసు సేవలు మరియు ప్రకటనలు."
  },
  {
   "n": "Warangal District Court (eCourts)",
@@ -47,7 +55,9 @@ window.SITES = [
   "area": "Warangal / Hanumakonda",
   "dept": "Judiciary (eCourts)",
   "sector": "Governance",
-  "status": "down"
+  "status": "down",
+  "tn": "వరంగల్ జిల్లా కోర్టు (ఈ-కోర్టులు)",
+  "td": "కేసు స్థితి, కాజ్ లిస్టులు, ఉత్తర్వులు."
  },
  {
   "n": "Kakatiya University",
@@ -56,7 +66,9 @@ window.SITES = [
   "area": "Warangal / Hanumakonda",
   "dept": "Higher Education",
   "sector": "Education",
-  "status": "down"
+  "status": "down",
+  "tn": "కాకతీయ విశ్వవిద్యాలయం",
+  "td": "వరంగల్‌లోని రాష్ట్ర విశ్వవిద్యాలయం: ప్రవేశాలు, ఫలితాలు, పరీక్షలు."
  },
  {
   "n": "NIT Warangal",
@@ -65,7 +77,9 @@ window.SITES = [
   "area": "Warangal / Hanumakonda",
   "dept": "Higher Education (MoE)",
   "sector": "Education",
-  "status": "down"
+  "status": "down",
+  "tn": "NIT వరంగల్",
+  "td": "జాతీయ సాంకేతిక సంస్థ: ప్రవేశాలు, విద్యా విభాగాలు, ప్లేస్‌మెంట్లు."
  },
  {
   "n": "Telangana Board of Intermediate Education",
@@ -74,7 +88,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Intermediate Education",
   "sector": "Education",
-  "status": "blocked"
+  "status": "blocked",
+  "tn": "తెలంగాణ ఇంటర్మీడియట్ విద్యా మండలి",
+  "td": "ఇంటర్ ఫలితాలు, హాల్ టికెట్లు, ప్రవేశాలు."
  },
  {
   "n": "School Education Dept. (SSC Board)",
@@ -83,7 +99,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "School Education",
   "sector": "Education",
-  "status": "down"
+  "status": "down",
+  "tn": "పాఠశాల విద్యా శాఖ (SSC బోర్డు)",
+  "td": "పదవ తరగతి ఫలితాలు మరియు పాఠశాల విద్య సమాచారం."
  },
  {
   "n": "TG ePASS Scholarships",
@@ -92,7 +110,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Social Welfare / Minorities / BC Welfare",
   "sector": "Education",
-  "status": "ok"
+  "status": "ok",
+  "tn": "TG ఈపాస్ స్కాలర్‌షిప్‌లు",
+  "td": "పోస్ట్-మెట్రిక్ స్కాలర్‌షిప్‌లు మరియు ఫీజు రీయింబర్స్‌మెంట్."
  },
  {
   "n": "Telangana State Public Service Commission",
@@ -101,7 +121,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Public Service Commission",
   "sector": "Employment",
-  "status": "ok"
+  "status": "ok",
+  "tn": "తెలంగాణ రాష్ట్ర పబ్లిక్ సర్వీస్ కమిషన్",
+  "td": "నియామక ప్రకటనలు మరియు పరీక్ష ఫలితాలు."
  },
  {
   "n": "Aarogyasri Health Care Trust",
@@ -110,7 +132,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Aarogyasri Health Care Trust",
   "sector": "Health",
-  "status": "down"
+  "status": "down",
+  "tn": "ఆరోగ్యశ్రీ హెల్త్ కేర్ ట్రస్ట్",
+  "td": "అర్హులైన కుటుంబాలకు నగదు రహిత వైద్యం, నెట్‌వర్క్ ఆసుపత్రుల వివరాలు."
  },
  {
   "n": "Health, Medical & Family Welfare Dept.",
@@ -119,7 +143,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Health, Medical & Family Welfare",
   "sector": "Health",
-  "status": "down"
+  "status": "down",
+  "tn": "ఆరోగ్య, వైద్య & కుటుంబ సంక్షేమ శాఖ",
+  "td": "రాష్ట్ర ఆరోగ్య కార్యక్రమాలు, పథకాలు, ప్రకటనలు."
  },
  {
   "n": "Ayushman Bharat PM-JAY",
@@ -128,7 +154,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "National Health Authority",
   "sector": "Health",
-  "status": "down"
+  "status": "down",
+  "tn": "ఆయుష్మాన్ భారత్ PM-JAY",
+  "td": "జాతీయ ఆరోగ్య రక్షణ పథకం; అర్హతను తనిఖీ చేయండి."
  },
  {
   "n": "ABHA / Ayushman Bharat Digital Mission",
@@ -137,7 +165,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "National Health Authority",
   "sector": "Health",
-  "status": "blocked"
+  "status": "blocked",
+  "tn": "ABHA / ఆయుష్మాన్ భారత్ డిజిటల్ మిషన్",
+  "td": "మీ హెల్త్ ఐడీ మరియు ఆరోగ్య రికార్డులను సృష్టించండి."
  },
  {
   "n": "TGNPDCL (Northern Power)",
@@ -146,7 +176,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Energy (TGNPDCL)",
   "sector": "Utilities",
-  "status": "ok"
+  "status": "ok",
+  "tn": "TGNPDCL (ఉత్తర తెలంగాణ విద్యుత్ సంస్థ)",
+  "td": "వరంగల్ ప్రాంతంలో విద్యుత్ బిల్లులు మరియు కనెక్షన్లు."
  },
  {
   "n": "TGSRTC",
@@ -155,7 +187,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Transport (TGSRTC)",
   "sector": "Transport",
-  "status": "ok"
+  "status": "ok",
+  "tn": "TGSRTC",
+  "td": "బస్సు సమయాలు, టికెట్ బుకింగ్, పాస్‌లు."
  },
  {
   "n": "Transport Department",
@@ -164,7 +198,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Transport, Roads & Buildings",
   "sector": "Transport",
-  "status": "ok"
+  "status": "ok",
+  "tn": "రవాణా శాఖ",
+  "td": "డ్రైవింగ్ లైసెన్స్, వాహన రిజిస్ట్రేషన్, పర్మిట్లు."
  },
  {
   "n": "Parivahan Sewa",
@@ -173,7 +209,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "Road Transport & Highways (MoRTH)",
   "sector": "Transport",
-  "status": "ok"
+  "status": "ok",
+  "tn": "పరివాహన్ సేవ",
+  "td": "జాతీయ డ్రైవింగ్ లైసెన్స్ మరియు వాహన సేవలు."
  },
  {
   "n": "South Central Railway (Kazipet Jn.)",
@@ -182,7 +220,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "Railways (South Central Railway)",
   "sector": "Transport",
-  "status": "ok"
+  "status": "ok",
+  "tn": "దక్షిణ మధ్య రైల్వే (కాజీపేట జంక్షన్)",
+  "td": "కాజీపేట/వరంగల్ స్టేషన్ల జోన్ సమాచారం."
  },
  {
   "n": "IRCTC",
@@ -191,7 +231,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "Railways (IRCTC)",
   "sector": "Transport",
-  "status": "blocked"
+  "status": "blocked",
+  "tn": "IRCTC",
+  "td": "రైలు టికెట్లు మరియు PNR స్థితి."
  },
  {
   "n": "Bhu Bharati (replaced Dharani)",
@@ -200,7 +242,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Revenue (CCLA)",
   "sector": "Land & Revenue",
-  "status": "down"
+  "status": "down",
+  "tn": "భూ భారతి (ధరణి స్థానంలో)",
+  "td": "భూ రికార్డులు (RoR), మ్యుటేషన్లు, అప్పీళ్లు, రిజిస్ట్రేషన్ స్లాట్లు."
  },
  {
   "n": "Registration & Stamps",
@@ -209,7 +253,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Registration & Stamps",
   "sector": "Land & Revenue",
-  "status": "down"
+  "status": "down",
+  "tn": "రిజిస్ట్రేషన్లు & స్టాంపులు",
+  "td": "ఎన్‌కంబరెన్స్ సర్టిఫికెట్లు, డాక్యుమెంట్ శోధన, స్టాంపు డ్యూటీ."
  },
  {
   "n": "MeeSeva",
@@ -218,7 +264,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "IT, Electronics & Communications",
   "sector": "Citizen Services",
-  "status": "down"
+  "status": "down",
+  "tn": "మీసేవ",
+  "td": "ధృవపత్రాలు, బిల్లులు, దరఖాస్తులతో సహా 150+ పౌర సేవలు."
  },
  {
   "n": "Civil Supplies (Ration Cards)",
@@ -227,7 +275,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Civil Supplies",
   "sector": "Welfare & Agriculture",
-  "status": "down"
+  "status": "down",
+  "tn": "పౌర సరఫరాలు (రేషన్ కార్డులు)",
+  "td": "రేషన్ కార్డు స్థితి మరియు ప్రజా పంపిణీ వ్యవస్థ సమాచారం."
  },
  {
   "n": "Agriculture Department",
@@ -236,7 +286,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Agriculture & Cooperation",
   "sector": "Welfare & Agriculture",
-  "status": "down"
+  "status": "down",
+  "tn": "వ్యవసాయ శాఖ",
+  "td": "రైతు పథకాలు, సలహాలు, సబ్సిడీలు."
  },
  {
   "n": "Praja Palana / Telangana Portal",
@@ -245,7 +297,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Government of Telangana",
   "sector": "Citizen Services",
-  "status": "ok"
+  "status": "ok",
+  "tn": "తెలంగాణ ప్రభుత్వ పోర్టల్",
+  "td": "రాష్ట్ర పథకాలు మరియు ప్రజా సేవల డైరెక్టరీ."
  },
  {
   "n": "PM-KISAN",
@@ -254,7 +308,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "Agriculture & Farmers Welfare (MoA)",
   "sector": "Welfare & Agriculture",
-  "status": "down"
+  "status": "down",
+  "tn": "PM-కిసాన్",
+  "td": "రైతులకు ఆదాయ మద్దతు; లబ్ధిదారుల స్థితి."
  },
  {
   "n": "UIDAI (Aadhaar)",
@@ -263,7 +319,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "UIDAI (MeitY)",
   "sector": "Identity & Taxes",
-  "status": "ok"
+  "status": "ok",
+  "tn": "UIDAI (ఆధార్)",
+  "td": "ఆధార్ నవీకరణ, డౌన్‌లోడ్, నమోదు కేంద్రాలు."
  },
  {
   "n": "DigiLocker",
@@ -272,7 +330,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "MeitY / NeGD",
   "sector": "Identity & Taxes",
-  "status": "ok"
+  "status": "ok",
+  "tn": "డిజిలాకర్",
+  "td": "డిజిటల్ పత్రాలు: ఆధార్, లైసెన్స్, మార్క్‌షీట్లు."
  },
  {
   "n": "UMANG",
@@ -281,7 +341,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "MeitY / NeGD",
   "sector": "Citizen Services",
-  "status": "ok"
+  "status": "ok",
+  "tn": "ఉమంగ్",
+  "td": "అనేక కేంద్ర, రాష్ట్ర సేవలకు ఒకే యాప్."
  },
  {
   "n": "Passport Seva",
@@ -290,7 +352,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "External Affairs (MEA)",
   "sector": "Identity & Taxes",
-  "status": "ok"
+  "status": "ok",
+  "tn": "పాస్‌పోర్ట్ సేవ",
+  "td": "పాస్‌పోర్ట్ దరఖాస్తు మరియు అపాయింట్‌మెంట్లు."
  },
  {
   "n": "Voters' Service Portal",
@@ -299,7 +363,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "Election Commission of India",
   "sector": "Identity & Taxes",
-  "status": "blocked"
+  "status": "blocked",
+  "tn": "ఓటర్ల సేవా పోర్టల్",
+  "td": "ఓటరు నమోదు, EPIC డౌన్‌లోడ్, సవరణలు."
  },
  {
   "n": "Income Tax e-Filing",
@@ -308,7 +374,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "Income Tax Department (CBDT)",
   "sector": "Identity & Taxes",
-  "status": "ok"
+  "status": "ok",
+  "tn": "ఆదాయపు పన్ను ఈ-ఫైలింగ్",
+  "td": "రిటర్నులు దాఖలు, PAN సేవలు."
  },
  {
   "n": "GST Portal",
@@ -317,7 +385,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "GST Council / CBIC",
   "sector": "Identity & Taxes",
-  "status": "ok"
+  "status": "ok",
+  "tn": "GST పోర్టల్",
+  "td": "GST నమోదు మరియు రిటర్నులు."
  },
  {
   "n": "CPGRAMS",
@@ -326,7 +396,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "Personnel & Public Grievances (DARPG)",
   "sector": "Grievance & Rights",
-  "status": "ok"
+  "status": "ok",
+  "tn": "CPGRAMS",
+  "td": "కేంద్ర/రాష్ట్ర శాఖలకు ప్రజా ఫిర్యాదులు నమోదు చేయండి."
  },
  {
   "n": "RTI Online",
@@ -335,7 +407,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "Personnel & Training (DoPT)",
   "sector": "Grievance & Rights",
-  "status": "ok"
+  "status": "ok",
+  "tn": "RTI ఆన్‌లైన్",
+  "td": "కేంద్ర ప్రభుత్వ సంస్థలకు సమాచార హక్కు దరఖాస్తులు."
  },
  {
   "n": "National Portal of India",
@@ -344,7 +418,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "MeitY / NIC",
   "sector": "Citizen Services",
-  "status": "down"
+  "status": "down",
+  "tn": "జాతీయ పోర్టల్ ఆఫ్ ఇండియా",
+  "td": "అన్ని ప్రభుత్వ వెబ్‌సైట్లకు ముఖద్వారం."
  },
  {
   "n": "MyGov",
@@ -353,7 +429,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "MeitY",
   "sector": "Citizen Services",
-  "status": "ok"
+  "status": "ok",
+  "tn": "మైగవ్",
+  "td": "పౌరుల భాగస్వామ్య వేదిక."
  },
  {
   "n": "Telangana Tourism",
@@ -362,7 +440,9 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Tourism & Culture",
   "sector": "Tourism & Culture",
-  "status": "down"
+  "status": "down",
+  "tn": "తెలంగాణ టూరిజం",
+  "td": "వరంగల్ కోట, వేయి స్తంభాల గుడి, రామప్ప (యునెస్కో) మరియు బుకింగ్‌లు."
  },
  {
   "n": "Archaeological Survey of India",
@@ -371,7 +451,9 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "Archaeological Survey of India (MoC)",
   "sector": "Tourism & Culture",
-  "status": "ok"
+  "status": "ok",
+  "tn": "భారత పురావస్తు సర్వేక్షణ సంస్థ",
+  "td": "రక్షిత స్మారక చిహ్నాలు మరియు సందర్శన సమాచారం."
  },
  {
   "n": "UNESCO – Ramappa Temple",
@@ -380,6 +462,8 @@ window.SITES = [
   "area": "India (Central)",
   "dept": "UNESCO World Heritage Centre",
   "sector": "Tourism & Culture",
-  "status": "blocked"
+  "status": "blocked",
+  "tn": "యునెస్కో – రామప్ప దేవాలయం",
+  "td": "కాకతీయ రుద్రేశ్వర (రామప్ప) ఆలయ ప్రపంచ వారసత్వ గుర్తింపు."
  }
 ];

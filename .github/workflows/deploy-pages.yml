@@ -7,6 +7,7 @@ on:
       - "playearn/**"
       - "ballsort/**"
       - "highway-aid/**"
+      - "warangal-portal/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
@@ -28,13 +29,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-      - name: Assemble site (PlayEarn at root, Ball Sort at /ballsort/, Highway Aid at /highway-aid/)
+      - name: Assemble site (PlayEarn at root, Ball Sort at /ballsort/, Highway Aid at /highway-aid/, Warangal Portal at /warangal-portal/)
         run: |
           mkdir -p _site/ballsort
           cp -r playearn/. _site/
           cp -r ballsort/. _site/ballsort/
           mkdir -p _site/highway-aid
           cp -r highway-aid/. _site/highway-aid/
+          mkdir -p _site/warangal-portal
+          cp -r warangal-portal/. _site/warangal-portal/
+          rm -f _site/warangal-portal/check-links.js _site/warangal-portal/README.md
           rm -rf _site/ballsort/backend _site/ballsort/tests
       - uses: actions/upload-pages-artifact@v3
         with:
