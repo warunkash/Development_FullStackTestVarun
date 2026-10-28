@@ -17,6 +17,7 @@ a.card:hover,a.card:focus-visible{border-color:var(--acc);outline:none;box-shado
 .card b{display:block}.card small{color:var(--mut);display:block;margin:4px 0 8px}.tag{font-size:.75rem;font-weight:600;text-transform:uppercase}
 .local{color:var(--local)}.state{color:var(--state)}.central{color:var(--central)}
 .ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}.ctl>span{min-width:64px;color:var(--mut);font-size:.85rem}.chips{display:flex;gap:8px;flex-wrap:wrap}
+.help h2{margin:8px 0}#hp{display:flex;gap:8px;flex-wrap:wrap}#hp a{display:flex;flex-direction:column;min-width:120px;padding:8px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;color:inherit;text-decoration:none}#hp b{font-size:1.25rem;color:var(--acc)}#hp small{color:var(--mut)}
 .sum{color:var(--mut);margin:14px 0 0}h2 small{color:var(--mut);font-weight:400}.card em{display:block;font-size:.78rem;color:var(--mut);font-style:normal}
 .badge{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;margin-bottom:6px;border:1px solid currentColor}
 .badge.ok{color:var(--local)}.badge.blocked{color:#b45309}.badge.down{color:#b91c1c}
@@ -26,6 +27,7 @@ footer{max-width:1100px;margin:auto;padding:0 16px 32px;color:var(--mut);font-si
 </style></head><body>
 <header><div class="top"><h1 id="ttl"></h1><div id="lang" class="chips" role="group" aria-label="Language"></div></div><p id="sub"></p></header>
 <main>
+<section class="help" aria-labelledby="hl"><h2 id="hl"></h2><div id="hp"></div></section>
 <div class="bar"><input id="q" type="search"></div>
 <div class="ctl"><span id="l-gb"></span><div id="gb" role="group"></div></div>
 <div class="ctl"><span id="l-ar"></span><div id="ar" role="group"></div></div>
@@ -51,7 +53,8 @@ chips("#ar",[["all",t.all],...AREAS.map(a=>[a,tr(a)])],"ar");
 chips("#st",[["all",t.all],...["ok","blocked","down"].map(k=>[k,t.st[k]])],"st");
 const lg=$("#lang");lg.innerHTML=[["en","English"],["te","తెలుగు"]].map(([k,n])=>`<button class="chip" data-k="${k}" aria-pressed="${lang===k}">${n}</button>`).join("");
 lg.onclick=e=>{const k=e.target.dataset.k;if(!k)return;lang=k;try{localStorage.setItem("lang",k)}catch(_){}ui()};
-render()}
+helps();render()}
+function helps(){const t=L();$("#hl").textContent=t.help;$("#hp").innerHTML=HELPLINES.map(h=>`<a href="tel:${h.num}"><b>${h.num}</b><small>${esc(lang==="te"?h.tn:h.n)}</small></a>`).join("")}
 $("#q").oninput=()=>render();
 function render(){const t=L(),q=$("#q").value.trim().toLowerCase(),g={};
 const name=s=>lang==="te"?s.tn:s.n,desc=s=>lang==="te"?s.td:s.d;
