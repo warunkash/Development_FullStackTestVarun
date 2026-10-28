@@ -1,0 +1,41 @@
+name: Weekly portal link check
+
+on:
+  schedule:
+    - cron: "17 3 * * 1" # Mondays 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check links
+        run: node warangal-portal/check-links.js --report "$RUNNER_TEMP/report.md"
+      - name: Open, update or close the tracking issue
+        uses: actions/github-script@v7
+        env:
+          REPORT_PATH: ${{ runner.temp }}/report.md
+        with:
+          script: |
+            const fs = require("fs");
+            const report = fs.readFileSync(process.env.REPORT_PATH, "utf8").trim();
+            const title = "Warangal portal: weekly link check";
+            const { owner, repo } = context.repo;
+            const open = (await github.paginate(github.rest.issues.listForRepo, { owner, repo, state: "open", per_page: 100 }))
+              .find(i => !i.pull_request && i.title === title);
+            if (report) {
+              const body = `${report}\n\n_Automated by the weekly link-check workflow. Statuses are measured from GitHub's US runners, so sites that block non-Indian traffic may appear down._`;
+              if (open) await github.rest.issues.createComment({ owner, repo, issue_number: open.number, body });
+              else await github.rest.issues.create({ owner, repo, title, body });
+            } else if (open) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: open.number, body: "All recorded statuses match this week's check. Closing." });
+              await github.rest.issues.update({ owner, repo, issue_number: open.number, state: "closed", state_reason: "completed" });
+            }
