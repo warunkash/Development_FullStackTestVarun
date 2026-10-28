@@ -8,9 +8,9 @@ Static, dependency-free directory of government websites useful to residents of 
 
 ## Link status (checked 2026-10-28)
 Each site in `data.js` has `area`, `dept`, `sector` and `status` fields; the page can group by any of them.
-- `ok` (25): responded 200 (NIT Warangal confirmed by the first GitHub Actions run).
+- `ok` (51): responded 200 (includes 26 pages of the official Hanumakonda district site and NIT Warangal, confirmed by the first GitHub Actions run).
 - `blocked` (5): server answered 403/406 to the automated check (ABDM, TGBIE, TGPSC, IRCTC, Voters' portal); likely fine in a browser.
-- `down` (15): no response from the cloud sandbox used for checking (GWMC, Kakatiya Univ., Aarogyasri, MeeSeva, Tourism, Registration, Civil Supplies, Agriculture, Health, SSC Board, eCourts, PM-JAY, PM-KISAN, plus the unconfirmed Bhu Bharati and Warangal Police URLs). Likely geo-blocking, so this is not proof they are dead.
+- `down` (18, incl. Prajavani, GO Issue Register and the Telangana Police Warangal page, all linked from the official district site): no response from the cloud sandbox used for checking (GWMC, Kakatiya Univ., Aarogyasri, MeeSeva, Tourism, Registration, Civil Supplies, Agriculture, Health, SSC Board, eCourts, PM-JAY, PM-KISAN, plus the unconfirmed Bhu Bharati and Warangal Police URLs). Likely geo-blocking, so this is not proof they are dead.
 Dharani was replaced by Bhu Bharati (Apr 2025). Run `node warangal-portal/check-links.js` from an Indian/unrestricted network to refresh statuses, then update `status` in `data.js`.
 
 ## Language & hosting
@@ -19,3 +19,6 @@ Dharani was replaced by Bhu Bharati (Apr 2025). Run `node warangal-portal/check-
 
 ## Weekly link check
 `.github/workflows/link-check.yml` runs `check-links.js` every Monday (and on demand from the Actions tab). It compares each live result with the recorded `status` and opens/updates one issue, "Warangal portal: weekly link check", listing: dead links (404/410), regressions (was `ok`, now failing) and recoveries (was not working, now `ok`). With no changes it stays quiet and closes an open issue. It never edits `data.js` itself — GitHub runners are outside India, so a human confirms before changing a status.
+
+## Sources for local entries
+The Hanumakonda district entries and the official external links (Prajavani, GOIR, Smart PDS, Telangana Police Warangal, warangalpolice.telangana.gov.in) come from the navigation of https://hanumakonda.telangana.gov.in, which lists them itself.
