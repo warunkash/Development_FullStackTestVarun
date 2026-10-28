@@ -77,7 +77,7 @@ window.SITES = [
   "area": "Warangal / Hanumakonda",
   "dept": "Higher Education (MoE)",
   "sector": "Education",
-  "status": "down",
+  "status": "ok",
   "tn": "NIT వరంగల్",
   "td": "జాతీయ సాంకేతిక సంస్థ: ప్రవేశాలు, విద్యా విభాగాలు, ప్లేస్‌మెంట్లు."
  },
@@ -121,7 +121,7 @@ window.SITES = [
   "area": "Telangana State",
   "dept": "Public Service Commission",
   "sector": "Employment",
-  "status": "ok",
+  "status": "blocked",
   "tn": "తెలంగాణ రాష్ట్ర పబ్లిక్ సర్వీస్ కమిషన్",
   "td": "నియామక ప్రకటనలు మరియు పరీక్ష ఫలితాలు."
  },
