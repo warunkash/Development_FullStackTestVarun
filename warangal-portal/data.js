@@ -465,5 +465,81 @@ window.SITES = [
   "status": "blocked",
   "tn": "యునెస్కో – రామప్ప దేవాలయం",
   "td": "కాకతీయ రుద్రేశ్వర (రామప్ప) ఆలయ ప్రపంచ వారసత్వ గుర్తింపు."
+ },
+ {
+  "n": "Kakatiya Urban Development Authority (KUDA)",
+  "d": "City master plan, layout and building approvals, and development projects for Warangal, Hanumakonda and Jangaon.",
+  "u": "http://www.kuda.in",
+  "area": "Warangal / Hanumakonda",
+  "dept": "Urban Development (KUDA)",
+  "sector": "Governance",
+  "status": "ok",
+  "tn": "కాకతీయ పట్టణాభివృద్ధి సంస్థ (KUDA)",
+  "td": "వరంగల్, హనుమకొండ, జనగామ ప్రాంతాలకు మాస్టర్ ప్లాన్, లేఅవుట్/భవన అనుమతులు, అభివృద్ధి ప్రాజెక్టులు."
+ },
+ {
+  "n": "Kakatiya Medical College & MGM Hospital",
+  "d": "Government medical college in Hanumakonda; its site lists courses, admissions and the affiliated MGM tertiary hospital (1,450 beds).",
+  "u": "https://kmcwgl.com",
+  "area": "Warangal / Hanumakonda",
+  "dept": "Medical Education (KMC)",
+  "sector": "Health",
+  "status": "ok",
+  "tn": "కాకతీయ మెడికల్ కాలేజీ & MGM ఆసుపత్రి",
+  "td": "హనుమకొండలోని ప్రభుత్వ వైద్య కళాశాల; కోర్సులు, ప్రవేశాలు మరియు అనుబంధ MGM ఆసుపత్రి (1,450 పడకలు) వివరాలు."
+ },
+ {
+  "n": "Kaloji Narayana Rao University of Health Sciences (KNRUHS)",
+  "d": "Warangal-based health university: medical, dental and nursing admissions, exams and results.",
+  "u": "https://knruhs.telangana.gov.in",
+  "area": "Warangal / Hanumakonda",
+  "dept": "Health Sciences University",
+  "sector": "Education",
+  "status": "ok",
+  "tn": "కాళోజీ నారాయణరావు ఆరోగ్య శాస్త్రాల విశ్వవిద్యాలయం (KNRUHS)",
+  "td": "వరంగల్‌లోని ఆరోగ్య విశ్వవిద్యాలయం: వైద్య, దంత, నర్సింగ్ ప్రవేశాలు, పరీక్షలు, ఫలితాలు."
+ }
+];
+// Emergency numbers (Telangana moved to unified 112 in 2025; older numbers still referenced). Confirm locally.
+window.HELPLINES = [
+ {
+  "num": "112",
+  "n": "Emergency (Police, Fire, Ambulance)",
+  "tn": "అత్యవసర సేవలు (పోలీస్, అగ్నిమాపక, అంబులెన్స్)"
+ },
+ {
+  "num": "100",
+  "n": "Police",
+  "tn": "పోలీస్"
+ },
+ {
+  "num": "108",
+  "n": "Ambulance",
+  "tn": "అంబులెన్స్"
+ },
+ {
+  "num": "101",
+  "n": "Fire",
+  "tn": "అగ్నిమాపక"
+ },
+ {
+  "num": "181",
+  "n": "Women helpline",
+  "tn": "మహిళా హెల్ప్‌లైన్"
+ },
+ {
+  "num": "1098",
+  "n": "Child helpline",
+  "tn": "చిల్డ్రన్ హెల్ప్‌లైన్"
+ },
+ {
+  "num": "1930",
+  "n": "Cyber crime (national)",
+  "tn": "సైబర్ నేరాలు (జాతీయ)"
+ },
+ {
+  "num": "1077",
+  "n": "Disaster control room",
+  "tn": "విపత్తు నియంత్రణ గది"
  }
 ];
