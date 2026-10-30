@@ -10,7 +10,7 @@
 <body>
 <nav><div class="wrap">
   <a class="logo" href="#"><span>Clip</span>forge</a>
-  <ul><li><a href="#features">Features</a></li><li><a href="#ads">AI ads</a></li><li><a href="#agents">Agents</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#faq">FAQ</a></li></ul>
+  <ul><li><a href="#generation">Generation</a></li><li><a href="#features">Features</a></li><li><a href="#ads">AI ads</a></li><li><a href="#agents">Agents</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#faq">FAQ</a></li></ul>
   <a class="btn" href="#top">Start creating</a>
 </div></nav>
 
@@ -23,6 +23,25 @@
   </form>
   <div class="preview" id="preview"></div>
 </header>
+
+<section id="generation"><div class="wrap">
+  <h2>AI video &amp; image generation</h2>
+  <p class="sub">Generate with several models, then pick the format you need.</p>
+  <div class="chips" id="models" role="group" aria-label="Model">
+    <button class="chip on" data-v="Model A">Model A</button>
+    <button class="chip" data-v="Model B">Model B</button>
+    <button class="chip" data-v="Model C">Model C</button>
+    <button class="chip" data-v="Image model">Image model</button>
+  </div>
+  <div class="tabs" id="formats" role="tablist" aria-label="Format">
+    <button class="tab on" data-v="YouTube Shorts" role="tab">YouTube Shorts</button>
+    <button class="tab" data-v="AI ads" role="tab">AI ads</button>
+    <button class="tab" data-v="UGC-style" role="tab">UGC-style videos</button>
+    <button class="tab" data-v="Story" role="tab">Story videos</button>
+  </div>
+  <div class="card gen-detail" id="format-detail"></div>
+  <p class="sub" style="margin-top:16px"><a class="btn" href="#top">Try it in the prompt box</a></p>
+</div></section>
 
 <section id="features"><div class="wrap">
   <h2>Everything in one project</h2>
