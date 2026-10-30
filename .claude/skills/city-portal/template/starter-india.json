@@ -1,0 +1,138 @@
+[
+ {
+  "n": "Ayushman Bharat PM-JAY",
+  "d": "National health protection scheme; check eligibility.",
+  "u": "https://pmjay.gov.in",
+  "dept": "National Health Authority",
+  "sector": "Health",
+  "status": "down"
+ },
+ {
+  "n": "ABHA / Ayushman Bharat Digital Mission",
+  "d": "Create your health ID and records.",
+  "u": "https://abdm.gov.in",
+  "dept": "National Health Authority",
+  "sector": "Health",
+  "status": "blocked"
+ },
+ {
+  "n": "Parivahan Sewa",
+  "d": "National driving licence and vehicle services.",
+  "u": "https://parivahan.gov.in",
+  "dept": "Road Transport & Highways (MoRTH)",
+  "sector": "Transport",
+  "status": "ok"
+ },
+ {
+  "n": "IRCTC",
+  "d": "Train tickets and PNR status.",
+  "u": "https://www.irctc.co.in",
+  "dept": "Railways (IRCTC)",
+  "sector": "Transport",
+  "status": "blocked"
+ },
+ {
+  "n": "PM-KISAN",
+  "d": "Income support for farmers; beneficiary status.",
+  "u": "https://pmkisan.gov.in",
+  "dept": "Agriculture & Farmers Welfare (MoA)",
+  "sector": "Welfare & Agriculture",
+  "status": "down"
+ },
+ {
+  "n": "UIDAI (Aadhaar)",
+  "d": "Aadhaar update, download and enrolment centres.",
+  "u": "https://uidai.gov.in",
+  "dept": "UIDAI (MeitY)",
+  "sector": "Identity & Taxes",
+  "status": "ok"
+ },
+ {
+  "n": "DigiLocker",
+  "d": "Digital documents: Aadhaar, licence, marksheets.",
+  "u": "https://www.digilocker.gov.in",
+  "dept": "MeitY / NeGD",
+  "sector": "Identity & Taxes",
+  "status": "ok"
+ },
+ {
+  "n": "UMANG",
+  "d": "Single app for many central and state services.",
+  "u": "https://web.umang.gov.in",
+  "dept": "MeitY / NeGD",
+  "sector": "Citizen Services",
+  "status": "ok"
+ },
+ {
+  "n": "Passport Seva",
+  "d": "Passport application and appointments.",
+  "u": "https://www.passportindia.gov.in",
+  "dept": "External Affairs (MEA)",
+  "sector": "Identity & Taxes",
+  "status": "ok"
+ },
+ {
+  "n": "Voters' Service Portal",
+  "d": "Voter registration, EPIC download and corrections.",
+  "u": "https://voters.eci.gov.in",
+  "dept": "Election Commission of India",
+  "sector": "Identity & Taxes",
+  "status": "blocked"
+ },
+ {
+  "n": "Income Tax e-Filing",
+  "d": "File returns, PAN services.",
+  "u": "https://www.incometax.gov.in",
+  "dept": "Income Tax Department (CBDT)",
+  "sector": "Identity & Taxes",
+  "status": "ok"
+ },
+ {
+  "n": "GST Portal",
+  "d": "GST registration and returns.",
+  "u": "https://www.gst.gov.in",
+  "dept": "GST Council / CBIC",
+  "sector": "Identity & Taxes",
+  "status": "ok"
+ },
+ {
+  "n": "CPGRAMS",
+  "d": "File public grievances with central/state departments.",
+  "u": "https://pgportal.gov.in",
+  "dept": "Personnel & Public Grievances (DARPG)",
+  "sector": "Grievance & Rights",
+  "status": "ok"
+ },
+ {
+  "n": "RTI Online",
+  "d": "File RTI requests to central public authorities.",
+  "u": "https://rtionline.gov.in",
+  "dept": "Personnel & Training (DoPT)",
+  "sector": "Grievance & Rights",
+  "status": "ok"
+ },
+ {
+  "n": "National Portal of India",
+  "d": "Gateway to all government websites.",
+  "u": "https://www.india.gov.in",
+  "dept": "MeitY / NIC",
+  "sector": "Citizen Services",
+  "status": "ok"
+ },
+ {
+  "n": "MyGov",
+  "d": "Citizen engagement platform.",
+  "u": "https://www.mygov.in",
+  "dept": "MeitY",
+  "sector": "Citizen Services",
+  "status": "ok"
+ },
+ {
+  "n": "Archaeological Survey of India",
+  "d": "Protected monuments and visiting information.",
+  "u": "https://asi.nic.in",
+  "dept": "Archaeological Survey of India (MoC)",
+  "sector": "Tourism & Culture",
+  "status": "ok"
+ }
+]

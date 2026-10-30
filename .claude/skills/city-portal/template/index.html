@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Citizen Portal</title>
+<style>
+:root{--bg:#faf7f2;--card:#fff;--ink:#1d2433;--mut:#5c667a;--acc:#9a3412;--line:#e6dfd3;--local:#166534;--state:#1d4ed8;--central:#7c3aed}
+@media(prefers-color-scheme:dark){:root{--bg:#14110f;--card:#1e1a17;--ink:#f3ede4;--mut:#a9a094;--acc:#fb923c;--line:#352f29;--local:#4ade80;--state:#60a5fa;--central:#c4b5fd}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,'Noto Sans','Noto Sans Telugu','Noto Sans Devanagari','Nirmala UI',sans-serif}
+header{padding:32px 16px 20px;max-width:1100px;margin:auto}h1{margin:0 0 4px;font-size:clamp(1.6rem,4vw,2.4rem)}
+header p{margin:0;color:var(--mut)}main{max-width:1100px;margin:auto;padding:0 16px 48px}
+.bar{display:flex;margin:16px 0}input{flex:1 1 240px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+button.chip{padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer;font:inherit}
+button.chip[aria-pressed=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
+h2{font-size:1.1rem;margin:28px 0 10px;color:var(--acc)}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+a.card{display:block;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;color:inherit;text-decoration:none}
+a.card:hover,a.card:focus-visible{border-color:var(--acc);outline:none;box-shadow:0 2px 10px #0002}
+.card b{display:block}.card small{color:var(--mut);display:block;margin:4px 0 8px}
+.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}.ctl>span{min-width:64px;color:var(--mut);font-size:.85rem}.chips{display:flex;gap:8px;flex-wrap:wrap}
+.help h2{margin:8px 0}#hp{display:flex;gap:8px;flex-wrap:wrap}#hp a{display:flex;flex-direction:column;min-width:120px;padding:8px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;color:inherit;text-decoration:none}#hp b{font-size:1.25rem;color:var(--acc)}#hp small{color:var(--mut)}
+.sum{color:var(--mut);margin:14px 0 0}h2 small{color:var(--mut);font-weight:400}.card em{display:block;font-size:.78rem;color:var(--mut);font-style:normal}
+.badge{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;margin-bottom:6px;border:1px solid currentColor}
+.badge.ok{color:var(--local)}.badge.blocked{color:#b45309}.badge.down{color:#b91c1c}
+@media(prefers-color-scheme:dark){.badge.blocked{color:#fbbf24}.badge.down{color:#f87171}}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+footer{max-width:1100px;margin:auto;padding:0 16px 32px;color:var(--mut);font-size:.85rem}#none{display:none;color:var(--mut);padding:24px 0}
+</style>
+<script src="config.js"></script>
+<script>
+(function(){const P=PORTAL,r=document.documentElement.style;r.setProperty("--acc",P.accent);
+if(matchMedia("(prefers-color-scheme: dark)").matches)r.setProperty("--acc",P.accentDark);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",e=>r.setProperty("--acc",e.matches?P.accentDark:P.accent))})();
+</script>
+</head><body>
+<header><div class="top"><h1 id="ttl"></h1><div id="lang" class="chips" role="group" aria-label="Language"></div></div><p id="sub"></p></header>
+<main>
+<section class="help" aria-labelledby="hl"><h2 id="hl"></h2><div id="hp"></div></section>
+<div class="bar"><input id="q" type="search"></div>
+<div class="ctl"><span id="l-gb"></span><div id="gb" role="group"></div></div>
+<div class="ctl"><span id="l-ar"></span><div id="ar" role="group"></div></div>
+<div class="ctl"><span id="l-st"></span><div id="st" role="group"></div></div>
+<p id="sum" class="sum"></p>
+<div id="out"></div><p id="none"></p>
+</main>
+<footer id="foot"></footer>
+<script src="data.js"></script><script src="lang-en.js"></script>
+<script>PORTAL.languages.filter(l=>l.code!=="en").forEach(l=>document.write('<script src="lang-'+l.code+'.js"><\/script>'))</script>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const P=PORTAL;
+let lang="en";try{lang=new URLSearchParams(location.search).get("lang")||localStorage.getItem("lang")||(navigator.language||"").slice(0,2)}catch(e){}
+if(!I18N[lang])lang="en";
+const AREAS=[P.localArea,P.stateArea,P.centralArea],f={gb:"sector",ar:"all",st:"all"},ORDER={status:["ok","blocked","down"],area:AREAS};
+const L=()=>I18N[lang],tr=v=>L().map[v]||v;
+const nm=s=>(s.tr&&s.tr[lang]&&s.tr[lang].n)||s.n,ds=s=>(s.tr&&s.tr[lang]&&s.tr[lang].d)||s.d;
+function chips(id,opts,key){const el=$(id);el.className="chips";el.innerHTML=opts.map(([k,t])=>`<button class="chip" data-k="${esc(k)}" aria-pressed="${f[key]===k}">${esc(t)}</button>`).join("");
+el.onclick=e=>{const k=e.target.dataset.k;if(k==null)return;f[key]=k;ui()}}
+function ui(){const t=L();document.documentElement.lang=lang;document.title=t.title;
+$("#ttl").textContent=t.title;$("#sub").textContent=t.sub;$("#q").placeholder=t.search;$("#q").setAttribute("aria-label",t.search);
+$("#l-gb").textContent=t.groupBy;$("#l-ar").textContent=t.area;$("#l-st").textContent=t.status;$("#none").textContent=t.none;$("#foot").textContent=t.foot(window.CHECKED);
+chips("#gb",[["sector",t.sector],["dept",t.dept],["area",t.areaK],["status",t.statusK]],"gb");
+chips("#ar",[["all",t.all],...AREAS.map(a=>[a,tr(a)])],"ar");
+chips("#st",[["all",t.all],...["ok","blocked","down"].map(k=>[k,t.st[k]])],"st");
+const lg=$("#lang");lg.style.display=P.languages.length>1?"":"none";
+lg.innerHTML=P.languages.map(l=>`<button class="chip" data-k="${esc(l.code)}" aria-pressed="${lang===l.code}">${esc(l.name)}</button>`).join("");
+lg.onclick=e=>{const k=e.target.dataset.k;if(!k)return;lang=k;try{localStorage.setItem("lang",k)}catch(_){}ui()};
+helps();render()}
+function helps(){const t=L();$("#hl").textContent=t.help;$("#hp").innerHTML=HELPLINES.map(h=>`<a href="tel:${esc(h.num)}"><b>${esc(h.num)}</b><small>${esc((h.tr&&h.tr[lang])||h.n)}</small></a>`).join("")}
+$("#q").oninput=()=>render();
+function render(){const t=L(),q=$("#q").value.trim().toLowerCase(),g={};
+const list=SITES.filter(s=>(f.ar==="all"||s.area===f.ar)&&(f.st==="all"||s.status===f.st)&&(!q||[s.n,s.d,nm(s),ds(s),s.dept,s.sector,s.area,tr(s.dept),tr(s.sector)].join(" ").toLowerCase().includes(q)));
+list.forEach(s=>{const k=f.gb==="status"?s.status:s[f.gb];(g[k]=g[k]||[]).push(s)});
+const ord=ORDER[f.gb],keys=Object.keys(g).sort((a,b)=>ord?ord.indexOf(a)-ord.indexOf(b):a.localeCompare(b));
+const cnt=k=>SITES.filter(s=>s.status===k).length;
+$("#sum").textContent=t.sum(SITES.length,cnt("ok"),cnt("blocked"),cnt("down"));
+$("#out").innerHTML=keys.map(k=>`<h2>${esc(f.gb==="status"?t.st[k]:tr(k))} <small>(${g[k].length})</small></h2><div class="grid">${g[k].map(s=>`<a class="card" href="${esc(s.u)}" target="_blank" rel="noopener noreferrer"><span class="badge ${s.status}" title="${esc(t.stTip[s.status])}">${esc(t.st[s.status])}</span><b>${esc(nm(s))}</b><small>${esc(ds(s))}</small><em>${esc(tr(s.dept))} · ${esc(tr(s.sector))} · ${esc(tr(s.area))}</em></a>`).join("")}</div>`).join("");
+$("#none").style.display=keys.length?"none":"block"}
+ui();
+</script></body></html>
