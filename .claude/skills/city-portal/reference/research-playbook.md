@@ -1,0 +1,10 @@
+# Research playbook
+
+1. **Identify administrative units.** District names change (Warangal Urban → Warangal / Hanumakonda). Search "<location> district official website", note every current district/corporation/authority covering the place. Cover each.
+2. **Mine the official district site.** WebFetch the home page with a prompt like "list all navigation items with full URLs, including Directory/Public Utilities, Departments and External Links". Then fetch the directory/department pages and take the departments, offices and hospitals they list. Their "external links" are the best source of endorsed state services (grievance portal, GO register, ration/PDS, police, MeeSeva-type service portals).
+3. **Local bodies.** Municipal corporation, urban development authority, police commissionerate, district court (eCourts), electricity distribution company, state transport corporation, universities and medical colleges that are public.
+4. **State layer.** Revenue/land records, registration & stamps, transport (licence/vehicle), civil supplies (ration), health insurance scheme, scholarships, public service commission, tourism, state portal. Check for renamed/replaced services.
+5. **National layer.** Start from `template/starter-india.json` (Aadhaar, DigiLocker, UMANG, Passport, Voter, Income Tax, GST, CPGRAMS, RTI, ...). Add ones with local relevance (railway zone, national institutes).
+6. **Helplines.** Unified emergency number, police, ambulance, fire, women, child, cybercrime, disaster. Prefer the district site's helpline page.
+7. **Verification per entry:** official domain (`.gov.in`, `.nic.in`, `.ac.in` for public institutions, `.telangana.gov.in`-style state domains); URL taken from an official page or a successful fetch; purpose from the page itself.
+8. **Search-engine caveats.** Snippets and wiki infoboxes are leads, not proof: they conflict (two Aarogyasri domains), go stale (Dharani), or point at mirrors. Record a lead as a site only after a fetch or an official page confirms it, otherwise leave it out or add it as `down` with a clear note in the PR.
