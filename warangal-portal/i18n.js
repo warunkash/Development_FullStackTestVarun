@@ -41,7 +41,7 @@ window.I18N = {
       "Registration & Stamps": "రిజిస్ట్రేషన్లు & స్టాంపులు", "IT, Electronics & Communications": "ఐటీ, ఎలక్ట్రానిక్స్ & కమ్యూనికేషన్లు",
       "Civil Supplies": "పౌర సరఫరాలు", "Agriculture & Cooperation": "వ్యవసాయ & సహకారం", "Government of Telangana": "తెలంగాణ ప్రభుత్వం",
       "Agriculture & Farmers Welfare (MoA)": "వ్యవసాయ & రైతు సంక్షేమం (MoA)", "UIDAI (MeitY)": "UIDAI (MeitY)", "MeitY / NeGD": "MeitY / NeGD",
-      "External Affairs (MEA)": "విదేశాంగ శాఖ (MEA)", "Election Commission of India": "భారత ఎన్నికల సంఘం", "Income Tax Department (CBDT)": "ఆదాయపు పన్ను శాఖ (CBDT)",
+      "External Affairs (MEA)": "విదేశాంగ శాఖ (MEA)", "Election Commission of India": "భారత ఎన్నికల సంఘం", "Chief Electoral Officer, Telangana": "ముఖ్య ఎన్నికల అధికారి, తెలంగాణ", "Income Tax Department (CBDT)": "ఆదాయపు పన్ను శాఖ (CBDT)",
       "GST Council / CBIC": "GST కౌన్సిల్ / CBIC", "Personnel & Public Grievances (DARPG)": "సిబ్బంది & ప్రజా ఫిర్యాదులు (DARPG)",
       "Personnel & Training (DoPT)": "సిబ్బంది & శిక్షణ (DoPT)", "MeitY / NIC": "MeitY / NIC", "MeitY": "MeitY", "Tourism & Culture": "పర్యాటకం & సంస్కృతి",
       "Archaeological Survey of India (MoC)": "భారత పురావస్తు సర్వేక్షణ (సాంస్కృతిక శాఖ)", "UNESCO World Heritage Centre": "యునెస్కో ప్రపంచ వారసత్వ కేంద్రం"

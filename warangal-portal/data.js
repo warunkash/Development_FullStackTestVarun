@@ -368,6 +368,28 @@ window.SITES = [
   "td": "ఓటరు నమోదు, EPIC డౌన్‌లోడ్, సవరణలు."
  },
  {
+  "n": "CEO Telangana (Graduates' & Teachers' MLC Rolls)",
+  "d": "Telangana Chief Electoral Officer: electoral-roll schedules, Form 18 graduate-voter enrolment and MLC election notices (Warangal-Khammam-Nalgonda Graduates' constituency).",
+  "u": "https://ceotelangana.nic.in",
+  "area": "Telangana State",
+  "dept": "Chief Electoral Officer, Telangana",
+  "sector": "Identity & Taxes",
+  "status": "down",
+  "tn": "సీఈఓ తెలంగాణ (పట్టభద్రులు & ఉపాధ్యాయ ఎమ్మెల్సీ ఓటర్ల జాబితా)",
+  "td": "తెలంగాణ ముఖ్య ఎన్నికల అధికారి: ఓటర్ల జాబితా షెడ్యూళ్లు, పట్టభద్రుల ఓటరు నమోదు (ఫారం 18), ఎమ్మెల్సీ ఎన్నికల ప్రకటనలు (వరంగల్-ఖమ్మం-నల్గొండ పట్టభద్రుల నియోజకవర్గం)."
+ },
+ {
+  "n": "Electoral Search (Check Your Name in Voter List)",
+  "d": "Search the electoral roll by EPIC number or details and find your polling station.",
+  "u": "https://electoralsearch.eci.gov.in",
+  "area": "India (Central)",
+  "dept": "Election Commission of India",
+  "sector": "Identity & Taxes",
+  "status": "ok",
+  "tn": "ఎలక్టోరల్ సెర్చ్ (ఓటర్ జాబితాలో పేరు తనిఖీ)",
+  "td": "EPIC నంబర్ లేదా వివరాలతో ఓటర్ల జాబితాలో వెతికి, పోలింగ్ కేంద్రాన్ని తెలుసుకోండి."
+ },
+ {
   "n": "Income Tax e-Filing",
   "d": "File returns, PAN services.",
   "u": "https://www.incometax.gov.in",
