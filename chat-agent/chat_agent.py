@@ -8,7 +8,13 @@ turns if the history grows too large.
 Usage:
     export ANTHROPIC_API_KEY=sk-ant-...
     pip install -r requirements.txt
-    python chat_agent.py
+    python chat_agent.py            # type to chat
+    python chat_agent.py --voice    # speak to it, hear it reply
+
+Voice mode needs the optional packages in requirements-voice.txt (microphone
+input via SpeechRecognition + PyAudio, spoken replies via pyttsx3). In voice
+mode you can still type: press Ctrl-C while it is listening to switch to
+typing for one message. Say "quit" or "goodbye" to exit.
 
 Commands (type at the prompt):
     /reset   forget the conversation and start fresh
@@ -58,7 +64,43 @@ def window(messages: list[dict]) -> list[dict]:
     return recent
 
 
+class Voice:
+    """Microphone input and spoken output. Imports are lazy so text mode needs no extras."""
+
+    def __init__(self) -> None:
+        try:
+            import pyttsx3
+            import speech_recognition as sr
+        except ImportError:
+            sys.exit("Voice mode needs: pip install -r requirements-voice.txt")
+        self.sr = sr
+        self.rec = sr.Recognizer()
+        self.mic = sr.Microphone()
+        self.tts = pyttsx3.init()
+        with self.mic as source:
+            print("(Calibrating for background noise...)")
+            self.rec.adjust_for_ambient_noise(source, duration=1)
+
+    def listen(self) -> str:
+        """Block until the user says something; return the transcript ('' if unclear)."""
+        with self.mic as source:
+            print("listening...", end="\r", flush=True)
+            audio = self.rec.listen(source, phrase_time_limit=30)
+        try:
+            return self.rec.recognize_google(audio)
+        except self.sr.UnknownValueError:
+            return ""
+        except self.sr.RequestError as e:
+            print(f"[speech recognition unavailable: {e}]")
+            return ""
+
+    def speak(self, text: str) -> None:
+        self.tts.say(text)
+        self.tts.runAndWait()
+
+
 def main() -> int:
+    voice = Voice() if "--voice" in sys.argv[1:] else None
     if not os.environ.get("ANTHROPIC_API_KEY"):
         print("Set ANTHROPIC_API_KEY first (export ANTHROPIC_API_KEY=...).", file=sys.stderr)
         return 1
@@ -71,7 +113,19 @@ def main() -> int:
 
     while True:
         try:
-            user = input("you> ").strip()
+            if voice:
+                try:
+                    user = voice.listen()
+                except KeyboardInterrupt:
+                    user = input("you (typed)> ").strip()
+                else:
+                    if user:
+                        print(f"you> {user}")
+                if user.lower().strip(".!? ") in ("quit", "goodbye", "exit"):
+                    print("Bye!")
+                    return 0
+            else:
+                user = input("you> ").strip()
         except (EOFError, KeyboardInterrupt):
             print("\nBye!")
             return 0
@@ -111,6 +165,8 @@ def main() -> int:
                     reply += text
                     print(text, end="", flush=True)
             print("\n")
+            if voice and reply:
+                voice.speak(reply)
         except KeyboardInterrupt:
             print("\n(interrupted)\n")
         except anthropic.APIError as e:
