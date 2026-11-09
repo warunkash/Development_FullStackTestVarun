@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Talk to the Agent</title>
+<style>
+  :root { --bg:#f6f5f2; --panel:#fff; --ink:#1d1d1b; --mute:#6b6a66; --line:#e3e1db; --you:#e8efe9; --accent:#2f6f4f; --rec:#c0392b; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161614; --panel:#1f1f1c; --ink:#ecebe6; --mute:#9a988f; --line:#33322e; --you:#26332b; --accent:#5fb487; --rec:#e0675a; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,sans-serif; height:100dvh; display:flex; flex-direction:column; }
+  header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--line); }
+  h1 { font-size:17px; margin:0; font-weight:600; }
+  header button { background:none; border:1px solid var(--line); color:var(--mute); border-radius:8px; padding:6px 10px; cursor:pointer; font:inherit; font-size:14px; }
+  #log { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; max-width:760px; width:100%; margin:0 auto; }
+  .msg { padding:10px 14px; border-radius:14px; max-width:85%; white-space:pre-wrap; border:1px solid var(--line); background:var(--panel); }
+  .msg.you { align-self:flex-end; background:var(--you); }
+  .hint { color:var(--mute); text-align:center; margin:auto; max-width:360px; }
+  footer { border-top:1px solid var(--line); padding:12px 16px 16px; background:var(--panel); }
+  .bar { max-width:760px; margin:0 auto; display:flex; gap:10px; align-items:center; }
+  #text { flex:1; padding:11px 14px; border-radius:22px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font:inherit; min-width:0; }
+  #mic { width:56px; height:56px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:24px; cursor:pointer; flex:none; }
+  #mic.live { background:var(--rec); animation:pulse 1.4s infinite; }
+  #mic:disabled { opacity:.4; cursor:not-allowed; }
+  @keyframes pulse { 50% { box-shadow:0 0 0 10px transparent; } 0% { box-shadow:0 0 0 0 color-mix(in srgb,var(--rec) 50%,transparent); } }
+  #status { max-width:760px; margin:8px auto 0; color:var(--mute); font-size:13px; min-height:18px; text-align:center; }
+  .row { max-width:760px; margin:8px auto 0; display:flex; gap:14px; justify-content:center; flex-wrap:wrap; font-size:13px; color:var(--mute); }
+  .row label { display:flex; align-items:center; gap:6px; }
+  select { max-width:220px; background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:6px; padding:2px 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Talk to the Agent</h1>
+  <div><button id="stop" title="Stop speaking">Stop voice</button> <button id="reset">New chat</button></div>
+</header>
+<main id="log"><p class="hint" id="hint">Press the microphone and start talking. I’ll listen, answer out loud, then listen again — a continuous conversation. You can also type.</p></main>
+<footer>
+  <div class="bar">
+    <input id="text" placeholder="…or type a message" autocomplete="off">
+    <button id="mic" aria-label="Start or stop conversation">🎤</button>
+  </div>
+  <div id="status"></div>
+  <div class="row">
+    <label><input type="checkbox" id="speakToggle" checked> Speak replies</label>
+    <label id="voiceWrap">Voice <select id="voice"></select></label>
+  </div>
+</footer>
+<script>
+const $ = id => document.getElementById(id);
+const log = $("log"), mic = $("mic"), statusEl = $("status"), textIn = $("text");
+const session = (() => { try { let s = localStorage.sid; if (!s) localStorage.sid = s = crypto.randomUUID(); return s; } catch { return "tmp-" + Date.now(); } })();
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let neural = false, conversing = false, busy = false, recog = null, audioQ = [], playing = null, voices = [];
+let speakGen = 0; // bumped to cancel in-flight speech
+
+const setStatus = t => statusEl.textContent = t;
+function addMsg(role, text) {
+  $("hint")?.remove();
+  const d = document.createElement("div"); d.className = "msg " + (role === "user" ? "you" : "bot"); d.textContent = text;
+  log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
+}
+
+// ---------- voices ----------
+function rankVoice(v) {
+  const n = v.name.toLowerCase(); let s = 0;
+  if (/natural|neural|online/.test(n)) s += 50;     // Edge "… Online (Natural)"
+  if (/premium|enhanced/.test(n)) s += 40;          // macOS/iOS
+  if (/google/.test(n)) s += 30;                    // Chrome
+  if (v.lang.toLowerCase().startsWith(navigator.language.slice(0, 2).toLowerCase())) s += 20;
+  if (v.localService) s -= 5;
+  return s;
+}
+function loadVoices() {
+  voices = speechSynthesis.getVoices().sort((a, b) => rankVoice(b) - rankVoice(a));
+  const sel = $("voice"); sel.innerHTML = "";
+  voices.forEach((v, i) => sel.add(new Option(`${v.name} (${v.lang})`, i)));
+  try { const saved = localStorage.voice; const i = voices.findIndex(v => v.name === saved); if (i >= 0) sel.value = i; } catch {}
+}
+if ("speechSynthesis" in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+$("voice").onchange = () => { try { localStorage.voice = voices[$("voice").value].name; } catch {} };
+
+// ---------- speaking (sentence by sentence, so it starts talking early) ----------
+function splitSentences(buf, final) {
+  const out = []; let m; const re = /^(.+?[.!?…]+["')\]]*)(\s+|$)/s;
+  while ((m = re.exec(buf)) && (m[2] || final)) { out.push(m[1]); buf = buf.slice(m[0].length); }
+  if (final && buf.trim()) { out.push(buf); buf = ""; }
+  return [out, buf];
+}
+function cleanForSpeech(t) { return t.replace(/[*_`#>]+/g, "").replace(/\s+/g, " ").trim(); }
+
+class Speaker {
+  constructor() { this.gen = speakGen; this.chain = Promise.resolve(); this.prefetch = []; }
+  say(sentence) {
+    const text = cleanForSpeech(sentence); if (!text || this.gen !== speakGen) return;
+    if (neural) {
+      const audio = fetch("/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) })
+        .then(r => { if (!r.ok) throw new Error("tts " + r.status); return r.blob(); }).catch(() => null);
+      this.chain = this.chain.then(async () => { const b = await audio; if (this.gen !== speakGen) return; b ? await playBlob(b) : await browserSpeak(text); });
+    } else {
+      this.chain = this.chain.then(() => this.gen === speakGen ? browserSpeak(text) : null);
+    }
+  }
+  done() { return this.chain; }
+}
+function playBlob(blob) {
+  return new Promise(res => {
+    const a = new Audio(URL.createObjectURL(blob)); playing = a;
+    a.onended = a.onerror = () => { URL.revokeObjectURL(a.src); playing = null; res(); };
+    a.play().catch(res);
+  });
+}
+function browserSpeak(text) {
+  return new Promise(res => {
+    if (!("speechSynthesis" in window)) return res();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = voices[$("voice").value]; if (v) { u.voice = v; u.lang = v.lang; }
+    u.onend = u.onerror = res; speechSynthesis.speak(u);
+  });
+}
+function stopSpeaking() {
+  speakGen++; try { speechSynthesis.cancel(); } catch {}
+  if (playing) { playing.pause(); playing = null; }
+}
+$("stop").onclick = stopSpeaking;
+
+// ---------- chat ----------
+async function send(message) {
+  if (busy || !message.trim()) return;
+  busy = true; stopListening(); stopSpeaking();
+  addMsg("user", message); setStatus("Thinking…");
+  const bubble = addMsg("bot", "…"); let full = "", pending = "";
+  const speaker = $("speakToggle").checked ? new Speaker() : null;
+  try {
+    const r = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session, message }) });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || "Server error " + r.status);
+    const reader = r.body.getReader(), dec = new TextDecoder();
+    for (;;) {
+      const { value, done } = await reader.read(); if (done) break;
+      const chunk = dec.decode(value, { stream: true }); full += chunk; pending += chunk;
+      bubble.textContent = full; log.scrollTop = log.scrollHeight;
+      if (speaker) { const [s, rest] = splitSentences(pending, false); pending = rest; s.forEach(x => speaker.say(x)); if (s.length) setStatus("Speaking…"); }
+    }
+    if (speaker) { const [s] = splitSentences(pending, true); s.forEach(x => speaker.say(x)); await speaker.done(); }
+  } catch (e) { bubble.textContent = "⚠️ " + e.message; }
+  busy = false; setStatus("");
+  if (conversing) startListening();
+}
+textIn.addEventListener("keydown", e => { if (e.key === "Enter") { const t = textIn.value; textIn.value = ""; send(t); } });
+
+// ---------- listening ----------
+function startListening() {
+  if (!SR || busy) return;
+  recog = new SR(); recog.lang = navigator.language || "en-US"; recog.interimResults = true; recog.continuous = false;
+  let finalText = "", ended = false;
+  recog.onresult = e => {
+    let interim = "";
+    for (const r of e.results) r.isFinal ? (finalText += r[0].transcript) : (interim += r[0].transcript);
+    setStatus("🎙 " + (finalText + interim));
+  };
+  recog.onerror = e => {
+    if (e.error === "not-allowed" || e.error === "service-not-allowed") { setStatus("Microphone blocked — allow it in the address bar, then try again."); conversing = false; mic.classList.remove("live"); }
+  };
+  recog.onend = () => {
+    if (ended) return; ended = true;
+    if (!conversing) return;
+    if (finalText.trim()) send(finalText); else setTimeout(() => conversing && !busy && startListening(), 300); // silence: keep listening
+  };
+  try { recog.start(); setStatus("Listening…"); } catch {}
+}
+function stopListening() { if (recog) { const r = recog; recog = null; r.onend = null; try { r.abort(); } catch {} } }
+
+mic.onclick = () => {
+  if (!SR) return setStatus("Speech recognition isn’t supported in this browser — use Chrome, Edge or Safari, or type.");
+  conversing = !conversing; mic.classList.toggle("live", conversing);
+  if (conversing) { stopSpeaking(); startListening(); } else { stopListening(); setStatus(""); }
+};
+if (!SR) { mic.disabled = true; setStatus("Voice input needs Chrome, Edge or Safari. Typing works everywhere."); }
+
+$("reset").onclick = async () => {
+  stopSpeaking(); await fetch("/api/reset/" + session, { method: "POST" });
+  log.innerHTML = '<p class="hint" id="hint">New conversation. Press the microphone to talk.</p>';
+};
+
+// ---------- init ----------
+fetch("/api/config").then(r => r.json()).then(c => { neural = c.neural_tts; if (neural) $("voiceWrap").style.display = "none"; }).catch(() => {});
+fetch("/api/history/" + session).then(r => r.json()).then(h => h.forEach(m => addMsg(m.role, m.content))).catch(() => {});
+</script>
+</body>
+</html>
