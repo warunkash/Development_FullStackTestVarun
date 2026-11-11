@@ -1,0 +1,202 @@
+{
+ "null_with_costs": {
+  "runs": 30,
+  "trades": 370,
+  "trades_per_run": 12.333333333333334,
+  "mean_return_pct": 0.32116787028635496,
+  "median_return_pct": -1.27421669613366,
+  "stdev_return_pct": 7.073522922218964,
+  "pct_runs_profitable": 43.333333333333336,
+  "mean_avg_r": -0.04781444851668721,
+  "worst_dd_pct": 13.412043746287116,
+  "dd_kills": 0
+ },
+ "null_zero_cost": {
+  "runs": 30,
+  "trades": 372,
+  "trades_per_run": 12.4,
+  "mean_return_pct": 0.9535596391855423,
+  "median_return_pct": -0.8493611143043925,
+  "stdev_return_pct": 7.175892984792626,
+  "pct_runs_profitable": 43.333333333333336,
+  "mean_avg_r": 0.001705894630206591,
+  "worst_dd_pct": 12.657321082200435,
+  "dd_kills": 0
+ },
+ "sensitivity_null": {
+  "default (min RR 2, continuation)": {
+   "runs": 15,
+   "trades": 187,
+   "trades_per_run": 12.466666666666667,
+   "mean_return_pct": -1.54441647500914,
+   "median_return_pct": -2.9203719558049874,
+   "stdev_return_pct": 5.235640880137656,
+   "pct_runs_profitable": 40.0,
+   "mean_avg_r": -0.1823247812501625,
+   "worst_dd_pct": 9.648878557243808,
+   "dd_kills": 0
+  },
+  "min RR 1.0": {
+   "runs": 15,
+   "trades": 280,
+   "trades_per_run": 18.666666666666668,
+   "mean_return_pct": -1.5317169132053323,
+   "median_return_pct": -2.001818900127603,
+   "stdev_return_pct": 5.435218602985336,
+   "pct_runs_profitable": 46.666666666666664,
+   "mean_avg_r": -0.09899710048907506,
+   "worst_dd_pct": 11.698662916474419,
+   "dd_kills": 0
+  },
+  "min RR 3.0": {
+   "runs": 15,
+   "trades": 77,
+   "trades_per_run": 5.133333333333334,
+   "mean_return_pct": -0.9091847279668887,
+   "median_return_pct": -1.786810036435915,
+   "stdev_return_pct": 3.2577660619173363,
+   "pct_runs_profitable": 26.666666666666668,
+   "mean_avg_r": -0.10948823662600159,
+   "worst_dd_pct": 7.548318174067667,
+   "dd_kills": 0
+  },
+  "no continuation filter": {
+   "runs": 15,
+   "trades": 471,
+   "trades_per_run": 31.4,
+   "mean_return_pct": -3.925638737723896,
+   "median_return_pct": -4.411174834399182,
+   "stdev_return_pct": 5.0211195747219115,
+   "pct_runs_profitable": 13.333333333333334,
+   "mean_avg_r": -0.11648039828106686,
+   "worst_dd_pct": 13.723513527337097,
+   "dd_kills": 6
+  },
+  "risk 0.5%": {
+   "runs": 15,
+   "trades": 187,
+   "trades_per_run": 12.466666666666667,
+   "mean_return_pct": -0.772969909305615,
+   "median_return_pct": -1.3978935643744859,
+   "stdev_return_pct": 2.613317763167936,
+   "pct_runs_profitable": 40.0,
+   "mean_avg_r": -0.18232478125016255,
+   "worst_dd_pct": 4.896608163725421,
+   "dd_kills": 0
+  }
+ },
+ "null_secs": 51.8
+}
+{
+ "trades": 3,
+ "wins": 2,
+ "win_rate": 0.6666666666666666,
+ "net_pnl": 395.8112449842014,
+ "return_pct": 3.958112449842014,
+ "avg_r": 1.2821099475395583,
+ "total_r": 3.8463298426186747,
+ "profit_factor": 4.720344686346113,
+ "max_dd_pct": 2.687428845021178,
+ "dd_kills": 0,
+ "rejects": {
+  "outside_session": 25
+ },
+ "by_symbol": {
+  "SPX500": {
+   "n": 2,
+   "pnl": 293.5751099581559,
+   "wins": 1
+  },
+  "EURUSD": {
+   "n": 1,
+   "pnl": 102.23613502604545,
+   "wins": 1
+  }
+ },
+ "exits": {
+  "SL": 1,
+  "TP2": 1,
+  "BE": 1
+ },
+ "window": [
+  1790650260,
+  1792723828
+ ],
+ "setups_reaching_trigger": 8,
+ "bars": {
+  "EURUSD": 25587,
+  "GBPUSD": 25596,
+  "XAUUSD": 24693,
+  "SPX500": 24561,
+  "NAS100": 24561
+ },
+ "state_events": {
+  "EURUSD": {
+   "HTF_TREND_FLIP": 40,
+   "BOS": 29,
+   "NO_INDUCEMENT": 8,
+   "INDUCEMENT": 15,
+   "expired": 1,
+   "trend_flip": 14,
+   "SWEEP": 1,
+   "LTF_PENDING": 1,
+   "rr_too_low": 4,
+   "TRADE_EXECUTED": 1,
+   "TRADE_CLOSED": 1
+  },
+  "GBPUSD": {
+   "HTF_TREND_FLIP": 57,
+   "BOS": 30,
+   "INDUCEMENT": 20,
+   "trend_flip": 19,
+   "SWEEP": 3,
+   "LTF_PENDING": 3,
+   "body_close_beyond_extreme": 1,
+   "reset": 1,
+   "NO_INDUCEMENT": 5,
+   "rr_too_low": 18,
+   "sweep_timeout": 1,
+   "expired": 1
+  },
+  "XAUUSD": {
+   "HTF_TREND_FLIP": 58,
+   "BOS": 35,
+   "INDUCEMENT": 16,
+   "trend_flip": 15,
+   "SWEEP": 2,
+   "LTF_PENDING": 2,
+   "rr_too_low": 25,
+   "sweep_timeout": 1,
+   "body_close_beyond_extreme": 1,
+   "reset": 1,
+   "NO_INDUCEMENT": 11
+  },
+  "SPX500": {
+   "HTF_TREND_FLIP": 51,
+   "BOS": 37,
+   "INDUCEMENT": 16,
+   "SWEEP": 3,
+   "LTF_PENDING": 3,
+   "TRADE_EXECUTED": 2,
+   "TRADE_CLOSED": 2,
+   "trend_flip": 14,
+   "NO_INDUCEMENT": 13,
+   "expired": 1,
+   "body_close_beyond_extreme": 1,
+   "reset": 1
+  },
+  "NAS100": {
+   "HTF_TREND_FLIP": 59,
+   "BOS": 39,
+   "INDUCEMENT": 21,
+   "trend_flip": 20,
+   "NO_INDUCEMENT": 7,
+   "SWEEP": 3,
+   "LTF_PENDING": 3,
+   "rr_too_low": 44,
+   "sweep_timeout": 2,
+   "body_close_beyond_extreme": 1,
+   "reset": 1
+  }
+ }
+}
