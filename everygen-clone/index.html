@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clipforge – AI short video studio (demo clone)</title>
+<meta name="description" content="Static demo landing page inspired by AI video creation suites. Not affiliated with everygen.ai.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><div class="wrap">
+  <a class="logo" href="#"><span>Clip</span>forge</a>
+  <ul><li><a href="#generation">Generation</a></li><li><a href="#features">Features</a></li><li><a href="#ads">AI ads</a></li><li><a href="#agents">Agents</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#faq">FAQ</a></li></ul>
+  <a class="btn" href="#top">Start creating</a>
+</div></nav>
+
+<header class="hero wrap" id="top">
+  <h1>Turn ideas into <em>short videos</em> in minutes</h1>
+  <p>Generate videos and images, write scripts, add voiceovers and captions — all in one project.</p>
+  <form class="prompt" id="gen">
+    <input id="idea" placeholder="Describe your video, e.g. a 15s ad for cold brew coffee" aria-label="Video idea">
+    <button class="btn">Generate</button>
+  </form>
+  <div class="preview" id="preview"></div>
+</header>
+
+<section id="generation"><div class="wrap">
+  <h2>AI video &amp; image generation</h2>
+  <p class="sub">Generate with several models, then pick the format you need.</p>
+  <div class="chips" id="models" role="group" aria-label="Model">
+    <button class="chip on" data-v="Model A">Model A</button>
+    <button class="chip" data-v="Model B">Model B</button>
+    <button class="chip" data-v="Model C">Model C</button>
+    <button class="chip" data-v="Image model">Image model</button>
+  </div>
+  <div class="tabs" id="formats" role="tablist" aria-label="Format">
+    <button class="tab on" data-v="YouTube Shorts" role="tab">YouTube Shorts</button>
+    <button class="tab" data-v="AI ads" role="tab">AI ads</button>
+    <button class="tab" data-v="UGC-style" role="tab">UGC-style videos</button>
+    <button class="tab" data-v="Story" role="tab">Story videos</button>
+  </div>
+  <div class="card gen-detail" id="format-detail"></div>
+  <p class="sub" style="margin-top:16px"><a class="btn" href="#top">Try it in the prompt box</a></p>
+</div></section>
+
+<section id="features"><div class="wrap">
+  <h2>Everything in one project</h2>
+  <p class="sub">From prompt to published short.</p>
+  <div class="grid">
+    <div class="card"><div class="ic">🎬</div><h3>AI video &amp; images</h3><p>Generate clips and stills with a choice of leading models.</p></div>
+    <div class="card"><div class="ic">📝</div><h3>Script writing</h3><p>Draft hooks and scripts tuned for Shorts, Reels and TikTok.</p></div>
+    <div class="card"><div class="ic">🎙️</div><h3>Voiceovers</h3><p>Create or swap voices for any clip.</p></div>
+    <div class="card"><div class="ic">💬</div><h3>Captions</h3><p>Add or remove captions with one click.</p></div>
+    <div class="card"><div class="ic">📥</div><h3>Import media</h3><p>Bring your own footage and keep editing in the same place.</p></div>
+    <div class="card"><div class="ic">📦</div><h3>Product videos</h3><p>Turn a product page into a ready-to-post video.</p></div>
+  </div>
+</div></section>
+
+<section id="ads"><div class="wrap">
+  <h2>Formats that perform</h2>
+  <p class="sub">Pick a format, we handle the structure.</p>
+  <div class="grid">
+    <div class="card"><h3>YouTube Shorts</h3><p>Vertical, fast-paced, loop-friendly.</p></div>
+    <div class="card"><h3>AI ads</h3><p>Product-first spots with clear calls to action.</p></div>
+    <div class="card"><h3>UGC style</h3><p>Authentic, creator-style talking videos.</p></div>
+    <div class="card"><h3>Story videos</h3><p>Narrated scenes from a single idea.</p></div>
+  </div>
+</div></section>
+
+<section id="agents"><div class="wrap">
+  <h2>Works with your AI agents</h2>
+  <p class="sub">Connect an MCP-compatible client to upload, generate and check status.</p>
+<pre>{
+  "mcpServers": {
+    "clipforge": { "url": "https://example.com/mcp" }
+  }
+}</pre>
+</div></section>
+
+<section id="pricing"><div class="wrap">
+  <h2>Pay with credits</h2>
+  <p class="sub">Placeholder pricing for this demo.</p>
+  <div class="grid price">
+    <div class="card"><h3>Starter</h3><div class="big">$9</div><p>100 credits</p></div>
+    <div class="card"><h3>Creator</h3><div class="big">$29</div><p>400 credits</p></div>
+    <div class="card"><h3>Studio</h3><div class="big">$79</div><p>1,200 credits</p></div>
+  </div>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <h2>FAQ</h2><p class="sub">&nbsp;</p>
+  <details><summary>Does this generate real videos?</summary><p>No. This is a static front-end demo.</p></details>
+  <details><summary>Is it affiliated with everygen.ai?</summary><p>No. It is an original layout inspired by the product category.</p></details>
+  <details><summary>How do credits work?</summary><p>Each generation would consume credits; numbers here are placeholders.</p></details>
+</div></section>
+
+<footer><div class="wrap">© 2026 Clipforge demo · Not affiliated with everygen.ai</div></footer>
+<script src="app.js"></script>
+</body>
+</html>
