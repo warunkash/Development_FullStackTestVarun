@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 3%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 38 92% 50%;
+    --primary-foreground: 0 0% 5%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 38 80% 45%;
+    --accent-foreground: 0 0% 5%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 38 92% 50%;
+    --radius: 0.5rem;
+
+    --wisdom-gold: 38 92% 50%;
+    --wisdom-amber: 30 90% 48%;
+    --wisdom-deep: 210 30% 12%;
+    --timeline-marker: 38 92% 50%;
+    --principle-t1: 38 92% 50%;
+    --principle-t2: 200 80% 50%;
+    --principle-t3: 280 70% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* ── Timeline ──────────────────────────────────────────────── */
+.timeline-bar {
+  @apply relative h-2 rounded-full bg-muted overflow-hidden;
+}
+
+.timeline-marker {
+  @apply absolute top-0 h-full w-1 rounded-full cursor-pointer transition-all;
+  background: hsl(var(--timeline-marker));
+}
+
+.timeline-marker:hover {
+  @apply w-2 -translate-x-0.5 shadow-lg;
+  box-shadow: 0 0 8px hsl(var(--wisdom-gold) / 0.8);
+}
+
+/* ── Wisdom Card ───────────────────────────────────────────── */
+.wisdom-card {
+  @apply relative rounded-lg border border-border bg-card p-4 transition-all duration-200;
+}
+
+.wisdom-card:hover {
+  @apply border-primary/50 shadow-lg;
+  box-shadow: 0 0 20px hsl(var(--wisdom-gold) / 0.1);
+}
+
+.wisdom-card::before {
+  content: '';
+  @apply absolute left-0 top-0 bottom-0 w-1 rounded-l-lg;
+  background: hsl(var(--wisdom-gold));
+}
+
+/* ── Chat ──────────────────────────────────────────────────── */
+.chat-message-user {
+  @apply bg-primary/10 border border-primary/20 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%] ml-auto;
+}
+
+.chat-message-assistant {
+  @apply bg-card border border-border rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%];
+}
+
+/* ── Principle Badge ───────────────────────────────────────── */
+.principle-badge {
+  @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+
+.principle-t1 {
+  @apply bg-amber-500/15 text-amber-400 border border-amber-500/30;
+}
+
+.principle-t2 {
+  @apply bg-sky-500/15 text-sky-400 border border-sky-500/30;
+}
+
+.principle-t3 {
+  @apply bg-purple-500/15 text-purple-400 border border-purple-500/30;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground;
+}
+
+/* ── Animations ────────────────────────────────────────────── */
+@keyframes wisdom-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes gold-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.wisdom-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--wisdom-gold) / 0.3),
+    hsl(var(--wisdom-gold) / 0.8),
+    hsl(var(--wisdom-gold) / 0.3)
+  );
+  background-size: 200% auto;
+  animation: gold-shimmer 2s linear infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
