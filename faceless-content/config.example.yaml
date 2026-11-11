@@ -1,0 +1,80 @@
+# Copy to config.yaml and edit. Every key is optional - anything omitted keeps
+# the built-in default. Secrets belong in the environment, not in this file;
+# ${VAR} and ${VAR:-default} are expanded from the environment on load.
+
+output_dir: output
+state_path: output/state.json
+
+# Extra terms to refuse on top of the built-in brand-safety blocklist.
+blocklist_extra: []
+
+discovery:
+  # Sources are queried in order; any that fails is skipped, not fatal.
+  #   wikipedia     - yesterday's most-read articles (literal pageviews)
+  #   google_trends - trending-now RSS, scored by approximate search volume
+  #   reddit        - top posts of the day in the subreddits below
+  #   hacker_news   - front page, scored by points
+  #   youtube       - the mostPopular chart (needs youtube_api_key)
+  sources: [wikipedia, google_trends, reddit, hacker_news]
+  geo: US
+  subreddits: [todayilearned, explainlikeimfive, science]
+  # Metrics are not comparable across sources, so each is normalised against
+  # its own peak and then multiplied by these weights.
+  weights:
+    wikipedia: 1.0
+    youtube: 1.0
+    google_trends: 0.9
+    reddit: 0.7
+    hacker_news: 0.5
+  # Multiplier applied per extra source that independently surfaced a topic.
+  corroboration_bonus: 0.35
+  cooldown_days: 30
+  min_score: 0.05
+  youtube_api_key: ${YOUTUBE_API_KEY:-}
+
+script:
+  writer: auto            # auto | anthropic | template
+  model: claude-opus-5
+  effort: medium          # low | medium | high | xhigh | max
+  target_seconds: 42
+  words_per_second: 2.6
+  max_beats: 6
+  tone: curious, fast-paced, plainspoken
+  audience: a general short-form video audience
+
+voice:
+  backend: auto           # auto | elevenlabs | openai | espeak
+  elevenlabs_voice_id: 21m00Tcm4TlvDq8ikWAM
+  openai_voice: alloy
+  espeak_wpm: 165
+
+visuals:
+  provider: auto          # auto | pexels | gradient
+  max_clips: 8
+  # per_beat_seconds: 0 splits the voiceover evenly across the clips.
+  per_beat_seconds: 0
+
+captions:
+  enabled: true
+  max_chars: 28
+  font: DejaVu Sans
+  font_size: 78
+  margin_v: 420           # distance from the bottom edge, in video pixels
+
+render:
+  width: 1080
+  height: 1920
+  fps: 30
+  crf: 20
+  preset: medium
+  # music_path: assets/bed.mp3
+  music_volume: 0.12
+
+publish:
+  # Empty means render only. Publishing also requires the --publish flag.
+  targets: []             # youtube | tiktok | instagram
+  privacy: public         # public | unlisted | private
+  hashtag_limit: 8
+  description_footer: ""
+  # Instagram fetches the file over HTTP, so it needs a public URL for it.
+  public_base_url: ""
