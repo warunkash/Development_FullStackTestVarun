@@ -1,0 +1,348 @@
+:root {
+  color-scheme: dark;
+  --cyan: #00e5ff;
+  --cyan-dim: rgba(0, 229, 255, 0.35);
+  --red: #ff4d6d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: #000308;
+  font-family: "Share Tech Mono", monospace;
+  color: #d9fbff;
+  overflow: hidden;
+}
+
+.app-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+.app-root canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.hud-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+}
+
+.hud-overlay > * {
+  pointer-events: auto;
+}
+
+.hud-panel {
+  background: linear-gradient(180deg, rgba(0, 30, 40, 0.55), rgba(0, 10, 15, 0.65));
+  border: 1px solid var(--cyan-dim);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.12), inset 0 0 24px rgba(0, 229, 255, 0.05);
+  backdrop-filter: blur(3px);
+  border-radius: 4px;
+}
+
+/* --- Status HUD --- */
+.status-hud {
+  align-self: flex-start;
+  padding: 10px 18px;
+  min-width: 320px;
+}
+
+.status-title {
+  font-family: "Orbitron", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  margin-bottom: 6px;
+  text-shadow: 0 0 8px var(--cyan-dim);
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+.status-badge.live {
+  color: #7dffb0;
+}
+.status-badge.sim {
+  color: #ffd166;
+}
+.status-pulse.up {
+  color: var(--cyan);
+}
+.status-pulse.down {
+  color: var(--red);
+}
+
+/* --- Watchlist bar --- */
+.watchlist-bar {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  max-width: 60vw;
+  flex-wrap: wrap;
+}
+
+.watchlist-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.watchlist-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 20, 26, 0.6);
+  border: 1px solid var(--cyan-dim);
+  color: var(--cyan);
+  font-family: "Share Tech Mono", monospace;
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.watchlist-chip.active {
+  background: rgba(0, 229, 255, 0.18);
+  box-shadow: 0 0 10px var(--cyan-dim);
+}
+
+.watchlist-chip.down {
+  color: var(--red);
+  border-color: rgba(255, 77, 109, 0.35);
+}
+
+.chip-pct {
+  opacity: 0.8;
+}
+
+.chip-remove {
+  opacity: 0.5;
+  padding-left: 2px;
+}
+.chip-remove:hover {
+  opacity: 1;
+  color: var(--red);
+}
+
+.watchlist-add input {
+  width: 70px;
+  background: transparent;
+  border: 1px dashed var(--cyan-dim);
+  color: var(--cyan);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 3px;
+}
+.watchlist-add input:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+
+/* --- JARVIS panel --- */
+.jarvis-panel {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  width: 380px;
+  max-height: 46vh;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(0, 30, 40, 0.6), rgba(0, 8, 12, 0.75));
+  border: 1px solid var(--cyan-dim);
+  border-radius: 6px;
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.15);
+}
+
+.jarvis-header {
+  font-family: "Orbitron", sans-serif;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.jarvis-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+  animation: pulse 1.6s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+.jarvis-voice-toggle {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.jarvis-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  padding-right: 4px;
+  min-height: 80px;
+}
+
+.jarvis-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.jarvis-msg-label {
+  font-size: 9px;
+  letter-spacing: 1px;
+  opacity: 0.55;
+}
+
+.jarvis-msg-jarvis {
+  color: var(--cyan);
+}
+.jarvis-msg-user {
+  color: #ffffff;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.jarvis-input-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.jarvis-input-row input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--cyan-dim);
+  color: #e9fbff;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 7px 9px;
+  border-radius: 3px;
+}
+.jarvis-input-row input:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+
+.jarvis-input-row button {
+  background: rgba(0, 229, 255, 0.12);
+  border: 1px solid var(--cyan-dim);
+  color: var(--cyan);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 7px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.jarvis-input-row button:hover {
+  background: rgba(0, 229, 255, 0.22);
+}
+
+.jarvis-mic.listening {
+  background: rgba(255, 77, 109, 0.2);
+  border-color: rgba(255, 77, 109, 0.5);
+  color: var(--red);
+}
+
+/* --- Corner brackets --- */
+.corner {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--cyan-dim);
+  opacity: 0.7;
+}
+.corner-tl { top: 12px; left: 12px; border-right: none; border-bottom: none; }
+.corner-tr { top: 12px; right: 12px; border-left: none; border-bottom: none; }
+.corner-bl { bottom: 12px; left: 12px; border-right: none; border-top: none; }
+.corner-br { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+
+/* --- Scanlines overlay --- */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 229, 255, 0.025) 0px,
+    rgba(0, 229, 255, 0.025) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: screen;
+}
+
+/* --- 3D panel HTML readouts --- */
+.panel-readout {
+  font-family: "Share Tech Mono", monospace;
+  text-shadow: 0 0 6px currentColor;
+  user-select: none;
+}
+
+.panel-readout-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.panel-symbol {
+  font-weight: bold;
+}
+
+.panel-price {
+  font-size: 22px;
+  color: #e9fbff;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  margin-top: 4px;
+}
+
+/* --- Scrollbar --- */
+.jarvis-messages::-webkit-scrollbar {
+  width: 4px;
+}
+.jarvis-messages::-webkit-scrollbar-thumb {
+  background: var(--cyan-dim);
+  border-radius: 2px;
+}
