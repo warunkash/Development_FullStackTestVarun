@@ -1,0 +1,133 @@
+# autobot configuration.
+#
+# Every setting here can be overridden from the environment with AUTOBOT_*
+# (AUTOBOT_POLICY, AUTOBOT_WORKSPACE, AUTOBOT_MODEL, AUTOBOT_ALLOWED_DOMAINS,
+# AUTOBOT_ALLOW_DANGEROUS_TOOLS, ...), which is how the GitHub Actions job
+# switches policies without editing this file.
+
+# Which brain picks the actions: "rule" replays a task's playbook (no
+# credentials, fully deterministic); "claude" lets the model decide.
+policy: rule
+
+# Filesystem tools are confined to this directory.
+workspace: .
+
+# Per-run JSONL transcripts land here.
+journal_dir: runs
+
+# Used only by the claude policy.
+model: claude-opus-5
+effort: high
+max_tokens: 16000
+
+# Hosts http_get is allowed to reach. An empty list means unrestricted -
+# set it to something real before pointing this at the open internet.
+allowed_domains:
+  - api.github.com
+  - raw.githubusercontent.com
+
+# run_command and anything else marked dangerous stays unavailable until this
+# is switched on.
+allow_dangerous_tools: false
+
+# Abandon a run after this many consecutive failed steps.
+failure_limit: 3
+
+# Pinterest integration. The access token is NOT stored here - it is read from
+# the PINTEREST_ACCESS_TOKEN environment variable (scopes: pins:write,
+# boards:read).
+pinterest:
+  # Build and log every request but publish nothing. Leave this on until you
+  # have watched a few dry runs and agree with what they would have posted.
+  # Publishing is public and the bot cannot undo it.
+  dry_run: true
+  # Hard ceiling per run, independent of what the policy decides to do.
+  max_pins_per_run: 5
+  # Point at Pinterest's sandbox instead of the live API while developing.
+  sandbox: false
+
+tasks:
+  # A deterministic task: no model, no network, safe to run anywhere.
+  # This is the one CI runs on every push.
+  - name: heartbeat
+    objective: Record that the bot is alive and write a status file.
+    interval_s: 900
+    max_steps: 6
+    deadline_s: 120
+    playbook:
+      - tool: current_time
+        rationale: establish when this run happened
+      - tool: write_file
+        rationale: leave a status file the next run (and a human) can read
+        args:
+          path: runs/status.txt
+          content: "autobot heartbeat ok at {{last_output}}"
+      - tool: append_json_line
+        rationale: keep an append-only history of heartbeats
+        args:
+          path: runs/heartbeats.jsonl
+          record:
+            event: heartbeat
+            source: autobot
+      - tool: finish
+        args:
+          summary: Heartbeat recorded; status file and history updated.
+
+  # Verifies the Pinterest connection without publishing anything: it only
+  # reads boards. Run this first after setting PINTEREST_ACCESS_TOKEN.
+  - name: pinterest-boards
+    objective: Confirm the Pinterest credentials work and record the boards.
+    interval_s: 86400
+    max_steps: 6
+    deadline_s: 120
+    enabled: false
+    playbook:
+      - tool: pinterest_list_boards
+        rationale: proves the token and the boards:read scope work
+      - tool: write_file
+        rationale: keep the board ids where the posting task can find them
+        args:
+          path: runs/pinterest_boards.txt
+          content: "{{last_output}}"
+      - tool: finish
+        args:
+          summary: Pinterest credentials verified and boards recorded.
+
+  # Publishes pins from pins/queue.jsonl. Deterministic - no model involved, so
+  # it needs no Claude credentials and always does exactly the same thing.
+  # Re-running never double-posts: published pins are recorded in
+  # runs/posted.jsonl and skipped thereafter.
+  #
+  # To actually publish you must change three things, deliberately:
+  #   1. this task's `enabled: false` -> true
+  #   2. `allow_dangerous_tools: false` -> true (above)
+  #   3. `pinterest.dry_run: true` -> false (above)
+  # Leave dry_run on until you have read a run's log and agree with every pin
+  # it would have sent. Pins are public and the bot cannot take them back.
+  - name: pinterest-post
+    objective: Publish any queued pins that have not been posted yet.
+    interval_s: 86400
+    max_steps: 6
+    deadline_s: 900
+    enabled: false
+    playbook:
+      - tool: pinterest_post_queue
+        rationale: drain the queue, skipping anything already published
+        args:
+          queue_path: pins/queue.jsonl
+          posted_path: runs/posted.jsonl
+      - tool: finish
+        args:
+          summary: "Queue drained: {{last_output}}"
+
+  # An open-ended task: the claude policy decides which tools to call.
+  # Under the rule policy it has no playbook, so `autobot doctor` flags it.
+  - name: repo-digest
+    objective: >-
+      Summarise what changed in this repository recently. Read README.md and
+      list the top-level directories, then write a short digest to
+      runs/digest.md and finish with a one-line summary.
+    interval_s: 86400
+    max_steps: 12
+    deadline_s: 600
+    enabled: false
