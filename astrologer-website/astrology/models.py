@@ -120,7 +120,7 @@ class DailyHoroscope(models.Model):
     """An editor-written reading that overrides the generated one for a day."""
 
     sign = models.CharField(max_length=20, choices=SIGN_CHOICES)
-    day = models.DateField(default=date.today)
+    day = models.DateField(default=timezone.localdate)
     general = models.TextField()
     love = models.CharField(max_length=300)
     career = models.CharField(max_length=300)
@@ -171,6 +171,34 @@ def reading_for(sign: zodiac.Sign, day: date) -> zodiac.Reading:
     if stored is not None:
         return stored.as_reading()
     return zodiac.generate_reading(sign, day)
+
+
+def readings_for(signs, day: date) -> list[zodiac.Reading]:
+    """Readings for many signs on one day, in one query."""
+    overrides = {
+        row.sign: row for row in DailyHoroscope.objects.filter(day=day)
+    }
+    return [
+        overrides[sign.slug].as_reading()
+        if sign.slug in overrides
+        else zodiac.generate_reading(sign, day)
+        for sign in signs
+    ]
+
+
+def readings_over_days(sign: zodiac.Sign, days) -> dict[date, zodiac.Reading]:
+    """Readings for one sign across many days, in one query."""
+    days = list(days)
+    overrides = {
+        row.day: row
+        for row in DailyHoroscope.objects.filter(sign=sign.slug, day__in=days)
+    }
+    return {
+        day: overrides[day].as_reading()
+        if day in overrides
+        else zodiac.generate_reading(sign, day)
+        for day in days
+    }
 
 
 class Booking(models.Model):

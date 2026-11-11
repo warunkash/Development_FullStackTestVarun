@@ -55,7 +55,7 @@
 
       {% if astrologer.is_accepting_bookings %}
         <a class="btn btn-primary" style="margin-top:1.5rem;width:100%;text-align:center"
-           href="{% url 'book' %}?astrologer={{ astrologer.slug }}">Book with {{ astrologer.name|cut:" "|truncatechars:14 }}</a>
+           href="{% url 'book' %}?astrologer={{ astrologer.slug }}">Book with {{ astrologer.name|truncatewords:1 }}</a>
       {% else %}
         <p class="muted small" style="margin-top:1.5rem">{{ astrologer.name }} is not accepting new bookings right now.
            <a href="{% url 'astrologer_list' %}">See who is available</a>.</p>

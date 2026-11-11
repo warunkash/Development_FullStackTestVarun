@@ -23,6 +23,8 @@ from .models import (
     Specialisation,
     Testimonial,
     reading_for,
+    readings_for,
+    readings_over_days,
 )
 
 
@@ -118,7 +120,7 @@ def horoscope_index(request):
         request,
         "astrology/horoscope_index.html",
         {
-            "readings": [reading_for(sign, today) for sign in zodiac.SIGNS],
+            "readings": readings_for(zodiac.SIGNS, today),
             "day": today,
         },
     )
@@ -130,13 +132,15 @@ def horoscope_detail(request, slug):
         raise Http404("Unknown zodiac sign.")
 
     today = timezone.localdate()
-    week = [reading_for(sign, today + timedelta(days=offset)) for offset in range(1, 4)]
+    days = [today + timedelta(days=offset) for offset in range(4)]
+    by_day = readings_over_days(sign, days)
+    week = [by_day[day] for day in days[1:]]
     return render(
         request,
         "astrology/horoscope_detail.html",
         {
             "sign": sign,
-            "reading": reading_for(sign, today),
+            "reading": by_day[today],
             "upcoming": week,
             "day": today,
             "compatible": sorted(
@@ -161,7 +165,7 @@ def find_my_sign(request):
         try:
             year, month, day = (int(part) for part in raw.split("-"))
             born = date(year, month, day)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, OverflowError):
             error = "Please enter a valid date."
         else:
             if born > timezone.localdate():
@@ -238,15 +242,35 @@ def _notify_desk(booking: Booking) -> None:
 
 
 def booking_confirmation(request, reference):
-    booking = get_object_or_404(Booking, reference=reference)
+    """Show one booking.
+
+    A guest booking is reachable by its reference alone — that link is all the
+    client has. Once a booking belongs to an account it stops being a bearer
+    token and only that account (or staff) may open it.
+    """
+    booking = get_object_or_404(
+        Booking.objects.select_related("astrologer", "service"), reference=reference
+    )
+    if booking.user_id is not None:
+        user = request.user
+        if not (user.is_authenticated and (user.pk == booking.user_id or user.is_staff)):
+            raise Http404("No such booking.")
     return render(request, "astrology/booking_confirmation.html", {"booking": booking})
 
 
 @login_required
 def my_bookings(request):
-    bookings = Booking.objects.filter(
-        Q(user=request.user) | Q(email__iexact=request.user.email)
-    ).select_related("astrologer", "service").distinct()
+    """Bookings attached to this account.
+
+    Deliberately keyed on the account, not the e-mail address: sign-up does not
+    verify e-mail, so matching on it would let anyone who registers with a
+    guest's address read that guest's booking and the question they asked.
+    Guests keep access through the reference link they were given.
+    """
+    bookings = (
+        Booking.objects.filter(user=request.user)
+        .select_related("astrologer", "service")
+    )
     return render(request, "astrology/my_bookings.html", {"bookings": bookings})
 
 
