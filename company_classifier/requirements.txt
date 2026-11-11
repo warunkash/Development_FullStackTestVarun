@@ -1,0 +1,16 @@
+# Core HTTP + HTML parsing (for website enrichment)
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# HuggingFace zero-shot classification
+# facebook/bart-large-mnli requires PyTorch; install CPU-only torch first if
+# you don't need GPU: pip install torch --index-url https://download.pytorch.org/whl/cpu
+transformers>=4.35.0
+torch>=2.0.0
+
+# Agent backends (install at least one for LLM-powered classification)
+# Option A — OpenAI Agents SDK (GitHub Models compatible)
+openai-agents>=0.0.3
+
+# Option B — Anthropic client (used as fallback if openai-agents is absent)
+anthropic>=0.25.0
