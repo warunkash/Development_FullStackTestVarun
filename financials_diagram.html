@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How Financials Are Connected</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      padding: 30px 20px;
+    }
+
+    .page {
+      background: #fff;
+      border-radius: 12px;
+      padding: 30px 24px 40px;
+      max-width: 900px;
+      width: 100%;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.7rem;
+      font-weight: 900;
+      margin-bottom: 28px;
+      letter-spacing: -0.5px;
+    }
+
+    /* ── diagram wrapper: columns + SVG overlay ── */
+    .diagram-wrapper {
+      position: relative;
+    }
+
+    .columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* ── individual column ── */
+    .col {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid #555;
+    }
+
+    .col-header {
+      text-align: center;
+      font-weight: 800;
+      font-size: 0.95rem;
+      padding: 10px 8px;
+      border-bottom: 2px solid #555;
+    }
+
+    .col-body {
+      padding: 14px 16px;
+      font-size: 0.82rem;
+      line-height: 1.75;
+    }
+
+    /* ── SWAPPED COLORS ──
+       Original: Balance Sheet = blue, P/L = green, Cash Flow = pink
+       Swapped:  Balance Sheet = pink, P/L = blue,  Cash Flow = green   */
+
+    /* Balance Sheet → PINK (was Cash Flow's color) */
+    .col-balance .col-header { background: #e8b4b8; }
+    .col-balance .col-body   { background: #fbe8ea; }
+    .col-balance             { border-color: #b0686e; }
+
+    /* P/L Statement → BLUE (was Balance Sheet's color) */
+    .col-pl .col-header { background: #7aadcf; }
+    .col-pl .col-body   { background: #d6eaf8; }
+    .col-pl             { border-color: #4a7fa0; }
+
+    /* Cash Flow Statement → GREEN (was P/L's color) */
+    .col-cf .col-header { background: #7bbf8a; }
+    .col-cf .col-body   { background: #d5eedd; }
+    .col-cf             { border-color: #4a9660; }
+
+    /* ── typography helpers ── */
+    .item { display: flex; align-items: baseline; gap: 4px; }
+    .bold { font-weight: 700; }
+    .underline { text-decoration: underline; font-weight: 700; }
+    .spacer { margin-top: 10px; }
+    .small-spacer { margin-top: 5px; }
+
+    /* ── SVG connector overlay ── */
+    .connector-svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .connector-svg line, .connector-svg path {
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* row-id anchors (invisible, used only for JS positioning) */
+    [data-row] { position: relative; }
+  </style>
+</head>
+<body>
+<div class="page">
+  <h1>How Financials Are Connected</h1>
+
+  <div class="diagram-wrapper">
+    <div class="columns">
+
+      <!-- ═══════════ BALANCE SHEET (now PINK) ═══════════ -->
+      <div class="col col-balance">
+        <div class="col-header">Balance Sheet</div>
+        <div class="col-body">
+
+          <div class="underline" id="bs-assets-title">Current &amp; Long-Term Assets</div>
+
+          <div class="item spacer" id="bs-cash">+Cash</div>
+          <div class="item small-spacer" id="bs-inventory">+Inventory</div>
+          <div class="item small-spacer" id="bs-ar">+Account Receivable</div>
+          <div class="item small-spacer" id="bs-ppe1">+ PP&amp;E</div>
+          <div class="item small-spacer" id="bs-intangible">+Intangible Assets</div>
+          <div class="item small-spacer" id="bs-others1">+ Others</div>
+          <div class="item small-spacer bold" id="bs-total-assets">= Total Assets</div>
+
+          <div class="underline spacer" id="bs-liab-title">Liabilities</div>
+
+          <div class="item spacer" id="bs-ap">+ Account Payable</div>
+          <div class="item small-spacer" id="bs-std">+ Short-Term Debt</div>
+          <div class="item small-spacer" id="bs-ltd">+ Long-Term Debt</div>
+          <div class="item small-spacer" id="bs-ppe2">+ PP&amp;E</div>
+          <div class="item small-spacer" id="bs-others2">+ Others</div>
+          <div class="item small-spacer bold" id="bs-total-liab">= Total Liabilities</div>
+
+          <div class="underline spacer bold" id="bs-equity">Equity = Asset – Liabilities</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ P/L STATEMENT (now BLUE) ═══════════ -->
+      <div class="col col-pl">
+        <div class="col-header">P/L Statement</div>
+        <div class="col-body">
+
+          <div class="item bold" id="pl-revenue">Revenue</div>
+          <div class="item" id="pl-cogs">- COGS</div>
+
+          <div class="item spacer bold" id="pl-gross">= Gross Profit</div>
+          <div class="item" id="pl-opex">- Operating Expenses</div>
+          <div class="item" id="pl-sga">- SG&amp;A</div>
+
+          <div class="item spacer bold" id="pl-ebitda">= EBITDA</div>
+          <div class="item" id="pl-da">- D&amp;A</div>
+
+          <div class="item spacer bold" id="pl-ebit">= EBIT</div>
+          <div class="item" id="pl-interest">- Interest Expenses</div>
+
+          <div class="item spacer bold" id="pl-pbt">= Profit Before Tax</div>
+          <div class="item" id="pl-tax">- Tax Expenses</div>
+
+          <div class="item spacer bold" id="pl-pat">= Profit After Tax</div>
+          <div class="item" id="pl-div">- Dividends</div>
+
+          <div class="item spacer bold" id="pl-retained">= Retained Earnings</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ CASH FLOW STATEMENT (now GREEN) ═══════════ -->
+      <div class="col col-cf">
+        <div class="col-header">Cash Flow Statement</div>
+        <div class="col-body">
+
+          <div class="item bold" id="cf-ebit">EBIT</div>
+          <div class="item" id="cf-da">+ D&amp;A</div>
+          <div class="item" id="cf-noncash">+ Other Non-Cash Expense</div>
+
+          <div class="item spacer" id="cf-inv">- Increase In Inventory</div>
+
+          <div class="item spacer" id="cf-rec">- Increase in Receivable</div>
+
+          <div class="item spacer" id="cf-pay">+ Increase In Payable</div>
+          <div class="item bold" id="cf-ocf">= Operating Cash Flow</div>
+
+          <div class="item spacer" id="cf-int">- Net Interest Paid</div>
+
+          <div class="item spacer" id="cf-tax">- Tax Paid</div>
+          <div class="item bold" id="cf-nocf">= Net Operating Cash Flow</div>
+
+          <div class="item spacer" id="cf-capex">- Capital Expenditure</div>
+          <div class="item" id="cf-div">- Dividends</div>
+          <div class="item" id="cf-eq">+/- Change in Equity</div>
+          <div class="item" id="cf-debt">+/- Change in Debt</div>
+          <div class="item bold" id="cf-movement">= Movement In Cash</div>
+        </div>
+      </div>
+
+    </div><!-- /.columns -->
+
+    <!-- SVG connector lines drawn by JS after layout -->
+    <svg class="connector-svg" id="connectors"></svg>
+
+  </div><!-- /.diagram-wrapper -->
+</div><!-- /.page -->
+
+<script>
+  /* Draw connectors after the DOM has fully laid out */
+  document.addEventListener('DOMContentLoaded', () => {
+    const svg  = document.getElementById('connectors');
+    const wrap = svg.parentElement;
+
+    function mid(el) {
+      const r  = el.getBoundingClientRect();
+      const wr = wrap.getBoundingClientRect();
+      return {
+        top:    r.top    - wr.top  + r.height / 2,
+        left:   r.left   - wr.left,
+        right:  r.right  - wr.left,
+        width:  r.width,
+        height: r.height,
+      };
+    }
+
+    function line(x1, y1, x2, y2, color) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      el.setAttribute('x1', x1); el.setAttribute('y1', y1);
+      el.setAttribute('x2', x2); el.setAttribute('y2', y2);
+      el.setAttribute('stroke', color);
+      svg.appendChild(el);
+    }
+
+    function arrow(x1, y1, x2, y2, color) {
+      line(x1, y1, x2, y2, color);
+      /* arrowhead */
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const size  = 7;
+      const a1 = angle + Math.PI * 0.8;
+      const a2 = angle - Math.PI * 0.8;
+      const p = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      const pts = [
+        [x2, y2],
+        [x2 + size * Math.cos(a1), y2 + size * Math.sin(a1)],
+        [x2 + size * Math.cos(a2), y2 + size * Math.sin(a2)],
+      ].map(p => p.join(',')).join(' ');
+      p.setAttribute('points', pts);
+      p.setAttribute('fill', color);
+      svg.appendChild(p);
+    }
+
+    /* helper: horizontal connector with a right-angle elbow */
+    function elbow(fromEl, toEl, color, offsetY = 0) {
+      const f = mid(fromEl);
+      const t = mid(toEl);
+      const fy = f.top + offsetY;
+      const ty = t.top + offsetY;
+      const fx = f.right;
+      const tx = t.left;
+      const mx = (fx + tx) / 2;
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', `M ${fx} ${fy} H ${mx} V ${ty} H ${tx}`);
+      path.setAttribute('stroke', color);
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('fill', 'none');
+      svg.appendChild(path);
+      arrow(tx, ty, tx - 1, ty, color);
+    }
+
+    /* ── connections (colour-matched to the original diagram) ── */
+
+    /* Revenue ← (red arrow from balance sheet cash area toward revenue) */
+    elbow(document.getElementById('bs-cash'),      document.getElementById('pl-revenue'),  '#c0392b');
+    /* Inventory → P/L (green) */
+    elbow(document.getElementById('bs-inventory'), document.getElementById('pl-revenue'),  '#27ae60', 6);
+    /* Account Receivable → P/L */
+    elbow(document.getElementById('bs-ar'),        document.getElementById('pl-revenue'),  '#c0392b', 12);
+
+    /* D&A on P/L → CF D&A (red) */
+    elbow(document.getElementById('pl-da'),        document.getElementById('cf-da'),       '#c0392b');
+
+    /* Revenue → CF EBIT (red arrow) */
+    elbow(document.getElementById('pl-revenue'),   document.getElementById('cf-ebit'),     '#c0392b');
+    /* Inventory connection to CF */
+    elbow(document.getElementById('pl-gross'),     document.getElementById('cf-inv'),      '#27ae60');
+    /* AR connection to CF receivable */
+    elbow(document.getElementById('pl-ebitda'),    document.getElementById('cf-rec'),      '#c0392b');
+    /* AP connection to CF payable */
+    elbow(document.getElementById('bs-ap'),        document.getElementById('cf-pay'),      '#2980b9');
+
+    /* Interest → CF interest */
+    elbow(document.getElementById('pl-interest'),  document.getElementById('cf-int'),      '#2980b9');
+    /* Tax → CF tax */
+    elbow(document.getElementById('pl-tax'),       document.getElementById('cf-tax'),      '#2980b9');
+
+    /* Dividends → CF dividends */
+    elbow(document.getElementById('pl-div'),       document.getElementById('cf-div'),      '#2980b9');
+
+    /* Retained Earnings ← Balance Sheet equity */
+    elbow(document.getElementById('bs-equity'),    document.getElementById('pl-retained'), '#2980b9');
+
+    /* Long-term debt → CF debt */
+    elbow(document.getElementById('bs-ltd'),       document.getElementById('cf-debt'),     '#2980b9');
+
+    /* Short-term debt → CF interest */
+    elbow(document.getElementById('bs-std'),       document.getElementById('cf-int'),      '#2980b9', 8);
+  });
+</script>
+</body>
+</html>
