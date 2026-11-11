@@ -1,0 +1,14 @@
+{
+  "name": "Chit Schedule",
+  "short_name": "Chit",
+  "description": "31-month chit fund schedule with payout, discount, net gain and effective rate.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbf6e3",
+  "theme_color": "#1f6f43",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
